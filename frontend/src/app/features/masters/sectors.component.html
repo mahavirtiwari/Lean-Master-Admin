@@ -1,0 +1,175 @@
+<app-page-intro
+  title="Sectors"
+  subtitle="NIC 2008 industrial divisions available to MSMEs during registration"
+/>
+
+<div class="stack">
+  <!-- ------------------------------------------------------ add / edit -->
+  @if (canCreate || canEdit) {
+    <section class="card card-pad">
+      <h3 class="card-title">{{ editingId() ? 'Edit Sector' : 'Add Sector' }}</h3>
+      <p class="card-sub">Codes follow the NIC 2008 two-digit industrial division</p>
+
+      <form class="sector-form" (ngSubmit)="save()">
+        <div class="field">
+          <label class="field-label" for="nicCode">SECTOR CODE<span class="req">*</span></label>
+          <input
+            id="nicCode"
+            class="input"
+            type="text"
+            placeholder="e.g. 25"
+            name="nicCode"
+            [ngModel]="form().nicCode"
+            (ngModelChange)="form.set({ ...form(), nicCode: $event })"
+          />
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="name">SECTOR NAME<span class="req">*</span></label>
+          <input
+            id="name"
+            class="input"
+            type="text"
+            placeholder="e.g. Manufacture of fabricated metal products"
+            name="name"
+            [ngModel]="form().name"
+            (ngModelChange)="form.set({ ...form(), name: $event })"
+          />
+        </div>
+
+        <div class="form-actions">
+          @if (editingId()) {
+            <button class="btn btn-secondary" type="button" (click)="cancelEdit()">Cancel</button>
+          }
+          <button class="btn btn-primary" type="submit" [disabled]="saving()">
+            {{ saving() ? 'Saving…' : 'Save' }}
+          </button>
+        </div>
+      </form>
+
+      @if (formError()) {
+        <div class="field-error form-error-row">{{ formError() }}</div>
+      }
+    </section>
+  }
+
+  <!-- ----------------------------------------------------------- list -->
+  <section class="card">
+    <div class="card-head">
+      <div class="row">
+        <h3 class="card-title">Sector List</h3>
+        <span class="count-chip">{{ total() | number }} sectors</span>
+      </div>
+
+      <div class="row">
+        <div class="search">
+          <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+            <circle cx="6.2" cy="6.2" r="4.4" fill="none" stroke="#93A29A" stroke-width="1.5" />
+            <path d="M9.6 9.6 12.5 12.5" stroke="#93A29A" stroke-width="1.5" stroke-linecap="round" />
+          </svg>
+          <input
+            class="input"
+            type="search"
+            placeholder="Search sector…"
+            [ngModel]="search()"
+            (ngModelChange)="search.set($event)"
+            (keyup.enter)="applyFilters()"
+            name="search"
+          />
+        </div>
+
+        <select
+          class="select"
+          [ngModel]="status()"
+          (ngModelChange)="status.set($event); applyFilters()"
+          name="status"
+        >
+          <option value="">All Status</option>
+          <option value="true">Active</option>
+          <option value="false">Inactive</option>
+        </select>
+      </div>
+    </div>
+
+    @if (loading()) {
+      <div class="empty"><div class="empty-text">Loading sectors…</div></div>
+    } @else if (rows().length === 0) {
+      <app-empty
+        title="No sectors found"
+        text="No sector matches the current search and status filter. Clear the filters, or add a sector above."
+      />
+    } @else {
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th>Sector Code</th>
+              <th>Sector Name</th>
+              <th class="num">MSMEs Mapped</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of rows(); track row.sectorId) {
+              <tr>
+                <td class="strong">{{ row.nicCode }}</td>
+                <td>{{ row.name }}</td>
+                <td class="num strong">{{ row.msmesMapped | number }}</td>
+                <td>
+                  <span class="pill" [class]="row.isActive ? 'pill-green' : 'pill-red'">
+                    {{ row.isActive ? 'Active' : 'Inactive' }}
+                  </span>
+                </td>
+                <td class="nowrap">
+                  @if (canEdit) {
+                    <button class="act act-edit" type="button" (click)="startEdit(row)">Edit</button>
+                    <span class="act-sep">|</span>
+                    <button
+                      class="act"
+                      type="button"
+                      [class.act-danger]="row.isActive"
+                      [class.act-green]="!row.isActive"
+                      (click)="confirming.set(row)"
+                    >
+                      {{ row.isActive ? 'Disable' : 'Enable' }}
+                    </button>
+                  } @else {
+                    <span class="muted">—</span>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <app-pager
+        [page]="page()"
+        [pageSize]="pageSize"
+        [total]="total()"
+        noun="sector"
+        nounPlural="sectors"
+        (go)="goToPage($event)"
+      />
+    }
+  </section>
+</div>
+
+<!-- ------------------------------------------- disable / enable dialogs -->
+@if (confirming(); as row) {
+  <app-confirm
+    [title]="row.isActive ? 'Disable Sector' : 'Enable Sector'"
+    [message]="
+      row.isActive
+        ? 'Disabling ' +
+          row.name +
+          ' hides it from new MSME registrations. Enterprises already mapped to it are not affected.'
+        : 'Enabling ' + row.name + ' makes it selectable again during MSME registration.'
+    "
+    [confirmLabel]="row.isActive ? 'Disable Sector' : 'Enable Sector'"
+    [tone]="row.isActive ? 'danger' : 'primary'"
+    (confirmed)="confirmToggle()"
+    (cancelled)="confirming.set(null)"
+  />
+}

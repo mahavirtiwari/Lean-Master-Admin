@@ -1,0 +1,790 @@
+@use './styles/tokens';
+
+// Global styles for the MCLS portal.
+//
+// The component classes below (.card, .tbl, .btn, .pill, .field) are global
+// rather than per-component because the same table and the same field appear on
+// 90-odd screens. Scoping them per component would mean the identical ruleset
+// compiled ninety times and a redesign touching ninety files.
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+body {
+  font-family: var(--font);
+  font-size: var(--fs-base);
+  color: var(--text-body);
+  background: var(--page-bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: var(--blue);
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
+
+// ------------------------------------------------------------------ cards ---
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border-card);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-card);
+}
+
+.card-pad {
+  padding: 20px;
+}
+
+.card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-divider);
+}
+
+.card-title {
+  font-size: var(--fs-card-title);
+  font-weight: 700;
+  color: var(--text-strong);
+  margin: 0;
+}
+
+.card-sub {
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+  margin: 4px 0 0;
+}
+
+.count-chip {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: var(--r-pill);
+  background: var(--blue-50);
+  border: 1px solid var(--blue-border);
+  color: var(--blue);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+}
+
+// ------------------------------------------------------------------ stats ---
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.stat {
+  background: var(--surface);
+  border: 1px solid var(--border-card);
+  border-radius: var(--r-lg);
+  padding: 16px 18px;
+}
+
+.stat-label {
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.stat-value {
+  font-size: var(--fs-stat);
+  font-weight: 700;
+  color: var(--text-strong);
+  margin-top: 8px;
+  line-height: 1.1;
+}
+
+.stat-hint {
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  margin-top: 7px;
+}
+
+// ----------------------------------------------------------------- tables ---
+
+.tbl-wrap {
+  overflow-x: auto;
+}
+
+.tbl {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-base);
+}
+
+.tbl thead th {
+  text-align: left;
+  padding: 11px 14px;
+  font-size: var(--fs-table-head);
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  background: var(--surface-muted);
+  border-bottom: 1px solid var(--border-card);
+  white-space: nowrap;
+}
+
+.tbl tbody td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border-divider);
+  color: var(--text-body);
+  vertical-align: middle;
+}
+
+.tbl tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.tbl tbody tr:hover {
+  background: var(--surface-subtle);
+}
+
+.tbl .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.tbl .strong {
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.tbl .code {
+  font-weight: 700;
+  color: var(--blue);
+}
+
+// ------------------------------------------------------------------ pills ---
+
+.pill {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: var(--r-pill);
+  font-size: var(--fs-micro);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.pill-green {
+  background: var(--green-50);
+  border: 1px solid var(--green-border);
+  color: var(--green);
+}
+.pill-red {
+  background: var(--danger-50);
+  border: 1px solid var(--danger-border);
+  color: var(--danger);
+}
+.pill-amber {
+  background: var(--amber-50);
+  border: 1px solid var(--amber-border);
+  color: var(--amber);
+}
+.pill-blue {
+  background: var(--blue-50);
+  border: 1px solid var(--blue-border);
+  color: var(--blue);
+}
+.pill-grey {
+  background: var(--surface-muted);
+  border: 1px solid var(--border-card);
+  color: var(--text-muted);
+}
+.pill-orange {
+  background: #fff4ed;
+  border: 1px solid #fdd7bd;
+  color: var(--orange);
+}
+
+// --------------------------------------------------------------- buttons ---
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  height: 36px;
+  padding: 0 16px;
+  border-radius: var(--r-md);
+  border: 1px solid transparent;
+  font-family: inherit;
+  font-size: var(--fs-button);
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.12s ease, border-color 0.12s ease;
+}
+
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: var(--green);
+  color: #fff;
+}
+.btn-primary:hover:not(:disabled) {
+  background: var(--green-dark);
+}
+
+.btn-secondary {
+  background: var(--surface);
+  border-color: var(--border-input);
+  color: var(--text-strong);
+}
+.btn-secondary:hover:not(:disabled) {
+  background: var(--surface-muted);
+}
+
+.btn-blue {
+  background: var(--blue);
+  color: #fff;
+}
+.btn-blue:hover:not(:disabled) {
+  background: #163f6f;
+}
+
+.btn-ghost-blue {
+  background: var(--blue-50);
+  border-color: var(--blue-border);
+  color: var(--blue);
+}
+
+.btn-danger {
+  background: var(--danger);
+  color: #fff;
+}
+.btn-danger:hover:not(:disabled) {
+  background: #9b1717;
+}
+
+.btn-sm {
+  height: 30px;
+  padding: 0 11px;
+  font-size: var(--fs-sm);
+}
+
+// Inline row actions: "Edit | Disable".
+.act {
+  background: none;
+  border: 0;
+  padding: 0;
+  font-family: inherit;
+  font-size: var(--fs-base);
+  font-weight: 600;
+  cursor: pointer;
+}
+.act-edit {
+  color: var(--blue);
+}
+.act-danger {
+  color: var(--danger);
+}
+.act-green {
+  color: var(--green);
+}
+.act:hover {
+  text-decoration: underline;
+}
+.act-sep {
+  color: var(--border-input);
+  margin: 0 6px;
+}
+
+// ----------------------------------------------------------------- forms ---
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.field-label {
+  font-size: var(--fs-label);
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.req {
+  color: var(--danger);
+  margin-left: 2px;
+}
+
+.field-hint {
+  font-size: 9.4px;
+  color: var(--text-muted);
+}
+
+.input,
+.select,
+.textarea {
+  width: 100%;
+  height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--border-input);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  font-family: inherit;
+  font-size: var(--fs-input);
+  color: var(--text-strong);
+}
+
+.textarea {
+  height: auto;
+  min-height: 84px;
+  padding: 10px 12px;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.input::placeholder,
+.textarea::placeholder {
+  color: var(--text-placeholder);
+}
+
+.input:focus,
+.select:focus,
+.textarea:focus {
+  outline: none;
+  border-color: var(--green);
+  box-shadow: 0 0 0 3px rgba(15, 123, 69, 0.12);
+}
+
+.input.is-invalid,
+.select.is-invalid,
+.textarea.is-invalid {
+  border-color: var(--danger);
+}
+
+.field-error {
+  font-size: 9.6px;
+  font-weight: 600;
+  color: var(--danger);
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px 24px;
+}
+
+.form-grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px 24px;
+}
+
+.span-2 {
+  grid-column: span 2;
+}
+
+// ------------------------------------------------------------- utilities ---
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.row-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.spacer {
+  flex: 1;
+}
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.muted {
+  color: var(--text-muted);
+}
+.small {
+  font-size: var(--fs-sm);
+}
+.nowrap {
+  white-space: nowrap;
+}
+.text-green {
+  color: var(--green);
+}
+.text-blue {
+  color: var(--blue);
+}
+.text-danger {
+  color: var(--danger);
+}
+
+// A note strip: the pale green banner the designs use for scheme rules.
+.note {
+  display: flex;
+  gap: 11px;
+  padding: 14px 16px;
+  border-radius: var(--r-lg);
+  background: var(--green-50);
+  border: 1px solid var(--green-border);
+  font-size: var(--fs-body);
+  color: var(--text-body);
+  line-height: 1.55;
+}
+
+.note-amber {
+  background: var(--amber-50);
+  border-color: var(--amber-border);
+}
+
+// --------------------------------------------------------------- toolbar ---
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.search {
+  position: relative;
+  flex: 1;
+  min-width: 220px;
+}
+
+.search .input {
+  padding-left: 34px;
+}
+
+.search svg {
+  position: absolute;
+  left: 11px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+// -------------------------------------------------------------- empty ---
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 56px 24px;
+  text-align: center;
+}
+
+.empty-title {
+  font-size: 13.4px;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.empty-text {
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+  max-width: 380px;
+  line-height: 1.6;
+}
+
+// -------------------------------------------------------------- pager ---
+
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--border-divider);
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+}
+
+.pager-btns {
+  display: flex;
+  gap: 6px;
+}
+
+.pg {
+  min-width: 30px;
+  height: 30px;
+  padding: 0 8px;
+  border: 1px solid var(--border-input);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  font-family: inherit;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--text-body);
+  cursor: pointer;
+}
+
+.pg.is-active {
+  background: var(--blue);
+  border-color: var(--blue);
+  color: #fff;
+}
+
+.pg:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+// -------------------------------------------------------------- tabs ---
+
+.tabs {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  background: var(--surface);
+  border: 1px solid var(--border-card);
+  border-radius: var(--r-lg);
+}
+
+.tab {
+  padding: 7px 14px;
+  border: 0;
+  border-radius: var(--r-md);
+  background: none;
+  font-family: inherit;
+  font-size: var(--fs-base);
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.tab.is-active {
+  background: var(--green-50);
+  color: var(--text-strong);
+  font-weight: 600;
+}
+
+// -------------------------------------------------------------- modal ---
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(22, 33, 26, 0.42);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 100;
+}
+
+.modal {
+  width: 100%;
+  max-width: 460px;
+  background: var(--surface);
+  border-radius: 12px;
+  box-shadow: var(--shadow-modal);
+  overflow: hidden;
+}
+
+.modal-lg {
+  max-width: 720px;
+}
+
+.modal-body {
+  padding: 24px;
+}
+
+.modal-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-strong);
+  margin: 0 0 8px;
+}
+
+.modal-text {
+  font-size: var(--fs-body);
+  color: var(--text-body);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.modal-foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 24px;
+  background: var(--surface-muted);
+  border-top: 1px solid var(--border-divider);
+}
+
+// ------------------------------------------------------------ master forms ---
+// The "Add Sector" / "Add Parameter" / "Add Technology" cards share a layout:
+// fields on a grid with the Save button right-aligned on its own row.
+
+.sector-form,
+.master-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px 24px;
+  margin-top: 18px;
+}
+
+.master-form-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.sector-form .form-actions,
+.master-form .form-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.form-error-row {
+  margin-top: 12px;
+}
+
+.char-count {
+  font-size: 9.4px;
+  color: var(--text-muted);
+  text-align: right;
+}
+
+// ------------------------------------------------------------ step forms ---
+// The Create New User screen numbers its sections; the same treatment is used
+// by any multi-part form.
+
+.step-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.step-no {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--green);
+  color: #fff;
+  font-size: 10.6px;
+  font-weight: 700;
+}
+
+.step-title {
+  font-size: 13.2px;
+  font-weight: 700;
+  color: var(--text-strong);
+  margin: 0;
+}
+
+.type-choices {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.type-choice {
+  padding: 16px 18px;
+  border: 1px solid var(--border-card);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.type-choice:hover {
+  border-color: var(--green-border);
+  background: var(--green-50);
+}
+
+.type-choice.is-selected {
+  border-color: var(--green);
+  background: var(--green-50);
+  box-shadow: 0 0 0 3px rgba(15, 123, 69, 0.12);
+}
+
+.choice-name {
+  display: block;
+  font-size: 12.4px;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.choice-desc {
+  display: block;
+  font-size: 9.8px;
+  line-height: 1.55;
+  color: var(--text-muted);
+  margin-top: 6px;
+}
+
+.form-foot {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border-divider);
+}
+
+// A level pill that links through to its own fee page. --accent carries the
+// level's colour: Bronze #C2410C, Silver #5D6B62, Gold #A16207.
+.level-pill {
+  display: inline-block;
+  padding: 3px 11px;
+  border-radius: var(--r-pill);
+  font-size: 10.2px;
+  font-weight: 600;
+  white-space: nowrap;
+  text-decoration: none;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, #fff);
+  border: 1px solid color-mix(in srgb, var(--accent) 32%, #fff);
+}
+
+.level-pill:hover {
+  text-decoration: none;
+  background: color-mix(in srgb, var(--accent) 18%, #fff);
+}
+
+/* ----------------------------------------------------- Bhashini picker ---
+   The plugin (index.html) mounts its button into this container, which lives
+   directly in <body> so it survives every route change, sign-in and sign-out.
+   It is positioned here rather than moved into a component: re-parenting it
+   into a header did not survive Angular tearing that view down, which left the
+   portal with no language picker at all after sign-in.
+
+   Top-right, so it reads as part of the header on both the sign-in screen and
+   the portal shell. */
+body > .bhashini-plugin-container {
+  position: fixed;
+  top: 14px;
+  right: 22px;
+  z-index: 60;
+}
+
+body > .bhashini-plugin-container #bhashini-translation {
+  position: static !important;
+  inset: auto !important;
+  margin: 0 !important;
+  transform: none !important;
+}

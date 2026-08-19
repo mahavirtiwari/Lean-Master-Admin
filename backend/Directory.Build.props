@@ -1,0 +1,41 @@
+<Project>
+
+  <!--
+    Settings shared by every project in the solution. Keeping them here means a
+    framework or analyser change is one edit rather than four.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+
+    <!-- Warnings are failures in CI. Local builds still surface them the same
+         way, which keeps the two honest. -->
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <AnalysisLevel>latest-recommended</AnalysisLevel>
+
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <!-- CS1591: not every public member needs an XML comment. The rest of the
+         documentation warnings stay on. -->
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+
+    <Company>Ministry of Micro, Small and Medium Enterprises</Company>
+    <Product>MCLS Portal</Product>
+    <Version>1.0.0</Version>
+    <NeutralLanguage>en-IN</NeutralLanguage>
+
+    <!-- Deterministic output so the same source produces the same binary,
+         which matters for release verification. -->
+    <Deterministic>true</Deterministic>
+    <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Version comes from Directory.Packages.props: Central Package Management
+         forbids a Version attribute here. -->
+    <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All" />
+  </ItemGroup>
+
+</Project>

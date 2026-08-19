@@ -1,0 +1,495 @@
+<!-- ------------------------------------------------------------ filter bar -->
+<section class="card filters">
+  <div class="field">
+    <label class="field-label" for="from">PERIOD FROM</label>
+    <input
+      id="from"
+      class="input"
+      type="date"
+      [ngModel]="periodFrom()"
+      (ngModelChange)="periodFrom.set($event); load()"
+      name="from"
+    />
+  </div>
+
+  <div class="field">
+    <label class="field-label" for="to">PERIOD TO</label>
+    <input
+      id="to"
+      class="input"
+      type="date"
+      [ngModel]="periodTo()"
+      (ngModelChange)="periodTo.set($event); load()"
+      name="to"
+    />
+  </div>
+
+  <div class="field">
+    <label class="field-label" for="state">SELECT STATE</label>
+    <select
+      id="state"
+      class="select"
+      [ngModel]="stateId()"
+      (ngModelChange)="onStateChange($event)"
+      name="state"
+    >
+      <option value="">All States</option>
+      @for (state of states(); track state.stateId) {
+        <option [value]="state.stateId">{{ state.name }}</option>
+      }
+    </select>
+  </div>
+
+  <div class="field">
+    <label class="field-label" for="district">SELECT DISTRICT</label>
+    <select
+      id="district"
+      class="select"
+      [ngModel]="districtId()"
+      (ngModelChange)="districtId.set($event); load()"
+      name="district"
+      [disabled]="!stateId()"
+    >
+      <option value="">All Districts</option>
+      @for (district of districts(); track district.districtId) {
+        <option [value]="district.districtId">{{ district.name }}</option>
+      }
+    </select>
+  </div>
+
+  <div class="field">
+    <label class="field-label" for="level">CERTIFICATION LEVEL</label>
+    <select
+      id="level"
+      class="select"
+      [ngModel]="level()"
+      (ngModelChange)="level.set($event); load()"
+      name="level"
+    >
+      <option value="">All Levels</option>
+      @for (l of levels(); track l.id) {
+        <option [value]="l.id">{{ l.name }}</option>
+      }
+    </select>
+  </div>
+
+  <div class="field">
+    <label class="field-label" for="agency">IMPLEMENTING AGENCY</label>
+    <select
+      id="agency"
+      class="select"
+      [ngModel]="agency()"
+      (ngModelChange)="agency.set($event); load()"
+      name="agency"
+    >
+      <option value="">All Agencies</option>
+      @for (a of agencies(); track a.id) {
+        <option [value]="a.id">{{ a.name }}</option>
+      }
+    </select>
+  </div>
+
+  <div class="filter-actions">
+    <button class="btn btn-secondary btn-sm" type="button" (click)="resetFilters()">
+      Reset filters
+    </button>
+  </div>
+</section>
+
+@if (loading()) {
+  <section class="card"><div class="empty"><div class="empty-text">Loading dashboard…</div></div></section>
+} @else if (!hasData()) {
+  <!-- 1-Dashboard-no-data.svg -->
+  <section class="card">
+    <app-empty
+      title="No scheme activity in this period"
+      text="No MSME applications fall within the selected period and filters. Widen the date range, or clear the state and certification filters to see scheme-wide figures."
+    />
+  </section>
+} @else if (counts(); as c) {
+  <div class="stack">
+    <!-- ------------------------------------------------------ KPI cards -->
+    <div class="stat-grid">
+      <div class="stat kpi" style="--kpi: #1B4F8A">
+        <div class="stat-label">Total Registered MSMEs</div>
+        <div class="stat-value">{{ c.registered | number }}</div>
+        <div class="kpi-split">{{ agencyLine('registered') }}</div>
+      </div>
+
+      <div class="stat kpi" style="--kpi: #0F7B45">
+        <div class="stat-label">Total Certified</div>
+        <div class="stat-value">{{ c.certified | number }}</div>
+        <div class="kpi-split">{{ agencyLine('certified') }}</div>
+      </div>
+
+      <div class="stat kpi" style="--kpi: #A16207">
+        <div class="stat-label">Applications In Progress</div>
+        <div class="stat-value">{{ c.handholdingInProgress + c.assessmentInProgress | number }}</div>
+        <div class="kpi-split">{{ agencyLine('inProgress') }}</div>
+      </div>
+
+      <div class="stat kpi" style="--kpi: #B91C1C">
+        <div class="stat-label">Pending Handholding</div>
+        <div class="stat-value">{{ c.paymentReceived | number }}</div>
+        <div class="kpi-split">{{ agencyLine('paymentReceived') }}</div>
+      </div>
+    </div>
+
+    <!-- --------------------------------------------- certification levels -->
+    <div class="level-grid">
+      @for (level of levelCards(); track level.name) {
+        <section class="card level-card" [style.--accent]="level.accent">
+          <span class="level-rule"></span>
+
+          <div class="level-body">
+            <div class="row-between">
+              <h3 class="card-title level-title">
+                <span class="level-dot"></span>{{ level.name }}
+              </h3>
+
+              <!-- r=18.5, 5-unit stroke, track #EDF2EF, as drawn -->
+              <span class="ring">
+                <svg viewBox="0 0 44 44" aria-hidden="true">
+                  <circle cx="22" cy="22" r="18.5" fill="none" stroke="#EDF2EF" stroke-width="5" />
+                  <circle
+                    cx="22"
+                    cy="22"
+                    r="18.5"
+                    fill="none"
+                    [attr.stroke]="level.accent"
+                    stroke-width="5"
+                    stroke-linecap="round"
+                    [attr.stroke-dasharray]="level.dash"
+                    transform="rotate(-90 22 22)"
+                  />
+                </svg>
+                <span class="ring-value">{{ level.percent }}%</span>
+              </span>
+            </div>
+
+            <div class="level-figures">
+              <div>
+                <div class="fig-label">APPLIED</div>
+                <div class="fig-value">{{ level.applied | number }}</div>
+              </div>
+              <div>
+                <div class="fig-label">CERTIFIED</div>
+                <div class="fig-value">{{ level.certified | number }}</div>
+              </div>
+              <div>
+                <div class="fig-label">IN-PROGRESS</div>
+                <div class="fig-value">{{ level.inProgress | number }}</div>
+              </div>
+            </div>
+
+            <!-- Agency Breakdown: 358.67 x 114, rx 7, fill #EDF2EF -->
+            <div class="agency-panel">
+              <div class="agency-head">AGENCY BREAKDOWN</div>
+
+              <table class="agency-tbl">
+                <thead>
+                  <tr>
+                    <th></th>
+                    <th>APPLIED</th>
+                    <th>CERTIFIED</th>
+                    <th>IN-PROGRESS</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (a of level.agencies; track a.name) {
+                    <tr>
+                      <td class="agency-name">
+                        <span class="agency-dot" [style.background]="a.name === 'QCI' ? '#1B4F8A' : '#0F7B45'"></span>
+                        {{ a.name }}
+                      </td>
+                      <td>{{ a.applied | number }}</td>
+                      <td>{{ a.certified | number }}</td>
+                      <td>{{ a.inProgress | number }}</td>
+                    </tr>
+                  } @empty {
+                    <tr><td colspan="4" class="muted">No agency data for these filters.</td></tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      }
+    </div>
+
+    <!-- ------------------------------------- state-wise adoption + map -->
+    <div class="geo-grid">
+      <section class="card">
+        <div class="card-head">
+          <div>
+            <h3 class="card-title">State-wise LEAN Adoption</h3>
+            <p class="card-sub">Top performing states by certified MSMEs</p>
+          </div>
+          <div class="scale">
+            <span class="scale-label">Low</span>
+            <span class="scale-bar"></span>
+            <span class="scale-label">High</span>
+          </div>
+        </div>
+
+        <div class="geo-body">
+          <!-- The choropleth as exported with the deck, 400x248 on the artboard. -->
+          <img
+            class="geo-map"
+            src="assets/india-lean-adoption.png"
+            alt="Map of India shaded by LEAN certification density"
+            width="400"
+            height="248"
+          />
+
+          <div class="top-states">
+            <div class="top-states-head">Top States</div>
+            @for (state of topStates(); track state.name) {
+              <div class="top-state">
+                <span class="top-state-name">{{ state.name }}</span>
+                <span class="top-state-bar">
+                  <span class="top-state-fill" [style.width.%]="state.percent"></span>
+                </span>
+                <span class="top-state-value">{{ state.certified | number }}</span>
+              </div>
+            }
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-head">
+          <div>
+            <h3 class="card-title">Top Districts by Certified MSMEs</h3>
+            <p class="card-sub">District-level performance across all implementing agencies</p>
+          </div>
+          <span class="count-chip">Top {{ topDistricts().length }}</span>
+        </div>
+
+        <div class="district-list">
+          @for (d of topDistricts(); track d.name; let i = $index) {
+            <div class="district-row">
+              <span class="rank">{{ i + 1 }}</span>
+              <span class="district-name">
+                <span class="district-title">{{ d.name }}</span>
+                <span class="district-state">{{ d.state }}</span>
+              </span>
+              <span class="district-bar">
+                <span
+                  class="district-fill"
+                  [style.width.%]="topDistricts()[0].certified > 0
+                    ? (d.certified / topDistricts()[0].certified) * 100
+                    : 0"
+                ></span>
+              </span>
+              <span class="district-value">{{ d.certified | number }}</span>
+            </div>
+          }
+        </div>
+      </section>
+    </div>
+
+    <!-- ------------------- gender / enterprise type / social category -->
+    @if (demographics(); as demo) {
+      <div class="demo-grid">
+        <section class="card card-pad">
+          <h3 class="card-title">Gender</h3>
+          <p class="card-sub">Registered MSMEs by promoter gender</p>
+          <div class="donut-row">
+            <svg class="donut" viewBox="0 0 140 140" aria-hidden="true">
+              <circle cx="70" cy="70" r="54" fill="none" stroke="var(--border-divider)" stroke-width="18" />
+              @for (seg of donutSegments(demo.gender); track seg.label) {
+                <circle
+                  cx="70"
+                  cy="70"
+                  r="54"
+                  fill="none"
+                  [attr.stroke]="seg.colour"
+                  stroke-width="18"
+                  [attr.stroke-dasharray]="seg.dash"
+                  [attr.stroke-dashoffset]="seg.offset"
+                  transform="rotate(-90 70 70)"
+                />
+              }
+              <text x="70" y="66" text-anchor="middle" class="donut-cap">TOTAL</text>
+              <text x="70" y="86" text-anchor="middle" class="donut-total">
+                {{ demo.total | number }}
+              </text>
+            </svg>
+
+            <div class="legend">
+              @for (slice of demo.gender; track slice.label; let i = $index) {
+                <div class="legend-row">
+                  <span class="legend-dot" [style.background]="colourFor(i)"></span>
+                  <span class="legend-label">{{ slice.label }}</span>
+                  <span class="legend-count">{{ slice.count | number }}</span>
+                  <span class="legend-pct">{{ slice.percent }}%</span>
+                </div>
+              }
+            </div>
+          </div>
+        </section>
+
+        <section class="card card-pad">
+          <h3 class="card-title">Enterprise Type</h3>
+          <p class="card-sub">As per revised MSME investment/turnover criteria</p>
+          <div class="donut-row">
+            <svg class="donut" viewBox="0 0 140 140" aria-hidden="true">
+              <circle cx="70" cy="70" r="54" fill="none" stroke="var(--border-divider)" stroke-width="18" />
+              @for (seg of donutSegments(demo.enterpriseType); track seg.label) {
+                <circle
+                  cx="70"
+                  cy="70"
+                  r="54"
+                  fill="none"
+                  [attr.stroke]="seg.colour"
+                  stroke-width="18"
+                  [attr.stroke-dasharray]="seg.dash"
+                  [attr.stroke-dashoffset]="seg.offset"
+                  transform="rotate(-90 70 70)"
+                />
+              }
+              <text x="70" y="66" text-anchor="middle" class="donut-cap">TOTAL</text>
+              <text x="70" y="86" text-anchor="middle" class="donut-total">
+                {{ demo.total | number }}
+              </text>
+            </svg>
+
+            <div class="legend">
+              @for (slice of demo.enterpriseType; track slice.label; let i = $index) {
+                <div class="legend-row">
+                  <span class="legend-dot" [style.background]="colourFor(i)"></span>
+                  <span class="legend-label">{{ slice.label }}</span>
+                  <span class="legend-count">{{ slice.count | number }}</span>
+                  <span class="legend-pct">{{ slice.percent }}%</span>
+                </div>
+              }
+            </div>
+          </div>
+        </section>
+
+        <section class="card card-pad">
+          <h3 class="card-title">Social Category</h3>
+          <p class="card-sub">Promoter social category of registered MSMEs</p>
+
+          <div class="social">
+            @for (slice of demo.socialCategory; track slice.label; let i = $index) {
+              <div class="social-row">
+                <div class="social-head">
+                  <span class="social-label">{{ slice.label }}</span>
+                  <span class="social-pct">{{ slice.percent }}%</span>
+                  <span class="social-count">{{ slice.count | number }}</span>
+                </div>
+                <span class="social-bar">
+                  <span
+                    class="social-fill"
+                    [style.width.%]="slice.percent"
+                    [style.background]="colourFor(i)"
+                  ></span>
+                </span>
+              </div>
+            }
+          </div>
+        </section>
+      </div>
+
+      <!-- ------------------------------------------ NIC sector-wise split -->
+      <section class="card">
+        <div class="card-head">
+          <div>
+            <h3 class="card-title">NIC Sector-wise Distribution</h3>
+            <p class="card-sub">
+              Applications and certification split by NIC 2008 industrial division
+            </p>
+          </div>
+          <span class="count-chip">Top {{ demo.nic.length }} divisions</span>
+        </div>
+
+        @if (demo.nic.length === 0) {
+          <div class="empty">
+            <div class="empty-text">No NIC activity recorded for the current filters.</div>
+          </div>
+        } @else {
+          <div class="tbl-wrap">
+            <table class="tbl">
+              <thead>
+                <tr>
+                  <th>NIC</th>
+                  <th>Industrial Division</th>
+                  <th class="num">Enterprises</th>
+                  <th class="num">Certified</th>
+                  <th class="num">Share</th>
+                  <th>Distribution</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (row of demo.nic; track row.code) {
+                  <tr>
+                    <td class="code">{{ row.code }}</td>
+                    <td class="strong">{{ row.name }}</td>
+                    <td class="num">{{ row.enterprises | number }}</td>
+                    <td class="num text-green">{{ row.certified | number }}</td>
+                    <td class="num muted">{{ row.percent }}%</td>
+                    <td class="nic-bar-cell">
+                      <span class="nic-bar">
+                        <span class="nic-fill" [style.width.%]="row.percent * 4"></span>
+                      </span>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </section>
+    }
+
+    <!-- --------------------------------------------------- pipeline table -->
+    <section class="card">
+      <div class="card-head">
+        <div>
+          <h3 class="card-title">Scheme Pipeline</h3>
+          <p class="card-sub">Every application by its current stage</p>
+        </div>
+      </div>
+
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th>Stage</th>
+              <th class="num">Applications</th>
+              <th class="num">Share</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (stage of [
+              { label: 'Registered', value: c.registered },
+              { label: 'Payment Received', value: c.paymentReceived },
+              { label: 'Handholding in progress', value: c.handholdingInProgress },
+              { label: 'Handholding Completed', value: c.handholdingCompleted },
+              { label: 'Assessment Scheduled', value: c.assessmentScheduled },
+              { label: 'Assessment In progress', value: c.assessmentInProgress },
+              { label: 'NC Raised', value: c.ncRaised },
+              { label: 'Quality Check', value: c.qualityCheck },
+              { label: 'Certified', value: c.certified },
+              { label: 'Rejected', value: c.rejected }
+            ]; track stage.label) {
+              <tr>
+                <td class="strong">{{ stage.label }}</td>
+                <td class="num">{{ stage.value | number }}</td>
+                <td class="num muted">
+                  {{
+                    c.totalApplications > 0
+                      ? ((stage.value / c.totalApplications) * 100 | number: '1.0-1') + '%'
+                      : '—'
+                  }}
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+}

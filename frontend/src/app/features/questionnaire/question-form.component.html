@@ -1,0 +1,367 @@
+<header class="q-head">
+  <div>
+    <h2 class="q-title">Create New Question</h2>
+    <p class="q-sub">
+      Sector-specific assessment question built from a parameter, its requirements and their
+      checkpoints
+    </p>
+  </div>
+  <div class="spacer"></div>
+  <button class="btn-ghost" type="button" (click)="preview()">Preview</button>
+</header>
+
+<!-- tabs -->
+<div class="tabs">
+  <button type="button" [class.on]="tab() === 'single'" (click)="tab.set('single')">
+    Single Question
+  </button>
+  <button type="button" [class.on]="tab() === 'bulk'" (click)="tab.set('bulk')">
+    Bulk Upload via Excel
+  </button>
+</div>
+
+@if (message(); as note) {
+  <div class="note" [class.note-bad]="failed()">{{ note }}</div>
+}
+
+@if (tab() === 'single') {
+  <!-- ------------------------------------------------ bulk-upload nudge -->
+  <section class="nudge">
+    <div>
+      <div class="nudge-title">Adding many questions at once?</div>
+      <p class="nudge-sub">
+        Download the Excel template, fill the requirements and checkpoints offline, then upload
+        the sheet.
+      </p>
+    </div>
+    <div class="spacer"></div>
+    <button class="btn-ghost" type="button" (click)="downloadTemplate()">Download Template</button>
+    <button class="btn-solid" type="button" (click)="tab.set('bulk')">Upload Excel</button>
+  </section>
+
+  <!-- --------------------------------------------------- question details -->
+  <section class="card">
+    <div class="card-pad">
+      <h3 class="card-title">Question Details</h3>
+      <p class="card-sub">The question applies only to the sector selected here</p>
+
+      <div class="grid-4">
+        <div class="field">
+          <label class="lbl" for="qid">QUESTION ID</label>
+          <input id="qid" class="inp inp-flat" [value]="questionId()" readonly />
+        </div>
+
+        <div class="field">
+          <label class="lbl" for="sector">SECTOR<span class="req">*</span></label>
+          <select
+            id="sector"
+            class="inp"
+            [value]="sectorId()"
+            (change)="sectorId.set($any($event.target).value)"
+          >
+            <option value="">Select sector</option>
+            @for (s of sectors(); track s.sectorId) {
+              <option [value]="s.sectorId">{{ s.nicCode }} — {{ s.name }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="field">
+          <label class="lbl" for="tier">CERTIFICATION TIER<span class="req">*</span></label>
+          <input id="tier" class="inp inp-flat" [value]="levelName()" readonly />
+        </div>
+
+        <div class="field">
+          <label class="lbl" for="param">PARAMETER<span class="req">*</span></label>
+          <select
+            id="param"
+            class="inp"
+            [value]="parameterId()"
+            (change)="parameterId.set($any($event.target).value)"
+          >
+            <option value="">Select parameter</option>
+            @for (p of parameters(); track p.parameterId) {
+              <option [value]="p.parameterId">{{ p.code }} — {{ p.name }}</option>
+            }
+          </select>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ---------------------------------------------------- requirements -->
+  <section class="card">
+    <div class="card-top">
+      <h3 class="card-title">Requirements</h3>
+      <span class="chip-blue">{{ requirements().length }} requirements</span>
+      <div class="spacer"></div>
+      <button class="link-act" type="button" (click)="addRequirement()">+ Add requirement</button>
+    </div>
+
+    <p class="card-sub card-sub-pad">
+      {{ checkpointCount() }} checkpoints across {{ requirements().length }} requirements — each
+      scored Yes, Partial or No
+    </p>
+
+    @for (r of requirements(); track $index; let ri = $index) {
+      <div class="req">
+        <div class="req-head">
+          <span class="req-no">REQUIREMENT {{ ri + 1 }}</span>
+          <div class="spacer"></div>
+          <button class="link-act link-danger" type="button" (click)="removeRequirement(ri)">
+            Remove
+          </button>
+        </div>
+
+        <input
+          class="inp req-title"
+          placeholder="e.g. Sort (Seiri) — remove what is not needed"
+          [value]="r.title"
+          (input)="patchRequirement(ri, { title: $any($event.target).value })"
+        />
+
+        <label class="lbl lbl-sm">REQUIREMENT</label>
+        <textarea
+          class="inp txt"
+          rows="2"
+          placeholder="What the enterprise must be doing"
+          [value]="r.narrative"
+          (input)="patchRequirement(ri, { narrative: $any($event.target).value })"
+        ></textarea>
+
+        <div class="sub-head">
+          <span class="lbl lbl-sm">SUB-POINTS</span>
+          <div class="spacer"></div>
+          <button class="link-act" type="button" (click)="addBullet(ri)">+ Add sub-point</button>
+        </div>
+
+        @for (b of r.bullets; track $index; let bi = $index) {
+          <div class="bullet-row">
+            <span class="bullet-dot"></span>
+            <input
+              class="inp"
+              placeholder="e.g. Red-tag area defined with a named owner"
+              [value]="b"
+              (input)="setBullet(ri, bi, $any($event.target).value)"
+            />
+            <button class="link-act link-muted" type="button" (click)="removeBullet(ri, bi)">
+              ×
+            </button>
+          </div>
+        }
+
+        <div class="grid-2">
+          <div class="field">
+            <label class="lbl lbl-sm">PURPOSE</label>
+            <textarea
+              class="inp txt"
+              rows="2"
+              [value]="r.purpose"
+              (input)="patchRequirement(ri, { purpose: $any($event.target).value })"
+            ></textarea>
+          </div>
+          <div class="field">
+            <label class="lbl lbl-sm">BENEFITS</label>
+            <textarea
+              class="inp txt"
+              rows="2"
+              [value]="r.benefits"
+              (input)="patchRequirement(ri, { benefits: $any($event.target).value })"
+            ></textarea>
+          </div>
+        </div>
+
+        <div class="sub-head">
+          <span class="lbl lbl-sm">CHECKPOINTS</span>
+          <span class="count-badge">{{ r.checkpoints.length }}</span>
+          <div class="spacer"></div>
+          <button class="link-act" type="button" (click)="addCheckpoint(ri)">
+            + Add checkpoint
+          </button>
+        </div>
+
+        <div class="tbl-wrap">
+          <table class="q-tbl">
+            <thead>
+              <tr>
+                <th class="num">#</th>
+                <th>CHECKPOINT</th>
+                <th>EVIDENCE(S)</th>
+                <th>KPI</th>
+                <th>UNIT</th>
+                <th>FREQUENCY</th>
+                <th>RESPONSE</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (c of r.checkpoints; track $index; let ci = $index) {
+                <tr>
+                  <td class="num muted">{{ ci + 1 }}</td>
+                  <td>
+                    <input
+                      class="inp inp-sm"
+                      [value]="c.text"
+                      (input)="patchCheckpoint(ri, ci, { text: $any($event.target).value })"
+                    />
+                  </td>
+                  <td>
+                    <input
+                      class="inp inp-sm"
+                      [value]="c.evidence"
+                      (input)="patchCheckpoint(ri, ci, { evidence: $any($event.target).value })"
+                    />
+                  </td>
+                  <td>
+                    <input
+                      class="inp inp-sm"
+                      [value]="c.kpi"
+                      (input)="patchCheckpoint(ri, ci, { kpi: $any($event.target).value })"
+                    />
+                  </td>
+                  <td>
+                    <input
+                      class="inp inp-sm inp-tiny"
+                      [value]="c.unit"
+                      (input)="patchCheckpoint(ri, ci, { unit: $any($event.target).value })"
+                    />
+                  </td>
+                  <td>
+                    <select
+                      class="inp inp-sm"
+                      [value]="c.frequency"
+                      (change)="patchCheckpoint(ri, ci, { frequency: $any($event.target).value })"
+                    >
+                      @for (f of frequencies; track f) {
+                        <option [value]="f">{{ f }}</option>
+                      }
+                    </select>
+                  </td>
+                  <td>
+                    <div class="resp">
+                      @for (opt of responses; track opt) {
+                        <button
+                          type="button"
+                          [class.on]="c.response === opt"
+                          (click)="patchCheckpoint(ri, ci, { response: opt })"
+                        >
+                          {{ opt }}
+                        </button>
+                      }
+                    </div>
+                  </td>
+                  <td>
+                    <button
+                      class="link-act link-muted"
+                      type="button"
+                      (click)="removeCheckpoint(ri, ci)"
+                    >
+                      ×
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+
+    <div class="card-foot">
+      <div class="spacer"></div>
+      <button class="btn-ghost" type="button" (click)="cancel()">Cancel</button>
+      <button class="btn-solid" type="button" (click)="save()">Save Question</button>
+    </div>
+  </section>
+} @else {
+  <!-- ------------------------------------------------------ bulk upload -->
+  <section class="card">
+    <div class="card-pad">
+      <h3 class="card-title">Bulk Upload Questions</h3>
+      <p class="card-sub">
+        Upload multiple questions at once using an Excel spreadsheet (.xlsx, .xls, .csv)
+      </p>
+
+      <label class="dropzone">
+        <input
+          type="file"
+          accept=".xlsx,.xls,.csv"
+          hidden
+          (change)="onFile($any($event.target).files)"
+        />
+        <span class="drop-icon">⬆</span>
+        <span class="drop-title">Drag &amp; drop your Excel file here or click to browse</span>
+        <span class="drop-sub">Supported: .xlsx, .xls, .csv &nbsp;|&nbsp; Max size: 10MB</span>
+        <span class="drop-btn">Browse Files</span>
+      </label>
+
+      <div class="drop-links">
+        <button class="link-act link-go" type="button" (click)="downloadTemplate()">
+          Download Template
+        </button>
+        <button class="link-act link-plain" type="button" (click)="formatGuide()">
+          View Format Guide
+        </button>
+        <button class="link-act link-plain" type="button" (click)="downloadTemplate()">
+          Sample File
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card-pad">
+      <h3 class="card-title sm">Upload Instructions</h3>
+
+      <ol class="steps">
+        <li><span class="step-no">1</span> Download the Excel template using the button above</li>
+        <li>
+          <span class="step-no">2</span> Fill in the requirements and checkpoints following the
+          template columns (Sector, Certification Tier, Parameter, Requirement, Purpose, Benefits,
+          Checkpoint, Evidence, KPI, Unit, Frequency, Expected Response)
+        </li>
+        <li><span class="step-no">3</span> Upload the completed file</li>
+        <li><span class="step-no">4</span> Review the preview and confirm import</li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card-pad">
+      <h3 class="card-title sm">Recent Uploads</h3>
+    </div>
+
+    @if (recentUploads().length === 0) {
+      <div class="empty">No file has been imported yet.</div>
+    } @else {
+      <div class="tbl-wrap">
+        <table class="q-tbl">
+          <thead>
+            <tr>
+              <th>File Name</th>
+              <th>Upload Date</th>
+              <th>Questions Count</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (u of recentUploads(); track u.fileName) {
+              <tr>
+                <td>{{ u.fileName }}</td>
+                <td>{{ u.uploadedOn }}</td>
+                <td>{{ u.questions }} questions</td>
+                <td><span class="pill pill-ok">{{ u.status }}</span></td>
+                <td>
+                  <button class="link-act" type="button">View</button>
+                  <span class="act-sep">|</span>
+                  <button class="link-act link-danger" type="button">Delete</button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+}

@@ -1,0 +1,100 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = crlf
+insert_final_newline = true
+indent_style = space
+trim_trailing_whitespace = true
+
+[*.{cs,csx}]
+indent_size = 4
+
+[*.{csproj,props,targets,json,yml,yaml}]
+indent_size = 2
+
+[*.sql]
+indent_size = 4
+
+# ---------------------------------------------------------------------------
+# Analyser configuration
+#
+# The build runs with TreatWarningsAsErrors, which is what surfaced the rules
+# below. Each suppression here is a deliberate decision, not noise-silencing —
+# anything not listed still fails the build.
+# ---------------------------------------------------------------------------
+
+[*.cs]
+
+# CA1711 — "type name should not end in 'Permission'".
+#
+# The rule targets library authors publishing a cross-language API, where a
+# suffix like 'Collection' or 'Permission' implies a specific base type. This
+# is an application, and Permission / RolePermission are the exact names of
+# identity.Permission and identity.RolePermission in the database and of the
+# concepts in the design deck. Renaming them would put a translation layer
+# between the code and the schema for no benefit to anyone.
+dotnet_diagnostic.CA1711.severity = none
+
+# CA1716 — "type name conflicts with a reserved language keyword".
+#
+# 'Module' is a keyword in Visual Basic. Nothing here is consumed from VB, and
+# 'Module' is the portal's own vocabulary: identity.Module holds the fifteen
+# sidebar modules, and the whole permission model is expressed as
+# MODULE.right. Renaming it to satisfy a language this solution does not use
+# would make the code harder to match against the design.
+dotnet_diagnostic.CA1716.severity = none
+
+# CA1848 — "use LoggerMessage delegates for performance".
+# CA1873 — "evaluation of this argument may be expensive if logging is disabled".
+#
+# Same concern, two rules: both want source-generated LoggerMessage delegates
+# to avoid boxing and formatting when the level is off. Worth it on a hot path.
+# Every site here is a request boundary, an error path, a service startup or a
+# completed file upload — the boxing of one int is not measurable next to the
+# I/O that just happened, and the generated form is markedly less readable.
+#
+# Left as suggestions rather than 'none' so they still show up if someone adds
+# logging somewhere that genuinely is hot.
+dotnet_diagnostic.CA1848.severity = suggestion
+dotnet_diagnostic.CA1873.severity = suggestion
+
+# CA1031 — "do not catch general exception types".
+#
+# Caught deliberately in three places, each commented: the global exception
+# middleware, the audit-log writer (a logging failure must not replace the
+# original error), and the e-mail dispatch loop (one bad message must not kill
+# the background service).
+dotnet_diagnostic.CA1031.severity = suggestion
+
+# CA2007 — "call ConfigureAwait".
+#
+# Meaningless in ASP.NET Core, which has no synchronisation context.
+dotnet_diagnostic.CA2007.severity = none
+
+# CA1000 — "do not declare static members on generic types".
+#
+# Fires on the Result<T> / PagedResult<T> factory methods. The rule exists
+# because Foo<T>.Bar() forces callers to state T explicitly; here that is the
+# entire point — Result<User>.NotFound(...) reads better than a separate
+# non-generic factory class, and it is the conventional shape for this pattern
+# across the ecosystem.
+dotnet_diagnostic.CA1000.severity = none
+
+# ---------------------------------------------------------------------------
+# Tests only. Scoped to the tests tree so production code keeps the full rule
+# set — a naming relaxation that is right for a test name would be wrong for a
+# public API.
+# ---------------------------------------------------------------------------
+
+[tests/**/*.cs]
+
+# CA1707 — "remove underscores from member names".
+#
+# Underscored test names (Fails_when_the_permission_is_absent) are the
+# convention for xUnit and read as sentences in the runner output, which is the
+# whole point of naming them that way.
+dotnet_diagnostic.CA1707.severity = none
+
+# Test classes are instantiated by the runner, not by us.
+dotnet_diagnostic.CA1515.severity = none

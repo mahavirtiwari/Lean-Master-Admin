@@ -1,0 +1,222 @@
+@if (loading()) {
+  <section class="card"><div class="empty"><div class="empty-text">Loading document…</div></div></section>
+} @else if (doc(); as d) {
+  <app-page-intro [title]="isEdit() ? 'Edit Document' : 'View Document'" [subtitle]="subtitle()">
+    <div class="row">
+      <a class="btn btn-secondary" routerLink="/documents">Back to library</a>
+      @if (!isEdit() && canEdit) {
+        <a class="btn btn-primary" [routerLink]="['/documents', d.documentId, 'edit']">Edit</a>
+      }
+    </div>
+  </app-page-intro>
+
+  <div class="stack">
+    <!-- ------------------------------------------- 1. document details -->
+    <section class="card card-pad">
+      <div class="step-head">
+        <span class="step-no">1</span>
+        <h3 class="step-title">Document Details</h3>
+        @if (isEdit()) {
+          <div class="spacer"></div>
+          <span class="small muted">Version bumps automatically on file replace</span>
+        }
+      </div>
+
+      @if (!isEdit()) {
+        <div class="field detail-field">
+          <span class="field-label">STATUS</span>
+          <span class="pill" [class]="d.isActive ? 'pill-green' : 'pill-red'">
+            {{ d.isActive ? 'Active' : 'Inactive' }}
+          </span>
+        </div>
+      }
+
+      <div class="form-grid detail-grid">
+        <div class="field">
+          <label class="field-label" for="title">
+            DOCUMENT NAME@if (isEdit()) {<span class="req">*</span>}
+          </label>
+          @if (isEdit()) {
+            <input
+              id="title"
+              class="input"
+              name="title"
+              [ngModel]="title()"
+              (ngModelChange)="title.set($event)"
+            />
+          } @else {
+            <div class="detail-value">{{ d.title }}</div>
+          }
+        </div>
+
+        <div class="field">
+          <span class="field-label">{{ isEdit() ? 'CURRENT VERSION' : 'VERSION' }}</span>
+          <div class="detail-value">{{ liveVersion()?.versionLabel || '—' }}</div>
+        </div>
+
+        <div class="field span-2">
+          <label class="field-label" for="description">DESCRIPTION</label>
+          @if (isEdit()) {
+            <textarea
+              id="description"
+              class="textarea"
+              maxlength="300"
+              name="description"
+              [ngModel]="description()"
+              (ngModelChange)="description.set($event)"
+            ></textarea>
+          } @else {
+            <div class="detail-value detail-para">{{ d.description || '—' }}</div>
+          }
+        </div>
+      </div>
+    </section>
+
+    <!-- ------------------------------------------------------- 2. file -->
+    <section class="card card-pad">
+      <div class="step-head">
+        <span class="step-no">2</span>
+        <h3 class="step-title">File</h3>
+      </div>
+
+      @if (liveVersion(); as v) {
+        @if (isEdit()) {
+          <span class="field-label">CURRENT FILE</span>
+          <div class="file-card">
+            <span class="file-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M6 2h8l4 4v16H6zM14 2v4h4" fill="none" stroke="#B91C1C" stroke-width="1.6" stroke-linejoin="round" />
+              </svg>
+            </span>
+            <span class="file-main">
+              <span class="file-name">{{ v.originalFileName }}</span>
+              <span class="file-meta">
+                {{ fileSize(v.fileSizeBytes) }} &nbsp;·&nbsp; uploaded
+                {{ v.uploadedOnUtc | date: 'dd MMM yyyy' }}
+              </span>
+            </span>
+            <label class="btn btn-secondary btn-sm replace">
+              Replace file
+              <input type="file" hidden accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx" />
+            </label>
+          </div>
+        } @else {
+          <div class="form-grid detail-grid">
+            <div class="field">
+              <span class="field-label">FILE NAME</span>
+              <div class="detail-value">{{ v.originalFileName }}</div>
+            </div>
+            <div class="field">
+              <span class="field-label">FILE SIZE</span>
+              <div class="detail-value">{{ fileSize(v.fileSizeBytes) }}</div>
+            </div>
+          </div>
+        }
+      } @else {
+        <p class="muted small">No file has been uploaded against this document.</p>
+      }
+    </section>
+
+    <!-- ------------------------------------------------ 3. role access -->
+    <section class="card card-pad">
+      <div class="step-head">
+        <span class="step-no">3</span>
+        <h3 class="step-title">Role Access</h3>
+        <div class="spacer"></div>
+        <span class="small muted">
+          {{ grantedCount() }} of {{ audiences().length }} roles
+          {{ isEdit() ? 'selected' : 'can download this document' }}
+        </span>
+      </div>
+
+      <div class="role-grid">
+        @for (a of audiences(); track a.accountTypeId) {
+          <label
+            class="role-chip"
+            [class.is-on]="isGranted(a.accountTypeId)"
+            [class.is-readonly]="!isEdit()"
+          >
+            @if (isEdit()) {
+              <input
+                type="checkbox"
+                [checked]="isGranted(a.accountTypeId)"
+                (change)="toggle(a.accountTypeId)"
+              />
+            } @else {
+              <span class="role-mark" [class.is-on]="isGranted(a.accountTypeId)">
+                @if (isGranted(a.accountTypeId)) {
+                  <svg width="11" height="11" viewBox="0 0 12 12" aria-hidden="true">
+                    <path
+                      d="M2.6 6.2 4.8 8.4 9.4 3.6"
+                      fill="none"
+                      stroke="#fff"
+                      stroke-width="1.9"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                }
+              </span>
+            }
+            <span class="role-label">{{ a.name }}</span>
+          </label>
+        }
+      </div>
+
+      @if (error()) {
+        <div class="field-error form-error-row">{{ error() }}</div>
+      }
+
+      @if (isEdit()) {
+        <div class="row form-foot">
+          <div class="spacer"></div>
+          <a class="btn btn-secondary" routerLink="/documents">Cancel</a>
+          <button class="btn btn-primary" type="button" (click)="save()" [disabled]="saving()">
+            {{ saving() ? 'Saving…' : 'Save Changes' }}
+          </button>
+        </div>
+      }
+    </section>
+
+    <!-- ------------------------------------------------ version history -->
+    @if (!isEdit() && d.versions.length > 1) {
+      <section class="card">
+        <div class="card-head">
+          <h3 class="card-title">Version History</h3>
+          <span class="count-chip">{{ d.versions.length }} versions</span>
+        </div>
+
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead>
+              <tr>
+                <th>Version</th>
+                <th>File Name</th>
+                <th class="num">Size</th>
+                <th>Uploaded By</th>
+                <th>Uploaded On</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (v of d.versions; track v.documentVersionId) {
+                <tr>
+                  <td class="code">{{ v.versionLabel }}</td>
+                  <td>{{ v.originalFileName }}</td>
+                  <td class="num">{{ fileSize(v.fileSizeBytes) }}</td>
+                  <td>{{ v.uploadedByName }}</td>
+                  <td class="nowrap">{{ v.uploadedOnUtc | date: 'dd MMM yyyy' }}</td>
+                  <td>
+                    <span class="pill" [class]="v.isLive ? 'pill-green' : 'pill-grey'">
+                      {{ v.isLive ? 'Live' : 'Superseded' }}
+                    </span>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </section>
+    }
+  </div>
+}

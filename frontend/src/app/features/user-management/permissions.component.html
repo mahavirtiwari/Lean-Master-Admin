@@ -1,0 +1,160 @@
+<app-page-intro
+  title="Edit Role &amp; Permissions"
+  subtitle="Grant or revoke module access and record-level rights for each account"
+/>
+
+<div class="note" style="margin-bottom: 20px">
+  <div>
+    Permission changes take effect at the user’s next sign-in and are recorded in the audit
+    trail.<br />
+    Super Admin permissions are fixed and cannot be edited.
+  </div>
+</div>
+
+<div class="perm-layout">
+  <!-- --------------------------------------------------------- user picker -->
+  <section class="card perm-side">
+    <div class="card-head">
+      <h3 class="card-title">Accounts</h3>
+    </div>
+
+    <div class="side-search">
+      <input
+        class="input"
+        type="search"
+        placeholder="Search accounts…"
+        name="search"
+        [ngModel]="search()"
+        (ngModelChange)="search.set($event)"
+        (keyup.enter)="loadUsers()"
+      />
+    </div>
+
+    @if (loading()) {
+      <div class="empty"><div class="empty-text">Loading…</div></div>
+    } @else if (users().length === 0) {
+      <app-empty title="No accounts" text="No account matches that search." />
+    } @else {
+      <div class="side-list">
+        @for (user of users(); track user.userId) {
+          <button
+            type="button"
+            class="side-item"
+            [class.is-selected]="selected()?.userId === user.userId"
+            (click)="select(user)"
+          >
+            <span class="side-name">{{ user.fullName }}</span>
+            <span class="side-meta">{{ user.roleName }} · {{ user.accountTypeShortName }}</span>
+          </button>
+        }
+      </div>
+    }
+  </section>
+
+  <!-- ------------------------------------------------------------- matrix -->
+  <section class="card perm-main">
+    @if (selected(); as user) {
+      <div class="card-head">
+        <div>
+          <div class="field-label">ACCOUNT TYPE / ROLE</div>
+          <h3 class="matrix-title">{{ user.fullName }}</h3>
+          <p class="card-sub">
+            {{ user.accountTypeName }} · {{ user.roleName }} —
+            toggle a module to grant access, then choose the record-level rights.
+          </p>
+        </div>
+
+        <div class="matrix-head-right">
+          <span class="count-chip">{{ grantedModules() }} of 15 modules</span>
+          @if (canEdit && !isSuperAdmin()) {
+            <div class="bulk">
+              <button class="act act-edit" type="button" (click)="setAll(true)">Grant all</button>
+              <span class="act-sep">·</span>
+              <button class="act act-danger" type="button" (click)="setAll(false)">Revoke all</button>
+            </div>
+          }
+        </div>
+      </div>
+
+      @if (isSuperAdmin()) {
+        <div class="note note-amber" style="margin: 16px 20px 0">
+          This is a Super Admin account. Its permissions are the full set by definition and cannot
+          be edited here.
+        </div>
+      }
+
+      @if (loadingMatrix()) {
+        <div class="empty"><div class="empty-text">Loading permissions…</div></div>
+      } @else {
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead>
+              <tr>
+                <th>Module</th>
+                <th class="perm-col">Access</th>
+                @for (right of rights; track right) {
+                  <th class="perm-col">{{ right }}</th>
+                }
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of rows(); track row.moduleId) {
+                <tr [class.is-off]="!hasAccess(row)">
+                  <td class="strong">{{ row.moduleName }}</td>
+
+                  <td class="perm-col">
+                    <button
+                      type="button"
+                      class="switch"
+                      [class.is-on]="hasAccess(row)"
+                      [disabled]="!canEdit || isSuperAdmin()"
+                      (click)="toggleAccess(row)"
+                      [attr.aria-label]="'Access to ' + row.moduleName"
+                      [attr.aria-pressed]="hasAccess(row)"
+                    >
+                      <span class="knob"></span>
+                    </button>
+                  </td>
+
+                  @for (right of rights; track right) {
+                    <td class="perm-col">
+                      @if (row.cells[right]; as cell) {
+                        <input
+                          type="checkbox"
+                          class="perm-box"
+                          [checked]="cell.isGranted"
+                          [disabled]="!canEdit || isSuperAdmin() || !hasAccess(row)"
+                          (change)="toggle(row, right)"
+                          [attr.aria-label]="row.moduleName + ' ' + right"
+                        />
+                      } @else {
+                        <span class="perm-none">—</span>
+                      }
+                    </td>
+                  }
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <div class="matrix-foot">
+          @if (message()) {
+            <span class="save-msg">{{ message() }}</span>
+          }
+          <div class="spacer"></div>
+          <button
+            class="btn btn-primary"
+            type="button"
+            [disabled]="saving() || !canEdit || isSuperAdmin()"
+            (click)="save()"
+          >
+            {{ saving() ? 'Saving…' : 'Save Permissions' }}
+          </button>
+        </div>
+      }
+    } @else {
+      <app-empty title="Select an account" text="Choose an account on the left to edit its permissions." />
+    }
+  </section>
+</div>

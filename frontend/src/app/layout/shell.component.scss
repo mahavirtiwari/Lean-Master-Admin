@@ -1,0 +1,429 @@
+// Portal frame. Sidebar 260 px expanded / 76 px collapsed on #F0F8F3, content
+// on #F4F7F5 — the two greens the designs use to separate navigation from work.
+
+.shell {
+  display: grid;
+  grid-template-columns: var(--sidebar-w) 1fr;
+  min-height: 100vh;
+}
+
+.shell.is-collapsed {
+  grid-template-columns: var(--sidebar-w-collapsed) 1fr;
+}
+
+// ----------------------------------------------------------------- sidebar ---
+
+.sidebar {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--sidebar-bg);
+  border-right: 1px solid var(--border-card);
+  overflow: hidden;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  padding: 20px;
+  flex: none;
+}
+
+.brand-logo {
+  width: 190px;
+  height: 68px;
+  object-fit: contain;
+  // The artwork is a wide lock-up. Collapsed, the sidebar is 76 px, so it is
+  // anchored on its left edge — the gear mark — rather than squashed.
+  object-position: left center;
+  transition: width 0.15s ease;
+}
+
+.brand.is-collapsed {
+  padding: 20px 12px;
+}
+
+.brand.is-collapsed .brand-logo {
+  width: 52px;
+}
+
+.nav {
+  flex: 1;
+  overflow-y: auto;
+  padding: 6px 12px 16px;   // 12 px inset either side, as x=12 w=236 implies
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.nav::-webkit-scrollbar {
+  width: 6px;
+}
+.nav::-webkit-scrollbar-thumb {
+  background: var(--green-tint);
+  border-radius: 3px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  width: 100%;
+  min-height: 33px;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: var(--r-lg);
+  background: none;
+  font-family: inherit;
+  font-size: var(--fs-body);
+  font-weight: 500;
+  color: var(--text);
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.nav-item:hover {
+  background: var(--green-100);
+  text-decoration: none;
+}
+
+.nav-item.is-active:hover {
+  background: #163f6f;
+}
+
+// The selected item is blue, not green: rect x=12 w=236 h=33 rx=8 fill #1B4F8A
+// on the artboard, with a 3 x 15 white pill against its trailing edge.
+.nav-item.is-active {
+  position: relative;
+  background: var(--blue);
+  color: #fff;
+  font-weight: 700;
+}
+
+.nav-item.is-active::after {
+  content: '';
+  position: absolute;
+  right: 7px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 15px;
+  border-radius: 1.5px;
+  background: #fff;
+}
+
+// A parent whose child is open takes the same blue, at low tint.
+.nav-item.is-open-parent:not(.is-active) {
+  background: var(--blue-50);
+  color: var(--blue);
+}
+
+.nav-icon {
+  display: grid;
+  place-items: center;
+  width: 17px;
+  flex: none;
+}
+
+.nav-label {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chev {
+  flex: none;
+  transition: transform 0.15s ease;
+}
+
+.chev.is-open {
+  transform: rotate(90deg);
+}
+
+.subnav {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin: 2px 0 6px 22px;
+  padding-left: 12px;
+  border-left: 1px solid var(--green-tint);
+}
+
+.subnav-item {
+  padding: 7px 10px;
+  border-radius: var(--r-sm);
+  font-size: var(--fs-base);
+  color: var(--text-body);
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.subnav-item:hover {
+  background: var(--green-100);
+  text-decoration: none;
+}
+
+.subnav-item.is-active {
+  background: var(--surface);
+  color: var(--blue);
+  font-weight: 700;
+  box-shadow: var(--shadow-card);
+}
+
+.sidebar-foot {
+  flex: none;
+  padding: 12px 16px 16px;
+  border-top: 1px solid var(--green-tint);
+}
+
+.who {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.who-name {
+  font-size: 12.4px;
+  font-weight: 600;
+  color: var(--text-strong);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.who-role {
+  font-size: 10.6px;
+  color: var(--text-muted-2);
+  margin-top: 2px;
+}
+
+// ------------------------------------------------------------------- main ---
+
+.main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  height: var(--topbar-h);
+  padding: 0 24px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border-card);
+}
+
+.icon-btn {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  flex: none;
+  border: 1px solid var(--border-card);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  cursor: pointer;
+}
+
+.icon-btn:hover {
+  background: var(--surface-muted);
+}
+
+.icon-btn .dot {
+  position: absolute;
+  top: 7px;
+  right: 8px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--danger);
+}
+
+.topbar-titles {
+  min-width: 0;
+}
+
+.crumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+}
+
+.crumb-sep {
+  color: var(--border-input);
+  font-size: 11px;
+}
+
+.crumb-part.is-last {
+  font-weight: 600;
+  color: var(--text-strong);
+}
+
+.page-title {
+  font-size: var(--fs-page-title);
+  font-weight: 700;
+  color: var(--text-strong);
+  margin: 5px 0 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.avatar {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  flex: none;
+  border: 0;
+  border-radius: 50%;
+  background: var(--green);
+  color: #fff;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.avatar-sm {
+  width: 32px;
+  height: 32px;
+  font-size: 11px;
+  cursor: default;
+}
+
+.user-chip {
+  position: relative;
+}
+
+.user-menu {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  width: 268px;
+  background: var(--surface);
+  border: 1px solid var(--border-card);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-pop);
+  overflow: hidden;
+  z-index: 30;
+}
+
+.user-menu-head {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border-divider);
+}
+
+.user-menu-name {
+  font-size: 12.6px;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.user-menu-meta {
+  font-size: 10.4px;
+  color: var(--text-muted);
+  margin-top: 3px;
+}
+
+.user-menu-body {
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: var(--fs-base);
+  color: var(--text-body);
+}
+
+.user-menu-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.signout {
+  width: 100%;
+  padding: 12px 16px;
+  border: 0;
+  border-top: 1px solid var(--border-divider);
+  background: var(--surface-muted);
+  font-family: inherit;
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--danger);
+  text-align: left;
+  cursor: pointer;
+}
+
+.signout:hover {
+  background: var(--danger-50);
+}
+
+// ---------------------------------------------------------------- content ---
+
+.content {
+  flex: 1;
+  padding: 24px;
+  min-width: 0;
+}
+
+// The chevron on a parent is its own control: the parent itself navigates, so
+// expanding must not be the only thing a click can do.
+.chev-btn {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  flex: none;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+.chev-btn:hover {
+  background: rgba(22, 33, 26, 0.08);
+}
+
+.nav-item.is-active .chev-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+
+// The Bhashini picker is borrowed into the top bar. The plugin positions its
+// own button fixed to a corner, so inside this slot it has to sit in the flow.
+.lang-slot {
+  display: flex;
+  align-items: center;
+
+  ::ng-deep #bhashini-translation {
+    position: static !important;
+    inset: auto !important;
+    margin: 0 !important;
+    transform: none !important;
+    box-shadow: none !important;
+  }
+}
+
+// The Bhashini language picker is fixed to the top-right of the viewport (see
+// styles.scss). The bar's own controls are pushed clear so the picker never
+// sits on top of the account avatar.
+.topbar {
+  padding-right: 74px;
+}

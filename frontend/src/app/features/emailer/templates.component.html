@@ -1,0 +1,108 @@
+<header class="em-head">
+  <div>
+    <h2 class="em-title">Transactional Templates</h2>
+    <p class="em-sub">System-triggered emails sent automatically at each stage of the scheme</p>
+  </div>
+  <div class="spacer"></div>
+  <div class="em-actions">
+    <button class="btn-ghost" type="button" (click)="back()">Back to Emailer</button>
+    @if (canEdit) {
+      <button class="btn-solid" type="button" (click)="newTemplate()">New Template</button>
+    }
+  </div>
+</header>
+
+<div class="info-bar">
+  <span class="info-mark"></span>
+  <span>
+    A transactional template is sent automatically when its trigger event occurs. The subject and
+    content can be edited at any time; the trigger event is fixed once the template is created.
+  </span>
+</div>
+
+@if (message(); as note) {
+  <div class="note" [class.note-bad]="failed()" style="margin-bottom: 18px">{{ note }}</div>
+}
+
+<section class="card">
+  <div class="card-top">
+    <h3 class="card-title">Template Library</h3>
+    <span class="chip chip-blue">{{ visible().length }} templates</span>
+    <div class="spacer"></div>
+
+    <input
+      class="inp inp-search"
+      type="search"
+      placeholder="Search templates…"
+      [value]="search()"
+      (input)="search.set($any($event.target).value)"
+    />
+
+    <select
+      class="inp inp-status"
+      [value]="statusFilter()"
+      (change)="statusFilter.set($any($event.target).value)"
+    >
+      <option value="">All Status</option>
+      <option value="active">Active</option>
+      <option value="disabled">Disabled</option>
+    </select>
+  </div>
+
+  @if (loading()) {
+    <div class="empty"><div class="empty-title">Loading…</div></div>
+  } @else if (visible().length === 0) {
+    <div class="empty">
+      <div class="empty-mark">▤</div>
+      <div class="empty-title">No templates match</div>
+      <div class="empty-text">Clear the search or status filter to see the full library.</div>
+    </div>
+  } @else {
+    <div class="tbl-wrap">
+      <table class="em-tbl">
+        <thead>
+          <tr>
+            <th>CODE</th>
+            <th>TEMPLATE NAME</th>
+            <th>TRIGGER EVENT</th>
+            <th>SUBJECT</th>
+            <th>LAST UPDATED</th>
+            <th>STATUS</th>
+            <th>ACTIONS</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (t of visible(); track t.emailTemplateId) {
+            <tr>
+              <td class="code">{{ t.code }}</td>
+              <td class="strong">{{ t.name }}</td>
+              <td>{{ t.triggerEvent || '—' }}</td>
+              <td>{{ t.subject }}</td>
+              <td>{{ formatDate(t.modifiedOnUtc) }}</td>
+              <td>
+                <span class="pill" [class]="t.isActive ? 'pill-ok' : 'pill-draft'">
+                  {{ t.isActive ? 'Active' : 'Disabled' }}
+                </span>
+              </td>
+              <td class="nowrap">
+                <button class="link-act" type="button" (click)="edit(t)">Edit</button>
+                @if (canEdit) {
+                  <span class="act-sep">|</span>
+                  <button
+                    class="link-act"
+                    [class.link-danger]="t.isActive"
+                    [class.link-go]="!t.isActive"
+                    type="button"
+                    (click)="toggle(t)"
+                  >
+                    {{ t.isActive ? 'Disable' : 'Enable' }}
+                  </button>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>

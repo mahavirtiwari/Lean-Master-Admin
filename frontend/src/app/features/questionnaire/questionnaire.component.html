@@ -1,0 +1,186 @@
+<header class="q-head">
+  <div>
+    <h2 class="q-title">Questionnaire Manager</h2>
+    <p class="q-sub">{{ levelName() }} — parameters, requirements and their checkpoints</p>
+  </div>
+  <div class="spacer"></div>
+
+  @if (canEdit) {
+    <div class="q-actions">
+      <button class="btn-solid" type="button" (click)="addQuestion()">+ Add New Question</button>
+      <button class="btn-ghost" type="button" (click)="publish()">Publish Changes</button>
+    </div>
+  }
+</header>
+
+<!-- ------------------------------------------------------- level cards -->
+<div class="lvl-grid">
+  @for (l of data()?.levels ?? []; track l.code) {
+    <section class="lvl-card" [class.is-scope]="l.code === levelCode()">
+      <div class="lvl-top">
+        <h3 class="lvl-name" [class]="levelClass(l.code)">{{ l.name }}</h3>
+        <div class="spacer"></div>
+        <span class="pill" [class]="l.status === 'Published' ? 'pill-ok' : 'pill-draft'">
+          {{ l.status }}
+        </span>
+      </div>
+
+      <div class="lvl-stats">
+        <div>
+          <div class="stat-label">QUESTIONS</div>
+          <div class="stat-value">{{ l.questions | number }}</div>
+        </div>
+        <div>
+          <div class="stat-label">MODULES</div>
+          <div class="stat-value">{{ l.modules | number }}</div>
+        </div>
+        <div>
+          <div class="stat-label">PASS MARK</div>
+          <div class="stat-value">{{ l.passMark !== null ? l.passMark + '%' : '—' }}</div>
+        </div>
+      </div>
+
+      <div class="lvl-foot">Last updated: {{ formatDate(l.lastUpdatedUtc) }}</div>
+    </section>
+  }
+</div>
+
+<!-- --------------------------------------- weightages & pass marks -->
+<section class="card">
+  <div class="card-top">
+    <div>
+      <h3 class="card-title">Weightages &amp; Pass Marks Configuration</h3>
+      <p class="card-sub">Global exam parameter setup per certification tier</p>
+    </div>
+    <div class="spacer"></div>
+    @if (canEdit) {
+      <button class="link-act" type="button" (click)="editConfig()">Edit Configuration</button>
+    }
+  </div>
+
+  <div class="tbl-wrap">
+    <table class="q-tbl">
+      <thead>
+        <tr>
+          <th>Level</th>
+          <th class="num">Total Questions</th>
+          <th class="num">Pass Mark (%)</th>
+          <th>Negative Marking</th>
+          <th>Time Limit</th>
+          <th class="num">Max Attempts</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (c of data()?.examConfig ?? []; track c.code) {
+          <tr>
+            <td><span class="lvl-tag" [class]="levelClass(c.code)">{{ c.levelName }}</span></td>
+            <td class="num">{{ c.totalQuestions | number }}</td>
+            <td class="num strong">{{ c.passMarkPercent }}%</td>
+            <td [class.neg]="c.negativeMarkPerWrong > 0">
+              {{ negativeMark(c.negativeMarkPerWrong) }}
+            </td>
+            <td>{{ c.timeLimitMinutes }} mins</td>
+            <td class="num">{{ c.maxAttempts }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ------------------------------------------------------ question bank -->
+<section class="card">
+  <div class="card-top">
+    <h3 class="card-title">Question Bank</h3>
+    <span class="chip-blue">{{ total() | number }} questions</span>
+    <div class="spacer"></div>
+
+    <input
+      class="q-search"
+      type="search"
+      placeholder="Search questions..."
+      [value]="search()"
+      (input)="search.set($any($event.target).value)"
+      (keyup.enter)="page.set(1); load()"
+    />
+
+    <div class="seg">
+      @for (t of bankTabs; track t.value) {
+        <button type="button" [class.on]="bankFilter() === t.value" (click)="setBankFilter(t.value)">
+          {{ t.label }}
+        </button>
+      }
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="empty">Loading…</div>
+  } @else if ((data()?.bank?.items ?? []).length === 0) {
+    <div class="empty">No questions match the current filter.</div>
+  } @else {
+    <div class="tbl-wrap">
+      <table class="q-tbl">
+        <thead>
+          <tr>
+            <th class="num">S.No</th>
+            <th>Question ID</th>
+            <th>Question Preview</th>
+            <th>Level</th>
+            <th>Course/Module</th>
+            <th>Difficulty</th>
+            <th>Status</th>
+            <th>Version</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (q of data()?.bank?.items ?? []; track q.checkpointId; let i = $index) {
+            <tr>
+              <td class="num muted">{{ rangeFrom() + i }}</td>
+              <td><span class="qid">{{ q.questionId }}</span></td>
+              <td class="preview">{{ q.preview }}</td>
+              <td><span class="lvl-tag" [class]="levelClass(q.levelCode)">{{ q.levelName }}</span></td>
+              <td>{{ q.module }}</td>
+              <td>
+                <span class="pill" [class]="q.difficulty === 'Hard' ? 'pill-hard' : 'pill-med'">
+                  {{ q.difficulty }}
+                </span>
+              </td>
+              <td><span class="pill pill-ok">{{ q.status }}</span></td>
+              <td class="muted">{{ q.version }}</td>
+              <td class="nowrap">
+                <button class="link-act" type="button" (click)="edit(q)">Edit</button>
+                <span class="act-sep">|</span>
+                <button class="link-act" type="button" (click)="preview(q)">Preview</button>
+                <span class="act-sep">|</span>
+                <button class="link-act link-muted" type="button" (click)="archive(q)">Archive</button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card-foot">
+      <span class="foot-text">
+        Showing {{ rangeFrom() | number }}-{{ rangeTo() | number }} of {{ total() | number }} questions
+      </span>
+      <div class="spacer"></div>
+      <button class="foot-btn" type="button" [disabled]="page() <= 1" (click)="page.set(page() - 1); load()">
+        Previous
+      </button>
+      <button
+        class="foot-btn"
+        type="button"
+        [disabled]="rangeTo() >= total()"
+        (click)="page.set(page() + 1); load()"
+      >
+        Next
+      </button>
+    </div>
+  }
+
+  @if (message(); as note) {
+    <div class="note">{{ note }}</div>
+  }
+</section>

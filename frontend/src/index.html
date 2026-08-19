@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>MclsPortal</title>
+  <base href="/">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+
+  <!--
+    Bhashini — the Government's own translation service (MeitY). It replaces the
+    static "English (EN)" label the artboard drew, and mounts its own floating
+    language picker rather than an inline control, which is why nothing here
+    positions it beyond data-pos-x / data-pos-y.
+
+    It lives in <head> because the plugin appends its stylesheet to
+    document.head as it initialises; loaded from <body> that runs before the
+    element it wants exists and the widget never mounts.
+
+    No secretKey is passed: the plugin reads one only in code that is commented
+    out upstream, so supplying a value would be pretending it does something.
+
+    language-detection is off on purpose. With it on the plugin posts
+    translate-text WITHOUT a sourceLanguage, and Bhashini's own service then
+    fails with "Cannot read properties of undefined (reading 'sourceLanguage')"
+    — a 500 from their auto-detect path. Off, it sends page-source-language
+    and the request is well formed.
+
+    Translation also needs the site's domain registered with Bhashini; until
+    then the service answers "Domain is not registered with Bhashini
+    Translation Plugin." That cannot be done for localhost.
+
+    The origins it calls are allow-listed in the portal's CSP in Program.cs. If
+    that list and this tag ever drift apart the widget silently fails to load,
+    so they are commented as a pair.
+  -->
+  <script
+    src="https://translation-plugin.bhashini.co.in/v3/website_translation_utility.js"
+    data-pos-x="20"
+    data-pos-y="20"
+    page-source-language="en"
+    language-detection="false"
+    language-icon-color="#1B4F8A"
+    defer
+  ></script>
+</head>
+<body>
+  <app-root></app-root>
+
+  <!--
+    Mount point for the Bhashini widget loaded in <head>. The plugin does
+    document.querySelector(".bhashini-plugin-container").appendChild(...) and
+    does not create this itself, so without the element it throws and no
+    language picker ever appears.
+
+    It sits outside <app-root> deliberately: Angular replaces that subtree on
+    every route change, which would take the widget with it.
+  -->
+  <div class="bhashini-plugin-container"></div>
+</body>
+</html>

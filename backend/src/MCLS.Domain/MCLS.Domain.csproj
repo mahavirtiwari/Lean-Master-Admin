@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    The domain deliberately depends on almost nothing. The one exception is
+    ASP.NET Core Identity: ApplicationUser and Role derive from
+    IdentityUser<int> / IdentityRole<int>, which is the pragmatic choice for a
+    portal whose whole account model is Identity-backed.
+  -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" />
+  </ItemGroup>
+
+</Project>

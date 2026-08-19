@@ -1,0 +1,341 @@
+<app-page-intro
+  title="Upload Documents"
+  subtitle="Publish documents and control which roles can access them"
+>
+  @if (canCreate) {
+    <button class="btn btn-primary" type="button" (click)="upload()" [disabled]="saving()">
+      {{ saving() ? 'Uploading…' : 'Upload New Document' }}
+    </button>
+  }
+</app-page-intro>
+
+<div class="stack">
+  <!-- ---------------------------------------------------------- filters -->
+  <section class="card card-pad">
+    <div class="toolbar">
+      <div class="search">
+        <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+          <circle cx="6.2" cy="6.2" r="4.4" fill="none" stroke="#93A29A" stroke-width="1.5" />
+          <path d="M9.6 9.6 12.5 12.5" stroke="#93A29A" stroke-width="1.5" stroke-linecap="round" />
+        </svg>
+        <input
+          class="input"
+          type="search"
+          placeholder="Search documents…"
+          name="search"
+          [ngModel]="search()"
+          (ngModelChange)="search.set($event)"
+          (keyup.enter)="applyFilters()"
+        />
+      </div>
+
+      <select
+        class="select filter-w"
+        name="audience"
+        [ngModel]="audienceFilter()"
+        (ngModelChange)="audienceFilter.set($event); applyFilters()"
+      >
+        <option value="">All Roles</option>
+        @for (a of audiences(); track a.accountTypeId) {
+          <option [value]="a.accountTypeId">{{ a.name }}</option>
+        }
+      </select>
+    </div>
+  </section>
+
+  <!-- ------------------------------- upload document & role assignment -->
+  @if (canCreate) {
+    <section class="card card-pad">
+      <h3 class="card-title">Upload Document &amp; Role Assignment</h3>
+      <p class="card-sub">
+        Add the document, then tick the roles that should be able to download it
+      </p>
+
+      <div class="upload-grid">
+        <div class="upload-fields">
+          <div class="field">
+            <label class="field-label" for="docName">DOCUMENT NAME<span class="req">*</span></label>
+            <input
+              id="docName"
+              class="input"
+              placeholder="Enter document name"
+              name="docName"
+              [ngModel]="title()"
+              (ngModelChange)="title.set($event)"
+            />
+          </div>
+
+          <div class="field">
+            <div class="label-row">
+              <label class="field-label" for="docDesc">DESCRIPTION</label>
+              <span class="char-count">{{ description().length }} / 300</span>
+            </div>
+            <textarea
+              id="docDesc"
+              class="textarea"
+              maxlength="300"
+              placeholder="Brief description of the document…"
+              name="docDesc"
+              [ngModel]="description()"
+              (ngModelChange)="description.set($event)"
+            ></textarea>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="field-label">FILE UPLOAD<span class="req">*</span></label>
+
+          <label
+            class="dropzone"
+            [class.is-dragging]="dragging()"
+            [class.has-file]="file()"
+            (dragover)="onDragOver($event)"
+            (dragleave)="onDragLeave()"
+            (drop)="onDrop($event)"
+          >
+            <input
+              type="file"
+              class="dropzone-input"
+              accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
+              (change)="onFileChosen($event)"
+            />
+
+            @if (file(); as chosen) {
+              <svg width="30" height="30" viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  d="M6 2h8l4 4v16H6zM14 2v4h4"
+                  fill="none"
+                  stroke="#0F7B45"
+                  stroke-width="1.6"
+                  stroke-linejoin="round"
+                />
+                <path
+                  d="M9 14.5 11 16.5 15.5 12"
+                  fill="none"
+                  stroke="#0F7B45"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+              <div class="drop-title">{{ chosen.name }}</div>
+              <div class="drop-hint">{{ fileSize(chosen.size) }} · click to replace</div>
+            } @else {
+              <svg width="30" height="30" viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  d="M12 16V4M7.5 8.5 12 4l4.5 4.5M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"
+                  fill="none"
+                  stroke="#5D6B62"
+                  stroke-width="1.6"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+              <div class="drop-title">Drag &amp; drop files here or click to browse</div>
+              <div class="drop-hint">Supported: PDF, DOCX, XLSX, PPT (Max 25MB)</div>
+            }
+          </label>
+        </div>
+      </div>
+
+      <!-- role assignment matrix -->
+      <div class="row role-head">
+        <h4 class="role-title">Role Assignment</h4>
+        <span class="count-chip">{{ audiences().length }} roles</span>
+      </div>
+      <p class="card-sub role-sub">
+        Tick a role to make the document downloadable for every user holding that account type
+      </p>
+
+      <div class="tbl-wrap">
+        <table class="tbl role-tbl">
+          <thead>
+            <tr>
+              <th class="role-name-col">Document Name</th>
+              @for (a of audiences(); track a.accountTypeId) {
+                <th class="role-col">{{ a.shortName }}</th>
+              }
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="role-new-row">
+              <td class="role-name-col strong">
+                {{ title().trim() || 'New document' }}
+              </td>
+              @for (a of audiences(); track a.accountTypeId) {
+                <td class="role-col">
+                  <input
+                    type="checkbox"
+                    class="role-box"
+                    [checked]="isAudienceSelected(a.accountTypeId)"
+                    (change)="toggleAudience(a.accountTypeId)"
+                    [attr.aria-label]="a.name"
+                  />
+                </td>
+              }
+            </tr>
+
+            <!-- Existing documents, read-only here: their assignment is edited
+                 on the Edit Document screen. -->
+            @for (row of rows(); track row.documentId) {
+              <tr>
+                <td class="role-name-col">{{ row.title }}</td>
+                @for (a of audiences(); track a.accountTypeId) {
+                  <td class="role-col">
+                    @if (rowHasAudience(row, a.accountTypeId)) {
+                      <span class="tick-dot" aria-label="Granted"></span>
+                    } @else {
+                      <span class="tick-none" aria-label="Not granted">—</span>
+                    }
+                  </td>
+                }
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <p class="role-note">Changes apply the next time each user signs in</p>
+
+      @if (formError()) {
+        <div class="field-error form-error-row">{{ formError() }}</div>
+      }
+
+      <div class="row form-foot">
+        <div class="spacer"></div>
+        <button class="btn btn-primary" type="button" (click)="upload()" [disabled]="saving()">
+          {{ saving() ? 'Uploading…' : 'Upload Document' }}
+        </button>
+      </div>
+    </section>
+  }
+
+  <!-- --------------------------------------------------- document library -->
+  <section class="card">
+    <div class="card-head">
+      <div class="row">
+        <h3 class="card-title">Document Library</h3>
+        <span class="count-chip">{{ total() | number }} documents</span>
+      </div>
+    </div>
+
+    @if (loading()) {
+      <div class="empty"><div class="empty-text">Loading documents…</div></div>
+    } @else if (rows().length === 0) {
+      <app-empty
+        title="No documents published yet"
+        text="Nothing matches the current search and role filter. Clear them, or upload the first document using the card above."
+      />
+    } @else {
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th>S.No</th>
+              <th>Document Name</th>
+              <th class="num">Roles</th>
+              <th>Version</th>
+              <th>Uploaded By</th>
+              <th>Upload Date</th>
+              <th class="num">Size</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of rows(); track row.documentId; let i = $index) {
+              <tr>
+                <td class="muted">{{ (page() - 1) * pageSize + i + 1 }}</td>
+                <td>
+                  <div class="strong">{{ row.title }}</div>
+                  @if (row.currentFileName) {
+                    <div class="small muted">{{ row.currentFileName }}</div>
+                  }
+                </td>
+                <td class="num">
+                  <span class="count-chip">{{ row.accountTypeIds.length }}</span>
+                </td>
+                <td class="code">{{ row.currentVersionLabel || '—' }}</td>
+                <td>{{ row.uploadedByName || '—' }}</td>
+                <td class="nowrap">
+                  {{ row.currentUploadedOnUtc ? (row.currentUploadedOnUtc | date: 'dd MMM yyyy') : '—' }}
+                </td>
+                <td class="num">{{ fileSize(row.currentFileSizeBytes) }}</td>
+                <td class="nowrap">
+                  <a class="act act-edit" [routerLink]="['/documents', row.documentId]">View</a>
+                  @if (canEdit) {
+                    <span class="act-sep">|</span>
+                    <a class="act act-edit" [routerLink]="['/documents', row.documentId, 'edit']">Edit</a>
+                  }
+                  @if (canDelete) {
+                    <span class="act-sep">|</span>
+                    <button class="act act-danger" type="button" (click)="deleting.set(row)">
+                      Delete
+                    </button>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <app-pager
+        [page]="page()"
+        [pageSize]="pageSize"
+        [total]="total()"
+        noun="document"
+        nounPlural="documents"
+        (go)="goToPage($event)"
+      />
+    }
+  </section>
+</div>
+
+<!-- ------------------------------------------------ delete confirmation -->
+@if (deleting(); as row) {
+  <div class="modal-backdrop" (click)="deleting.set(null)">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-body">
+        <h3 class="modal-title">Delete document</h3>
+        <p class="modal-text">This cannot be undone.</p>
+
+        <div class="del-doc">
+          <span class="count-chip">{{ row.currentVersionLabel }}</span>
+          <span class="del-doc-name">{{ row.title }}</span>
+          <span class="del-doc-roles">{{ row.accountTypeIds.length }} roles</span>
+        </div>
+
+        <ul class="del-points">
+          <li>The file is removed and can no longer be downloaded by any role.</li>
+          <li>The record stays in the audit trail against your account.</li>
+        </ul>
+
+        <div class="field">
+          <label class="field-label" for="reason">
+            REASON FOR DELETION<span class="req">*</span>
+          </label>
+          <input
+            id="reason"
+            class="input"
+            placeholder="e.g. Superseded by a newer version"
+            name="reason"
+            [ngModel]="deleteReason()"
+            (ngModelChange)="deleteReason.set($event)"
+          />
+        </div>
+      </div>
+
+      <div class="modal-foot">
+        <button class="btn btn-secondary" type="button" (click)="deleting.set(null)">Cancel</button>
+        <button
+          class="btn btn-danger"
+          type="button"
+          [disabled]="!deleteReason().trim()"
+          (click)="confirmDelete()"
+        >
+          Delete Document
+        </button>
+      </div>
+    </div>
+  </div>
+}

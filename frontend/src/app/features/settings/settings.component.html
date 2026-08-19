@@ -1,0 +1,952 @@
+@switch (section()) {
+  <!-- ============================================ 33 — System Settings === -->
+  @case ('system') {
+    <header class="set-head">
+      <div>
+        <h2 class="set-title">System Settings</h2>
+        <p class="set-sub">
+          Portal-wide configuration for the MCLS Master Administration environment
+        </p>
+      </div>
+      <div class="spacer"></div>
+
+      @if (canEdit) {
+        <div class="set-actions">
+          <button class="btn-ghost" type="button" [disabled]="saving()" (click)="resetToDefault()">
+            Reset to Default
+          </button>
+          <button class="btn-solid" type="button" [disabled]="saving() || !dirty()" (click)="saveAll()">
+            {{ saving() ? 'Saving…' : 'Save Changes' }}
+          </button>
+        </div>
+      }
+    </header>
+
+    @if (message(); as note) {
+      <div class="notice" [class.notice-ok]="!failed()" [class.notice-bad]="failed()">
+        <span class="notice-mark"></span>
+        <span>{{ note }}</span>
+      </div>
+    } @else {
+      <div class="notice">
+        <span class="notice-mark"></span>
+        <span>
+          Changes to certification validity and fee-lock settings take effect from the next fiscal
+          cycle and are audit-logged.
+        </span>
+      </div>
+    }
+
+    <div class="set-grid">
+      @for (group of groups(); track group.category) {
+        <section class="set-card">
+          <div class="set-card-head">
+            <span class="set-tile" [innerHTML]="tileIcon(group.iconKey)"></span>
+            <h3 class="set-card-title">{{ group.category }}</h3>
+          </div>
+
+          @for (s of group.settings; track s.systemSettingId) {
+            <div class="set-row">
+              <span class="set-label" [title]="s.description || s.key">{{ s.displayName }}</span>
+
+              <div class="set-control">
+                @if (s.dataType === 'Bool') {
+                  <button
+                    class="tgl"
+                    type="button"
+                    role="switch"
+                    [class.on]="isOn(s)"
+                    [attr.aria-checked]="isOn(s)"
+                    [attr.aria-label]="s.displayName"
+                    [disabled]="!canEdit || !s.isEditable"
+                    (click)="toggle(s)"
+                  ></button>
+                  <span class="tgl-text" [class.on]="isOn(s)">{{ isOn(s) ? 'On' : 'Off' }}</span>
+                } @else {
+                  <input
+                    class="set-input"
+                    [class.set-input-sm]="s.dataType === 'Int'"
+                    [type]="s.dataType === 'Int' ? 'number' : 'text'"
+                    [attr.aria-label]="s.displayName"
+                    [disabled]="!canEdit || !s.isEditable"
+                    [value]="draft()[s.systemSettingId] ?? ''"
+                    (input)="edit(s, $any($event.target).value)"
+                  />
+                }
+              </div>
+            </div>
+          }
+        </section>
+      }
+    </div>
+
+    <!-- ------------------------------------ payment gateway configuration -->
+    <section class="set-card pay-card" style="margin-bottom: 18px">
+      <div class="pay-head">
+        <span class="set-tile" [innerHTML]="tileIcon('card')"></span>
+        <div>
+          <h3 class="pay-title">Payment Gateway Configuration</h3>
+          <p class="pay-sub">
+            Enable, disable and prioritise the gateways offered to MSMEs at checkout
+          </p>
+        </div>
+        <div class="spacer"></div>
+        <span class="chip-green">{{ gwActive() }} of {{ gwTotal() }} active</span>
+        @if (canEdit) {
+          <button class="btn-add" type="button" (click)="addGateway()">+ Add Gateway</button>
+        }
+      </div>
+
+      <div class="pay-strip">
+        <div class="pay-strip-cell">
+          <span class="strip-label">DEFAULT GATEWAY</span>
+          <div class="strip-body">
+            <select
+              class="strip-select"
+              aria-label="Default gateway"
+              [disabled]="!canEdit"
+              [value]="defaultGateway() ?? ''"
+              (change)="setDefaultGateway($any($event.target).value)"
+            >
+              @for (g of enabledGateways(); track g.paymentGatewayId) {
+                <option [value]="g.name">{{ g.name }}</option>
+              }
+            </select>
+          </div>
+        </div>
+
+        <div class="pay-strip-cell">
+          <span class="strip-label">AUTO-FAILOVER ON GATEWAY ERROR</span>
+          <div class="strip-body">
+            <button
+              class="tgl"
+              type="button"
+              role="switch"
+              aria-label="Auto-failover on gateway error"
+              [class.on]="autoFailover()"
+              [attr.aria-checked]="autoFailover()"
+              [disabled]="!canEdit"
+              (click)="autoFailover.set(!autoFailover())"
+            ></button>
+            <span class="tgl-text" [class.on]="autoFailover()">
+              {{ autoFailover() ? 'On' : 'Off' }}
+            </span>
+          </div>
+        </div>
+
+        <div class="pay-strip-cell">
+          <span class="strip-label">RETRY ATTEMPTS BEFORE FAILOVER</span>
+          <div class="strip-body">
+            <input
+              class="set-input set-input-sm"
+              type="number"
+              min="1"
+              max="9"
+              aria-label="Retry attempts before failover"
+              [disabled]="!canEdit"
+              [value]="retryAttempts()"
+              (input)="retryAttempts.set(+$any($event.target).value)"
+            />
+            <span class="strip-note">attempts per transaction</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="set-tbl-wrap">
+        <table class="set-tbl">
+          <thead>
+            <tr>
+              <th>GATEWAY</th>
+              <th>MODE</th>
+              <th>MERCHANT / API KEY</th>
+              <th>PRIORITY</th>
+              <th>LAST TXN</th>
+              <th>SUCCESS RATE</th>
+              <th>STATUS</th>
+              <th>ACTIONS</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (g of gateways(); track g.paymentGatewayId) {
+              <tr>
+                <td>
+                  <div class="gw-name" [class.off]="!g.isEnabled">
+                    <span class="gw-avatar">{{ g.name.charAt(0) }}</span>
+                    <div>
+                      <div class="gw-label">{{ g.name }}</div>
+                      <div class="gw-role" [class.primary]="g.roleLabel === 'Primary'">
+                        {{ g.roleLabel }}
+                      </div>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <span class="tag" [class]="g.mode === 'Live' ? 'tag-live' : 'tag-test'">
+                    {{ g.mode }}
+                  </span>
+                </td>
+                <td><span class="mono">{{ g.merchantKeyMask || 'Not configured' }}</span></td>
+                <td>{{ g.priority ?? '—' }}</td>
+                <td>{{ g.lastTxnOnUtc ? relative(g.lastTxnOnUtc) : 'N/A' }}</td>
+                <td>
+                  @if (g.successRate === null) {
+                    <span>—</span>
+                  } @else {
+                    <span class="rate" [class]="rateClass(g.successRate)">{{ g.successRate }}%</span>
+                  }
+                </td>
+                <td>
+                  <div class="set-control">
+                    <button
+                      class="tgl"
+                      type="button"
+                      role="switch"
+                      [class.on]="g.isEnabled"
+                      [attr.aria-checked]="g.isEnabled"
+                      [attr.aria-label]="g.name + ' status'"
+                      [disabled]="!canEdit"
+                      (click)="toggleGateway(g)"
+                    ></button>
+                    <span class="tgl-text" [class.on]="g.isEnabled">
+                      {{ g.isEnabled ? 'Active' : 'Disabled' }}
+                    </span>
+                  </div>
+                </td>
+                <td class="nowrap">
+                  <button class="link-act" type="button" (click)="configureGateway(g)">
+                    Configure
+                  </button>
+                  <span class="act-sep">|</span>
+                  <button
+                    class="link-act link-go"
+                    type="button"
+                    [disabled]="!canEdit"
+                    (click)="g.isEnabled ? testGateway(g) : toggleGateway(g)"
+                  >
+                    {{ g.isEnabled ? 'Test' : 'Enable' }}
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ------------------------------------------------- maintenance mode -->
+    <section class="set-card maint-card">
+      <div class="maint-head">
+        <h3 class="maint-title">Maintenance Mode</h3>
+        <div class="spacer"></div>
+        @if (maintenanceEnabled(); as flag) {
+          <button
+            class="tgl"
+            type="button"
+            role="switch"
+            aria-label="Maintenance mode"
+            [class.on]="isOn(flag)"
+            [attr.aria-checked]="isOn(flag)"
+            [disabled]="!canEdit"
+            (click)="toggle(flag)"
+          ></button>
+          <span class="tgl-text" [class.on]="isOn(flag)">{{ isOn(flag) ? 'On' : 'Off' }}</span>
+        }
+      </div>
+
+      <p class="maint-sub">
+        Takes the portal offline for MSMEs while keeping admin access available
+      </p>
+
+      <label class="maint-label" for="maintBanner">BANNER MESSAGE SHOWN TO USERS</label>
+      <div class="maint-row">
+        @if (maintenanceBanner(); as banner) {
+          <input
+            id="maintBanner"
+            class="maint-input"
+            placeholder="Scheduled maintenance 02:00–04:00 IST. Assessment booking will be unavailable."
+            [disabled]="!canEdit"
+            [value]="draft()[banner.systemSettingId] ?? ''"
+            (input)="edit(banner, $any($event.target).value)"
+          />
+        }
+        <button class="btn-window" type="button" (click)="scheduleWindow()">Schedule Window</button>
+      </div>
+    </section>
+  }
+
+  <!-- ============================================= 34 — Audit Logs ======= -->
+  @case ('audit-logs') {
+    <!-- filter bar -->
+    <div class="filter-card">
+      <div class="filter-field">
+        <label class="filter-label" for="afFrom">PERIOD FROM</label>
+        <input
+          id="afFrom"
+          class="filter-input"
+          type="date"
+          [value]="fromDate()"
+          (change)="fromDate.set($any($event.target).value); page.set(1); reload()"
+        />
+      </div>
+
+      <div class="filter-field">
+        <label class="filter-label" for="afTo">PERIOD TO</label>
+        <input
+          id="afTo"
+          class="filter-input"
+          type="date"
+          [value]="toDate()"
+          (change)="toDate.set($any($event.target).value); page.set(1); reload()"
+        />
+      </div>
+
+      <div class="filter-field">
+        <label class="filter-label" for="afUser">USER / ROLE</label>
+        <select
+          id="afUser"
+          class="filter-input"
+          [value]="userFilter()"
+          (change)="userFilter.set($any($event.target).value); page.set(1); reload()"
+        >
+          <option value="">All Users</option>
+          @for (u of filters()?.users ?? []; track u.userId) {
+            <option [value]="u.userId">{{ u.name }}{{ u.roleName ? ' — ' + u.roleName : '' }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="filter-field">
+        <label class="filter-label" for="afModule">MODULE</label>
+        <select
+          id="afModule"
+          class="filter-input"
+          [value]="moduleFilter()"
+          (change)="moduleFilter.set($any($event.target).value); page.set(1); reload()"
+        >
+          <option value="">All Modules</option>
+          @for (m of filters()?.modules ?? []; track m.moduleId) {
+            <option [value]="m.moduleId">{{ m.name }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="filter-field">
+        <label class="filter-label" for="afAction">ACTION</label>
+        <select
+          id="afAction"
+          class="filter-input"
+          [value]="actionFilter()"
+          (change)="actionFilter.set($any($event.target).value); page.set(1); reload()"
+        >
+          <option value="">All Actions</option>
+          @for (a of filters()?.actions ?? []; track a) {
+            <option [value]="a">{{ a }}</option>
+          }
+        </select>
+      </div>
+
+      <button class="filter-export" type="button" (click)="exportAudit()">Export Logs</button>
+    </div>
+
+    <!-- count tiles -->
+    <div class="kpi-row">
+      <div class="kpi">
+        <span class="kpi-tile" [innerHTML]="tileIcon('list')"></span>
+        <div>
+          <div class="kpi-label">TOTAL ENTRIES</div>
+          <div class="kpi-value">{{ auditSummary().totalEntries | number }}</div>
+        </div>
+      </div>
+      <div class="kpi">
+        <span class="kpi-tile" [innerHTML]="tileIcon('grid')"></span>
+        <div>
+          <div class="kpi-label">MODULES TRACKED</div>
+          <div class="kpi-value">{{ auditSummary().modulesTracked | number }}</div>
+        </div>
+      </div>
+      <div class="kpi kpi-green">
+        <span class="kpi-tile" [innerHTML]="tileIcon('users')"></span>
+        <div>
+          <div class="kpi-label">DISTINCT USERS</div>
+          <div class="kpi-value">{{ auditSummary().distinctUsers | number }}</div>
+        </div>
+      </div>
+      <div class="kpi kpi-red">
+        <span class="kpi-tile" [innerHTML]="tileIcon('alert')"></span>
+        <div>
+          <div class="kpi-label">FAILED ACTIONS</div>
+          <div class="kpi-value">{{ auditSummary().failedActions | number }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- audit trail -->
+    <section class="set-card pay-card">
+      <div class="log-head">
+        <h3 class="log-title">Audit Trail</h3>
+        <span class="chip-blue">{{ total() | number }} entries</span>
+        <div class="spacer"></div>
+        <div class="seg">
+          @for (opt of outcomeTabs; track opt.value) {
+            <button
+              type="button"
+              [class.on]="outcomeFilter() === opt.value"
+              (click)="outcomeFilter.set(opt.value); page.set(1); reload()"
+            >
+              {{ opt.label }}
+            </button>
+          }
+        </div>
+      </div>
+
+      @if (audit().length === 0) {
+        <app-empty title="No audit entries" text="Nothing has been recorded for the current filter." />
+      } @else {
+        <div class="set-tbl-wrap">
+          <table class="set-tbl">
+            <thead>
+              <tr>
+                <th>TIMESTAMP</th>
+                <th>USER</th>
+                <th>ROLE</th>
+                <th>ACTION</th>
+                <th>MODULE</th>
+                <th>IP ADDRESS</th>
+                <th>STATUS</th>
+                <th>ACTIONS</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of audit(); track row.auditLogId) {
+                <tr>
+                  <td><span class="stamp">{{ stamp(row.occurredOnUtc) }}</span></td>
+                  <td><span class="who">{{ row.userName || '—' }}</span></td>
+                  <td>{{ row.roleName || '—' }}</td>
+                  <td>
+                    <span class="pill-act" [class]="actionClass(row.action)">{{ row.action }}</span>
+                  </td>
+                  <td>{{ row.moduleName || row.entityName }}</td>
+                  <td>{{ row.ipAddress || '—' }}</td>
+                  <td>
+                    <span
+                      class="pill-state"
+                      [class]="row.outcome === 'Failed' ? 'state-bad' : 'state-ok'"
+                    >
+                      {{ row.outcome }}
+                    </span>
+                  </td>
+                  <td>
+                    <button class="link-act" type="button" (click)="showDetail(row)">Details</button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <div class="log-foot">
+          <span class="foot-text">
+            Showing {{ rangeFrom() | number }}-{{ rangeTo() | number }} of
+            {{ total() | number }} entries
+          </span>
+          <div class="spacer"></div>
+          <button
+            class="foot-btn"
+            type="button"
+            [disabled]="page() <= 1"
+            (click)="page.set(page() - 1); reload()"
+          >
+            Previous
+          </button>
+          <button
+            class="foot-btn"
+            type="button"
+            [disabled]="rangeTo() >= total()"
+            (click)="page.set(page() + 1); reload()"
+          >
+            Next
+          </button>
+        </div>
+      }
+
+      @if (message(); as note) {
+        <div class="notice" [class.notice-bad]="failed()" style="margin: 0 18px 18px">
+          <span class="notice-mark"></span>
+          <span>{{ note }}</span>
+        </div>
+      }
+    </section>
+  }
+
+  <!-- ============================================= 35 — Error Logs ======= -->
+  @case ('error-logs') {
+    <!-- filter bar -->
+    <div class="filter-card">
+      <div class="filter-field">
+        <label class="filter-label" for="efFrom">PERIOD FROM</label>
+        <input
+          id="efFrom"
+          class="filter-input"
+          type="date"
+          [value]="fromDate()"
+          (change)="fromDate.set($any($event.target).value); page.set(1); reload()"
+        />
+      </div>
+
+      <div class="filter-field">
+        <label class="filter-label" for="efTo">PERIOD TO</label>
+        <input
+          id="efTo"
+          class="filter-input"
+          type="date"
+          [value]="toDate()"
+          (change)="toDate.set($any($event.target).value); page.set(1); reload()"
+        />
+      </div>
+
+      <div class="filter-field">
+        <label class="filter-label" for="efSeverity">SEVERITY</label>
+        <select
+          id="efSeverity"
+          class="filter-input"
+          [value]="severityFilter()"
+          (change)="severityFilter.set($any($event.target).value); page.set(1); reload()"
+        >
+          <option value="">All Severities</option>
+          @for (s of errorFilters()?.severities ?? []; track s) {
+            <option [value]="s">{{ s }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="filter-field">
+        <label class="filter-label" for="efModule">MODULE</label>
+        <select
+          id="efModule"
+          class="filter-input"
+          [value]="moduleFilter()"
+          (change)="moduleFilter.set($any($event.target).value); page.set(1); reload()"
+        >
+          <option value="">All Modules</option>
+          @for (m of errorFilters()?.modules ?? []; track m.moduleId) {
+            <option [value]="m.moduleId">{{ m.name }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="filter-field">
+        <label class="filter-label" for="efStatus">STATUS</label>
+        <select
+          id="efStatus"
+          class="filter-input"
+          [value]="statusFilter()"
+          (change)="statusFilter.set($any($event.target).value); page.set(1); reload()"
+        >
+          <option value="">All Status</option>
+          @for (s of errorFilters()?.statuses ?? []; track s) {
+            <option [value]="s">{{ s }}</option>
+          }
+        </select>
+      </div>
+
+      <button class="filter-export" type="button" (click)="exportErrors()">Export</button>
+    </div>
+
+    <!-- count tiles -->
+    <div class="kpi-row kpi-5">
+      <div class="kpi kpi-red">
+        <span class="kpi-tile" [innerHTML]="tileIcon('alert')"></span>
+        <div>
+          <div class="kpi-label">CRITICAL</div>
+          <div class="kpi-value">{{ errorSummary().critical | number }}</div>
+        </div>
+      </div>
+      <div class="kpi kpi-red">
+        <span class="kpi-tile" [innerHTML]="tileIcon('alert')"></span>
+        <div>
+          <div class="kpi-label">ERROR</div>
+          <div class="kpi-value">{{ errorSummary().error | number }}</div>
+        </div>
+      </div>
+      <div class="kpi kpi-amber">
+        <span class="kpi-tile" [innerHTML]="tileIcon('alert')"></span>
+        <div>
+          <div class="kpi-label">WARNING</div>
+          <div class="kpi-value">{{ errorSummary().warning | number }}</div>
+        </div>
+      </div>
+      <div class="kpi">
+        <span class="kpi-tile" [innerHTML]="tileIcon('list')"></span>
+        <div>
+          <div class="kpi-label">INFO</div>
+          <div class="kpi-value">{{ errorSummary().info | number }}</div>
+        </div>
+      </div>
+      <div class="kpi kpi-green">
+        <span class="kpi-tile" [innerHTML]="tileIcon('check')"></span>
+        <div>
+          <div class="kpi-label">RESOLVED (7 DAYS)</div>
+          <div class="kpi-value">{{ errorSummary().resolvedLast7Days | number }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- error volume, last 14 days -->
+    <section class="set-card" style="margin-bottom: 18px">
+      <h3 class="log-title" style="margin: 0">Error Volume — Last 14 Days</h3>
+      <p class="log-sub" style="margin: 4px 0 0">
+        Daily count of ERROR and CRITICAL events across all modules
+      </p>
+
+      <div class="vol-chart">
+        @for (d of volume().series; track d.day) {
+          <div class="vol-col" [title]="d.count + ' events on ' + dayLabel(d.day)">
+            <div
+              class="vol-bar"
+              [class]="volClass(d.count)"
+              [style.height.%]="volHeight(d.count)"
+            ></div>
+          </div>
+        }
+      </div>
+
+      <div class="vol-axis">
+        <span>{{ volume().series.length ? dayLabel(volume().series[0].day) : '' }}</span>
+        <span>
+          {{ volume().series.length ? dayLabel(volume().series[volume().series.length - 1].day) : '' }}
+        </span>
+      </div>
+    </section>
+
+    <!-- error log -->
+    <section class="set-card pay-card">
+      <div class="log-head">
+        <h3 class="log-title">Error Log</h3>
+        <span class="chip-blue">{{ errorSummary().totalEvents | number }} events</span>
+        <div class="spacer"></div>
+        <div class="seg">
+          @for (opt of severityTabs; track opt.value) {
+            <button
+              type="button"
+              [class.on]="severityFilter() === opt.value"
+              (click)="severityFilter.set(opt.value); page.set(1); reload()"
+            >
+              {{ opt.label }}
+            </button>
+          }
+        </div>
+      </div>
+
+      @if (errorGroups().length === 0) {
+        <app-empty
+          title="No errors logged"
+          text="The portal has not recorded an error for the current filter."
+        />
+      } @else {
+        <div class="set-tbl-wrap">
+          <table class="set-tbl">
+            <thead>
+              <tr>
+                <th>TIMESTAMP</th>
+                <th>ERROR CODE</th>
+                <th>SEVERITY</th>
+                <th>MODULE</th>
+                <th>MESSAGE</th>
+                <th class="num">COUNT</th>
+                <th>STATUS</th>
+                <th>ACTIONS</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of errorGroups(); track row.errorCode) {
+                <tr>
+                  <td><span class="stamp">{{ stamp(row.lastSeenUtc) }}</span></td>
+                  <td><span class="err-code">{{ row.errorCode }}</span></td>
+                  <td>
+                    <span class="pill-state" [class]="severityClass(row.severity)">
+                      {{ row.severity }}
+                    </span>
+                  </td>
+                  <td>{{ row.moduleName || '—' }}</td>
+                  <td class="msg">{{ row.message }}</td>
+                  <td class="num"><span class="count-strong">{{ row.occurrences | number }}</span></td>
+                  <td>
+                    <span class="pill-state" [class]="statusClass(row.status)">{{ row.status }}</span>
+                  </td>
+                  <td class="nowrap">
+                    @if (canEdit && row.status !== 'Resolved') {
+                      @if (row.status === 'Open') {
+                        <button class="link-act" type="button" (click)="triage(row, 'Acknowledged')">
+                          Acknowledge
+                        </button>
+                        <span class="act-sep">|</span>
+                      }
+                      <button class="link-act link-go" type="button" (click)="triage(row, 'Resolved')">
+                        Resolve
+                      </button>
+                    } @else if (canEdit) {
+                      <button class="link-act" type="button" (click)="triage(row, 'Open')">Reopen</button>
+                    } @else {
+                      <span class="muted">—</span>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <div class="log-foot">
+          <span class="foot-text">
+            Showing {{ rangeFrom() | number }}-{{ rangeTo() | number }} of
+            {{ total() | number }} faults
+          </span>
+          <div class="spacer"></div>
+          <button
+            class="foot-btn"
+            type="button"
+            [disabled]="page() <= 1"
+            (click)="page.set(page() - 1); reload()"
+          >
+            Previous
+          </button>
+          <button
+            class="foot-btn"
+            type="button"
+            [disabled]="rangeTo() >= total()"
+            (click)="page.set(page() + 1); reload()"
+          >
+            Next
+          </button>
+        </div>
+      }
+
+      @if (message(); as note) {
+        <div class="notice" [class.notice-bad]="failed()" style="margin: 0 18px 18px">
+          <span class="notice-mark"></span>
+          <span>{{ note }}</span>
+        </div>
+      }
+    </section>
+  }
+
+  <!-- ============================================= 36 — APIs ============= -->
+  @case ('apis') {
+    <header class="set-head">
+      <div>
+        <h2 class="set-title">API Management</h2>
+        <p class="set-sub">
+          Keys, endpoints and integration health for external systems consuming MCLS data
+        </p>
+      </div>
+      <div class="spacer"></div>
+      <div class="set-actions">
+        <button class="btn-ghost" type="button" (click)="openApiDocs()">API Documentation</button>
+        @if (canEdit) {
+          <button class="btn-solid" type="button" (click)="generateKey()">Generate New Key</button>
+        }
+      </div>
+    </header>
+
+    @if (message(); as note) {
+      <div class="notice" [class.notice-ok]="!failed()" [class.notice-bad]="failed()">
+        <span class="notice-mark"></span>
+        <span>{{ note }}</span>
+      </div>
+    }
+
+    <!-- count tiles -->
+    <div class="kpi-row">
+      <div class="kpi">
+        <span class="kpi-tile" [innerHTML]="tileIcon('plug')"></span>
+        <div>
+          <div class="kpi-label">ACTIVE ENDPOINTS</div>
+          <div class="kpi-value">{{ apiSummary().activeEndpoints | number }}</div>
+        </div>
+      </div>
+      <div class="kpi kpi-green">
+        <span class="kpi-tile" [innerHTML]="tileIcon('key')"></span>
+        <div>
+          <div class="kpi-label">LIVE API KEYS</div>
+          <div class="kpi-value">{{ apiSummary().liveKeys | number }}</div>
+        </div>
+      </div>
+      <div class="kpi">
+        <span class="kpi-tile" [innerHTML]="tileIcon('pulse')"></span>
+        <div>
+          <div class="kpi-label">CALLS (24H)</div>
+          <div class="kpi-value">{{ compact(apiSummary().calls24h) }}</div>
+        </div>
+      </div>
+      <div class="kpi kpi-amber">
+        <span class="kpi-tile" [innerHTML]="tileIcon('alert')"></span>
+        <div>
+          <div class="kpi-label">ERROR RATE (24H)</div>
+          <div class="kpi-value">{{ apiSummary().errorRate }}%</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- API keys -->
+    <section class="set-card pay-card" style="margin-bottom: 18px">
+      <div class="log-head">
+        <h3 class="log-title">API Keys</h3>
+        <span class="chip-green">{{ apiSummary().liveKeys }} live</span>
+      </div>
+
+      <div class="set-tbl-wrap">
+        <table class="set-tbl">
+          <thead>
+            <tr>
+              <th>KEY NAME</th>
+              <th>KEY PREFIX</th>
+              <th>OWNER</th>
+              <th>LAST USED</th>
+              <th>STATUS</th>
+              <th>ACTIONS</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (k of apiKeys(); track k.apiKeyId) {
+              <tr>
+                <td><span class="who">{{ k.name }}</span></td>
+                <td><span class="mono">{{ k.keyPrefix }}</span></td>
+                <td>{{ k.owner }}</td>
+                <td>{{ k.lastUsedOnUtc ? dayLabel(k.lastUsedOnUtc) + ' ' + year(k.lastUsedOnUtc) : '—' }}</td>
+                <td>
+                  <span class="pill-state" [class]="k.status === 'Live' ? 'state-ok' : 'state-bad'">
+                    {{ k.status }}
+                  </span>
+                </td>
+                <td class="nowrap">
+                  <button
+                    class="link-act"
+                    type="button"
+                    [disabled]="!canEdit || k.status !== 'Live'"
+                    (click)="rotateKey(k)"
+                  >
+                    Rotate
+                  </button>
+                  <span class="act-sep">|</span>
+                  <button
+                    class="link-act link-danger"
+                    type="button"
+                    [disabled]="!canEdit || k.status !== 'Live'"
+                    (click)="revokeKey(k)"
+                  >
+                    Revoke
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- endpoints -->
+    <section class="set-card pay-card" style="margin-bottom: 18px">
+      <div class="log-head">
+        <h3 class="log-title">Endpoints</h3>
+        <span class="chip-blue">{{ apiEndpoints().length }} endpoints</span>
+        <div class="spacer"></div>
+        <div class="seg">
+          @for (opt of endpointTabs; track opt.value) {
+            <button
+              type="button"
+              [class.on]="endpointFilter() === opt.value"
+              (click)="endpointFilter.set(opt.value)"
+            >
+              {{ opt.label }}
+            </button>
+          }
+        </div>
+      </div>
+
+      <div class="set-tbl-wrap">
+        <table class="set-tbl">
+          <thead>
+            <tr>
+              <th>METHOD</th>
+              <th>ENDPOINT</th>
+              <th>DESCRIPTION</th>
+              <th class="num">CALLS (24H)</th>
+              <th class="num">ERROR RATE</th>
+              <th>STATUS</th>
+              <th>ACTIONS</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (e of visibleEndpoints(); track e.apiEndpointId) {
+              <tr>
+                <td>
+                  <span class="verb" [class]="e.method === 'GET' ? 'verb-get' : 'verb-post'">
+                    {{ e.method }}
+                  </span>
+                </td>
+                <td><span class="route">{{ e.route }}</span></td>
+                <td>{{ e.description || '—' }}</td>
+                <td class="num"><span class="count-strong">{{ e.calls24h | number }}</span></td>
+                <td class="num">
+                  <span class="rate" [class]="errRateClass(e.errorRate)">{{ e.errorRate }}%</span>
+                </td>
+                <td>
+                  <span
+                    class="pill-state"
+                    [class]="e.status === 'Live' ? 'state-ok' : 'state-warn'"
+                  >
+                    {{ e.status }}
+                  </span>
+                </td>
+                <td>
+                  <button class="link-act" type="button" (click)="endpointLogs(e)">Logs</button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- rate limits + webhooks -->
+    <div class="set-grid">
+      <section class="set-card">
+        <h3 class="set-card-title" style="margin: 0 0 6px">Rate Limits</h3>
+
+        @for (l of rateLimits(); track l.apiRateLimitId) {
+          <div class="limit">
+            <div class="limit-head">
+              <span class="limit-name">{{ l.tierName }}</span>
+              <div class="spacer"></div>
+              <span class="limit-cap">{{ l.requestsPerMin | number }} req / min</span>
+            </div>
+            <div class="limit-track">
+              <div
+                class="limit-fill"
+                [class]="limitClass(l.usagePercent)"
+                [style.width.%]="l.usagePercent"
+              ></div>
+            </div>
+          </div>
+        }
+      </section>
+
+      <section class="set-card">
+        <h3 class="set-card-title" style="margin: 0 0 6px">Webhooks</h3>
+
+        @for (w of webhooks(); track w.webhookId) {
+          <div class="hook">
+            <div>
+              <div class="hook-event">{{ w.event }}</div>
+              <div class="hook-url">{{ w.targetUrl }}</div>
+            </div>
+            <div class="spacer"></div>
+            <span class="pill-state" [class]="w.status === 'Live' ? 'state-ok' : 'state-warn'">
+              {{ w.status }}
+            </span>
+          </div>
+        }
+      </section>
+    </div>
+  }
+}

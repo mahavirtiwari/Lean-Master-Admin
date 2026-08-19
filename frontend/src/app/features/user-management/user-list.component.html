@@ -1,0 +1,192 @@
+@if (accountType(); as type) {
+  <app-page-intro [title]="type.name + ' Users'" [subtitle]="type.description ?? ''">
+    <div class="row">
+      <span class="acct-chip">Account Type: {{ type.name }}</span>
+      @if (canCreate && type.canCreateDirectly) {
+        <a class="btn btn-primary" [routerLink]="['/user-management/type', type.accountTypeId, 'new']">
+          Create New User
+        </a>
+      }
+    </div>
+  </app-page-intro>
+
+  <div class="stack">
+    <!-- ------------------------------------------------------- counters -->
+    <div class="stat-grid stat-grid-3">
+      <div class="stat">
+        <div class="stat-label">Total Users</div>
+        <div class="stat-value">{{ type.totalUsers | number }}</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Active Users</div>
+        <div class="stat-value text-green">{{ type.activeUsers | number }}</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Disabled Users</div>
+        <div class="stat-value text-danger">{{ type.inactiveUsers | number }}</div>
+      </div>
+    </div>
+
+    <!-- --------------------------------------------------------- filters -->
+    <section class="card card-pad">
+      <div class="toolbar">
+        <div class="search">
+          <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+            <circle cx="6.2" cy="6.2" r="4.4" fill="none" stroke="#93A29A" stroke-width="1.5" />
+            <path d="M9.6 9.6 12.5 12.5" stroke="#93A29A" stroke-width="1.5" stroke-linecap="round" />
+          </svg>
+          <input
+            class="input"
+            type="search"
+            placeholder="Search by name, email or organisation…"
+            name="search"
+            [ngModel]="search()"
+            (ngModelChange)="search.set($event)"
+            (keyup.enter)="applyFilters()"
+          />
+        </div>
+
+        <select
+          class="select filter-w"
+          name="role"
+          [ngModel]="roleId()"
+          (ngModelChange)="roleId.set($event); applyFilters()"
+        >
+          <option value="">All Roles</option>
+          @for (role of roles(); track role.roleId) {
+            <option [value]="role.roleId">{{ role.name }}</option>
+          }
+        </select>
+      </div>
+    </section>
+
+    <!-- ------------------------------------------------------------ list -->
+    <section class="card">
+      <div class="card-head">
+        <div class="row">
+          <h3 class="card-title">{{ type.name }} Accounts</h3>
+          <span class="count-chip">{{ total() | number }} users</span>
+        </div>
+
+        <div class="tabs">
+          <button class="tab" type="button" [class.is-active]="statusTab() === ''" (click)="setTab('')">
+            All
+          </button>
+          <button class="tab" type="button" [class.is-active]="statusTab() === '1'" (click)="setTab('1')">
+            Active
+          </button>
+          <button class="tab" type="button" [class.is-active]="statusTab() === '2'" (click)="setTab('2')">
+            Disabled
+          </button>
+        </div>
+      </div>
+
+      @if (loading()) {
+        <div class="empty"><div class="empty-text">Loading users…</div></div>
+      } @else if (rows().length === 0) {
+        <app-empty
+          [title]="'No ' + type.name + ' users found'"
+          [text]="
+            type.canCreateDirectly
+              ? 'No account matches the current search and filters. Clear them, or create the first user for this account type.'
+              : 'No account matches the current filters. Accounts of this type are raised by the organisation that empanels them, not from this screen.'
+          "
+        >
+          @if (canCreate && type.canCreateDirectly) {
+            <a class="btn btn-primary" [routerLink]="['/user-management/type', type.accountTypeId, 'new']">
+              Create New User
+            </a>
+          }
+        </app-empty>
+      } @else {
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead>
+              <tr>
+                <th>User</th>
+                <th>Role</th>
+                <th>{{ referenceColumn().header }}</th>
+                <th>Status</th>
+                <th>Last Login</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of rows(); track row.userId) {
+                <tr>
+                  <td>
+                    <div class="user-cell">
+                      <span class="user-avatar">{{ row.initials }}</span>
+                      <span>
+                        <span class="user-name">{{ row.fullName }}</span>
+                        <span class="user-email">{{ row.email }}</span>
+                      </span>
+                    </div>
+                  </td>
+                  <td>{{ row.roleName }}</td>
+                  <td>{{ reference(row) }}</td>
+                  <td>
+                    <span class="pill" [class]="row.statusId === 1 ? 'pill-green' : 'pill-red'">
+                      {{ row.statusName }}
+                    </span>
+                  </td>
+                  <td class="muted nowrap">
+                    {{ lastLogin(row) ?? (row.lastLoginOnUtc | date: 'dd MMM yyyy') ?? 'Never' }}
+                  </td>
+                  <td class="nowrap">
+                    <a class="act act-edit" [routerLink]="['/user-management/users', row.userId]">View</a>
+                    @if (canEdit) {
+                      <span class="act-sep">|</span>
+                      <a
+                        class="act act-edit"
+                        [routerLink]="['/user-management/users', row.userId, 'edit']"
+                      >
+                        Edit
+                      </a>
+                      <span class="act-sep">|</span>
+                      <button
+                        class="act"
+                        type="button"
+                        [class.act-danger]="row.statusId === 1"
+                        [class.act-green]="row.statusId !== 1"
+                        (click)="confirming.set(row)"
+                      >
+                        {{ row.statusId === 1 ? 'Disable' : 'Enable' }}
+                      </button>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <app-pager
+          [page]="page()"
+          [pageSize]="pageSize"
+          [total]="total()"
+          noun="user"
+          nounPlural="users"
+          (go)="goToPage($event)"
+        />
+      }
+    </section>
+  </div>
+}
+
+<!-- ------------------------------------------- disable / enable dialogs -->
+@if (confirming(); as row) {
+  <app-confirm
+    [title]="row.statusId === 1 ? 'Disable User' : 'Enable User'"
+    [message]="
+      row.statusId === 1
+        ? row.fullName +
+          ' will be signed out and blocked from signing in again. The account and its history are kept, and it can be re-enabled at any time.'
+        : row.fullName + ' will be able to sign in again with their existing credentials.'
+    "
+    [confirmLabel]="row.statusId === 1 ? 'Disable User' : 'Enable User'"
+    [tone]="row.statusId === 1 ? 'danger' : 'primary'"
+    (confirmed)="confirmToggle()"
+    (cancelled)="confirming.set(null)"
+  />
+}

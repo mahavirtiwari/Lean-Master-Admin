@@ -1,0 +1,293 @@
+<app-page-intro
+  [title]="heading()"
+  subtitle="Register officials, coordinators and master agency admins into the LEAN scheme"
+/>
+
+@if (loading()) {
+  <section class="card"><div class="empty"><div class="empty-text">Loading user…</div></div></section>
+} @else {
+  <form class="stack" (ngSubmit)="save()">
+    <!-- ------------------------------------------------- 1. account type -->
+    <section class="card card-pad">
+      <div class="step-head">
+        <span class="step-no">1</span>
+        <h3 class="step-title">Account Type</h3>
+        @if (!isEdit()) {
+          <div class="spacer"></div>
+          <span class="small muted">Super Admin may create these three account types</span>
+        }
+      </div>
+
+      <div class="field type-field">
+        <label class="field-label" for="accountType">ACCOUNT TYPE<span class="req">*</span></label>
+        <select
+          id="accountType"
+          class="select"
+          name="accountType"
+          [disabled]="isEdit()"
+          [ngModel]="selectedType()"
+          (ngModelChange)="changeType(+$event)"
+        >
+          @for (type of creatableTypes(); track type.accountTypeId) {
+            <option [value]="type.accountTypeId">{{ type.name }}</option>
+          }
+        </select>
+        @if (isEdit()) {
+          <div class="field-hint">The account type is fixed once the account is issued.</div>
+        }
+      </div>
+    </section>
+
+    <!-- --------------------------------------------- 2. {type} details -->
+    <section class="card card-pad">
+      <div class="step-head">
+        <span class="step-no">2</span>
+        <h3 class="step-title">{{ copy().section }}</h3>
+      </div>
+
+      @if (isEdit()) {
+        <div class="org-readonly">
+          <span class="field-label">{{ copy().orgLabel }}</span>
+          <div class="detail-value">{{ existingOrg()?.name || '—' }}</div>
+          <div class="field-hint">
+            The organisation is registered with the account and is not edited here.
+          </div>
+        </div>
+      } @else {
+        <div class="master-form">
+          <div class="field" [class.span-2]="!copy().showRegistration">
+            <label class="field-label" for="orgName">
+              {{ copy().orgLabel }}<span class="req">*</span>
+            </label>
+            <input
+              id="orgName"
+              class="input"
+              name="orgName"
+              [placeholder]="
+                selectedType() === 1
+                  ? 'e.g. National Productivity Council'
+                  : selectedType() === 2
+                    ? 'e.g. Office of the Development Commissioner (MSME)'
+                    : 'e.g. Directorate of Industries, Government of Maharashtra'
+              "
+              [ngModel]="org().name"
+              (ngModelChange)="org.set({ ...org(), name: $event })"
+            />
+          </div>
+
+          @if (copy().showRegistration) {
+            <div class="field">
+              <label class="field-label" for="cin">REGISTRATION / CIN NO.</label>
+              <input
+                id="cin"
+                class="input"
+                name="cin"
+                placeholder="e.g. AAATN2451K"
+                [ngModel]="org().registrationNo"
+                (ngModelChange)="org.set({ ...org(), registrationNo: $event })"
+              />
+            </div>
+          }
+
+          @if (copy().showCategory) {
+            <div class="field">
+              <label class="field-label" for="category">
+                AGENCY CATEGORY<span class="req">*</span>
+              </label>
+              <select
+                id="category"
+                class="select"
+                name="category"
+                [ngModel]="org().categoryLookupId"
+                (ngModelChange)="org.set({ ...org(), categoryLookupId: $event })"
+              >
+                <option value="">Select category</option>
+                @for (c of categories(); track c.lookupValueId) {
+                  <option [value]="c.lookupValueId">{{ c.name }}</option>
+                }
+              </select>
+            </div>
+          }
+
+          <div class="field">
+            <label class="field-label" for="state">
+              {{ selectedType() === 1 ? 'STATE' : 'STATE / UT' }}<span class="req">*</span>
+            </label>
+            <select
+              id="state"
+              class="select"
+              name="state"
+              [ngModel]="org().stateId"
+              (ngModelChange)="onStateChange($event)"
+            >
+              <option value="">Select state</option>
+              @for (s of states(); track s.stateId) {
+                <option [value]="s.stateId">{{ s.name }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="field">
+            <label class="field-label" for="district">DISTRICT<span class="req">*</span></label>
+            <select
+              id="district"
+              class="select"
+              name="district"
+              [disabled]="!org().stateId"
+              [ngModel]="org().districtId"
+              (ngModelChange)="org.set({ ...org(), districtId: $event })"
+            >
+              <option value="">Select district</option>
+              @for (d of districts(); track d.districtId) {
+                <option [value]="d.districtId">{{ d.name }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="field span-2">
+            <label class="field-label" for="address">
+              {{ copy().addressLabel }}<span class="req">*</span>
+            </label>
+            <textarea
+              id="address"
+              class="textarea"
+              name="address"
+              placeholder="Building, street, locality, city"
+              [ngModel]="org().addressLine"
+              (ngModelChange)="org.set({ ...org(), addressLine: $event })"
+            ></textarea>
+          </div>
+
+          <div class="field">
+            <label class="field-label" for="pincode">PINCODE<span class="req">*</span></label>
+            <input
+              id="pincode"
+              class="input"
+              name="pincode"
+              inputmode="numeric"
+              maxlength="6"
+              placeholder="e.g. 201010"
+              [ngModel]="org().pincode"
+              (ngModelChange)="org.set({ ...org(), pincode: $event })"
+            />
+          </div>
+        </div>
+      }
+    </section>
+
+    <!-- --------------------------------------- 3. nodal contact & access -->
+    <section class="card card-pad">
+      <div class="step-head">
+        <span class="step-no">3</span>
+        <h3 class="step-title">Nodal Contact &amp; Access</h3>
+      </div>
+
+      <div class="master-form">
+        <div class="field">
+          <label class="field-label" for="fullName">
+            {{ copy().personLabel }}<span class="req">*</span>
+          </label>
+          <input
+            id="fullName"
+            class="input"
+            name="fullName"
+            placeholder="e.g. Shri Ramesh Bhat"
+            [ngModel]="person().fullName"
+            (ngModelChange)="person.set({ ...person(), fullName: $event })"
+          />
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="designation">DESIGNATION<span class="req">*</span></label>
+          <input
+            id="designation"
+            class="input"
+            name="designation"
+            placeholder="e.g. Joint Director"
+            [ngModel]="person().designation"
+            (ngModelChange)="person.set({ ...person(), designation: $event })"
+          />
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="role">PORTAL ROLE<span class="req">*</span></label>
+          <select
+            id="role"
+            class="select"
+            name="role"
+            [ngModel]="person().roleId"
+            (ngModelChange)="person.set({ ...person(), roleId: $event })"
+          >
+            <option value="">Select role</option>
+            @for (r of roles(); track r.roleId) {
+              <option [value]="r.roleId">{{ r.name }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="email">
+            EMAIL ADDRESS@if (!isEdit()) {<span class="req">*</span>}
+          </label>
+          <input
+            id="email"
+            class="input"
+            type="email"
+            name="email"
+            placeholder="e.g. r.bhat@msme.gov.in"
+            [disabled]="isEdit()"
+            [ngModel]="person().email"
+            (ngModelChange)="person.set({ ...person(), email: $event })"
+          />
+          @if (isEdit()) {
+            <div class="field-hint">The e-mail address is the sign-in identity.</div>
+          }
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="mobile">MOBILE NUMBER</label>
+          <input
+            id="mobile"
+            class="input"
+            name="mobile"
+            inputmode="numeric"
+            placeholder="e.g. 9876543210"
+            [ngModel]="person().mobile"
+            (ngModelChange)="person.set({ ...person(), mobile: $event })"
+          />
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="jurisdiction">JURISDICTION</label>
+          <input
+            id="jurisdiction"
+            class="input"
+            name="jurisdiction"
+            placeholder="e.g. National, Western Region"
+            [ngModel]="person().jurisdiction"
+            (ngModelChange)="person.set({ ...person(), jurisdiction: $event })"
+          />
+        </div>
+      </div>
+
+      @if (!isEdit()) {
+        <div class="note" style="margin-top: 18px">
+          The account is created in Pending Activation. An activation e-mail goes to the address
+          above and the holder sets their own password from it — no password is issued here.
+        </div>
+      }
+
+      @if (error()) {
+        <div class="field-error form-error-row">{{ error() }}</div>
+      }
+
+      <div class="row form-foot">
+        <div class="spacer"></div>
+        <button class="btn btn-secondary" type="button" (click)="cancel()">Cancel</button>
+        <button class="btn btn-primary" type="submit" [disabled]="saving()">
+          {{ saving() ? 'Saving…' : isEdit() ? 'Save Changes' : 'Create User' }}
+        </button>
+      </div>
+    </section>
+  </form>
+}

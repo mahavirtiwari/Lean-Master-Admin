@@ -1,0 +1,275 @@
+<app-page-intro
+  title="User Management"
+  subtitle="Nine account types across the LEAN scheme, from Ministry officials to empanelled assessors"
+>
+  <div class="row">
+    @if (canEdit) {
+      <a class="btn btn-secondary" routerLink="/user-management/permissions">Edit Permissions</a>
+    }
+    @if (canCreate) {
+      <a class="btn btn-primary" [routerLink]="['/user-management/type', 1, 'new']">
+        Create New User
+      </a>
+    }
+  </div>
+</app-page-intro>
+
+@if (loading()) {
+  <section class="card"><div class="empty"><div class="empty-text">Loading account types…</div></div></section>
+} @else if (types().length === 0) {
+  <section class="card">
+    <app-empty
+      title="No account types configured"
+      text="The permission seed has not been applied to this database. Run database/04-seed/02-roles-and-permissions.sql and reload."
+    />
+  </section>
+} @else {
+  <div class="stack">
+    <!-- ------------------------------------------------------ search bar -->
+    <section class="card card-pad">
+      <div class="toolbar">
+        <div class="search">
+          <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+            <circle cx="6.2" cy="6.2" r="4.4" fill="none" stroke="#93A29A" stroke-width="1.5" />
+            <path d="M9.6 9.6 12.5 12.5" stroke="#93A29A" stroke-width="1.5" stroke-linecap="round" />
+          </svg>
+          <input
+            class="input"
+            type="search"
+            placeholder="Search users, organisations or email…"
+            name="search"
+            [ngModel]="search()"
+            (ngModelChange)="search.set($event)"
+            (keyup.enter)="runSearch()"
+          />
+        </div>
+
+        <select
+          class="select filter-w"
+          name="type"
+          [ngModel]="filterAccountType()"
+          (ngModelChange)="filterAccountType.set($event)"
+        >
+          <option value="">All Account Types</option>
+          @for (type of types(); track type.accountTypeId) {
+            <option [value]="type.accountTypeId">{{ type.name }}</option>
+          }
+        </select>
+
+        <select
+          class="select filter-w"
+          name="role"
+          [ngModel]="filterRole()"
+          (ngModelChange)="filterRole.set($event)"
+        >
+          <option value="">All Roles</option>
+        </select>
+
+        <select
+          class="select filter-w"
+          name="status"
+          [ngModel]="filterStatus()"
+          (ngModelChange)="filterStatus.set($event)"
+        >
+          <option value="">All Status</option>
+          <option value="1">Active</option>
+          <option value="2">Disabled</option>
+          <option value="3">Pending Activation</option>
+        </select>
+
+        <button class="btn btn-blue" type="button" (click)="runSearch()">Search</button>
+      </div>
+    </section>
+
+    <!-- --------------------------------------------- account type cards -->
+    <div class="type-grid">
+      @for (type of types(); track type.accountTypeId; let i = $index) {
+        <section class="card card-pad type-card" [class]="'tone-' + toneFor(i)">
+          <div class="type-head">
+            <h3 class="type-name">{{ type.name }}</h3>
+            <span class="type-count">{{ type.totalUsers | number }}</span>
+          </div>
+
+          <p class="type-desc">{{ type.description }}</p>
+
+          <div class="type-foot">
+            <div class="type-split">
+              <span class="text-green">{{ type.activeUsers | number }} active</span>
+              @if (type.inactiveUsers > 0) {
+                <span class="muted">·</span>
+                <span class="text-danger">{{ type.inactiveUsers | number }} disabled</span>
+              }
+            </div>
+
+            <a class="type-link" [routerLink]="['/user-management/type', type.accountTypeId]">
+              View List ›
+            </a>
+          </div>
+        </section>
+      }
+    </div>
+
+    <!-- ------------------------------------------------- export section -->
+    <section class="card card-pad">
+      <div class="row-between">
+        <div>
+          <h3 class="card-title">Export User Data</h3>
+          <p class="card-sub">
+            Download selective or complete user records as an Excel workbook
+          </p>
+        </div>
+      </div>
+
+      <!-- step 1 -->
+      <div class="step-head export-step">
+        <span class="step-no step-no-blue">1</span>
+        <span class="step-label">SELECT ACCOUNT TYPES</span>
+        <div class="spacer"></div>
+        <button class="act act-edit" type="button" (click)="selectAll()">Select all</button>
+        <span class="act-sep">·</span>
+        <button class="act act-danger" type="button" (click)="clearSelection()">Clear</button>
+      </div>
+
+      <div class="export-types">
+        @for (type of types(); track type.accountTypeId) {
+          <label class="export-type" [class.is-checked]="isSelected(type.accountTypeId)">
+            <input
+              type="checkbox"
+              [checked]="isSelected(type.accountTypeId)"
+              (change)="toggleSelected(type.accountTypeId)"
+            />
+            <span class="export-type-name">{{ type.name }}</span>
+            <span class="export-type-count">{{ type.totalUsers | number }}</span>
+          </label>
+        }
+      </div>
+
+      <!-- step 2 -->
+      <div class="step-head export-step">
+        <span class="step-no step-no-blue">2</span>
+        <span class="step-label">FILTERS &amp; FILE FORMAT</span>
+      </div>
+
+      <div class="form-grid-3">
+        <div class="field">
+          <label class="field-label" for="exportStatus">ACCOUNT STATUS</label>
+          <select
+            id="exportStatus"
+            class="select"
+            name="exportStatus"
+            [ngModel]="exportStatus()"
+            (ngModelChange)="exportStatus.set($event)"
+          >
+            <option value="">All Status</option>
+            <option value="1">Active</option>
+            <option value="2">Disabled</option>
+            <option value="3">Pending Activation</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label class="field-label">REGISTERED BETWEEN</label>
+          <div class="date-range">
+            <input
+              class="input"
+              type="date"
+              name="exportFrom"
+              [ngModel]="exportFrom()"
+              (ngModelChange)="exportFrom.set($event)"
+            />
+            <span class="range-dash">—</span>
+            <input
+              class="input"
+              type="date"
+              name="exportTo"
+              [ngModel]="exportTo()"
+              (ngModelChange)="exportTo.set($event)"
+            />
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="exportFormat">FILE FORMAT</label>
+          <select
+            id="exportFormat"
+            class="select"
+            name="exportFormat"
+            [ngModel]="exportFormat()"
+            (ngModelChange)="exportFormat.set($event)"
+          >
+            <option value="xlsx">Excel Workbook (.xlsx)</option>
+            <option value="csv">Comma Separated (.csv)</option>
+            <option value="pdf">PDF Document (.pdf)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row form-foot">
+        <div class="spacer"></div>
+        <button
+          class="btn btn-ghost-blue"
+          type="button"
+          [disabled]="!canExport || selectedCount() === 0"
+        >
+          Export Selected ({{ selectedCount() | number }})
+        </button>
+        <button class="btn btn-blue" type="button" [disabled]="!canExport">
+          Export All ({{ totalUsers() | number }})
+        </button>
+      </div>
+    </section>
+
+    <!-- ------------------------------------------ role & permission matrix -->
+    <section class="card">
+      <div class="card-head">
+        <div>
+          <h3 class="card-title">Role &amp; Permission Matrix</h3>
+          <p class="card-sub">Module access granted to every account type on the portal</p>
+        </div>
+        @if (canEdit) {
+          <a class="btn btn-secondary btn-sm" routerLink="/user-management/permissions">
+            Edit Permissions
+          </a>
+        }
+      </div>
+
+      @if (matrix(); as m) {
+        <div class="tbl-wrap">
+          <table class="tbl matrix-tbl">
+            <thead>
+              <tr>
+                <th class="matrix-row-head">Account Type / Role</th>
+                @for (module of m.modules; track module.moduleId) {
+                  <th class="matrix-col">{{ module.name }}</th>
+                }
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of m.rows; track row.label) {
+                <tr [class.is-super]="row.isSuperAdmin">
+                  <td class="matrix-row-head strong">{{ row.label }}</td>
+                  @for (open of row.access; track $index) {
+                    <td class="matrix-col">
+                      @if (open) {
+                        <span class="dot-on" aria-label="Access granted"></span>
+                      } @else {
+                        <span class="dot-off" aria-label="No access"></span>
+                      }
+                    </td>
+                  }
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <div class="matrix-legend">
+          <span class="dot-on"></span> Module accessible
+          <span class="dot-off legend-gap"></span> No access
+        </div>
+      } @else {
+        <div class="empty"><div class="empty-text">Loading permission matrix…</div></div>
+      }
+    </section>
+  </div>
+}

@@ -1,0 +1,540 @@
+// Emailer — 79 (Campaign), 80 (Transactional templates), 81 (Edit template).
+// Measurements and colours come from the artboards; this sheet is shared by all
+// three screens.
+
+.em-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 18px;
+
+  .em-title { margin: 0; font-size: 21px; font-weight: 700; color: #16211a; }
+  .em-sub { margin: 6px 0 0; font-size: 11.6px; color: #5d6b62; }
+  .spacer { flex: 1; }
+}
+
+.em-actions { display: flex; gap: 10px; padding-top: 4px; }
+
+.btn-solid,
+.btn-ghost {
+  height: 38px;
+  padding: 0 18px;
+  border-radius: 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.btn-solid { background: #1b4f8a; border: 1px solid #1b4f8a; color: #fff; }
+.btn-solid:hover:not(:disabled) { background: #17436f; }
+.btn-ghost { background: #fff; border: 1px solid #c6d3cb; color: #16211a; }
+.btn-ghost:hover:not(:disabled) { background: #f7faf8; }
+.btn-solid:disabled, .btn-ghost:disabled { opacity: 0.55; cursor: default; }
+
+.btn-mini {
+  height: 28px;
+  padding: 0 14px;
+  border-radius: 6px;
+  border: 1px solid #c6d3cb;
+  background: #fff;
+  font-size: 11.4px;
+  font-weight: 600;
+  color: #16211a;
+  cursor: pointer;
+}
+
+// ----------------------------------------------------------- count tiles ---
+.kpi-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 18px;
+
+  @media (max-width: 1000px) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+.kpi {
+  background: #fff;
+  border: 1px solid #dee7e1;
+  border-radius: 8px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+
+  .kpi-tile {
+    flex: none;
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    display: grid;
+    place-items: center;
+    font-size: 14px;
+  }
+
+  .kpi-label { font-size: 10.2px; font-weight: 600; color: #5d6b62; letter-spacing: 0.3px; }
+  .kpi-value { margin-top: 3px; font-size: 21px; font-weight: 700; color: #16211a; line-height: 1.1; }
+}
+
+.tile-blue  { background: #eff4fa; color: #1b4f8a; }
+.tile-green { background: #f0faf4; color: #0f7b45; }
+.tile-amber { background: #fefce8; color: #a16207; }
+
+// ----------------------------------------------------------------- cards ---
+.card {
+  position: relative;
+  background: #fff;
+  border: 1px solid #dee7e1;
+  border-radius: 8px;
+  margin-bottom: 18px;
+}
+
+// The 3 px green rule the artboard puts along the top of the compose card.
+.card-accent::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: #0f7b45;
+  border-radius: 8px 8px 0 0;
+}
+
+.card-pad { padding: 18px; }
+.card-title { margin: 0; font-size: 14px; font-weight: 700; color: #16211a; }
+.card-sub { margin: 4px 0 0; font-size: 10.6px; color: #5d6b62; }
+
+.card-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 18px;
+  flex-wrap: wrap;
+
+  .card-title { font-size: 14.5px; }
+  .spacer { flex: 1; }
+}
+
+// ---------------------------------------------------------------- fields ---
+.row-2 {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 16px;
+  margin-top: 16px;
+
+  @media (max-width: 900px) { grid-template-columns: minmax(0, 1fr); }
+}
+
+.field { display: flex; flex-direction: column; gap: 7px; min-width: 0; }
+
+.lbl {
+  font-size: 9.6px;
+  font-weight: 700;
+  color: #5d6b62;
+  letter-spacing: 0.3px;
+}
+
+.lbl-block { display: block; margin: 18px 0 8px; }
+.req { color: #b91c1c; margin-left: 2px; }
+
+.inp {
+  height: 38px;
+  padding: 0 12px;
+  background: #fff;
+  border: 1px solid #c6d3cb;
+  border-radius: 6px;
+  font: inherit;
+  font-size: 12.5px;
+  color: #16211a;
+  width: 100%;
+  min-width: 0;
+
+  &::placeholder { color: #93a29a; }
+  &:focus { outline: none; border-color: #1b4f8a; box-shadow: 0 0 0 3px rgb(27 79 138 / 12%); }
+  &:disabled { background: #f7faf8; color: #5d6b62; }
+}
+
+.inp-search { height: 32px; min-width: 200px; width: auto; }
+.inp-status { height: 32px; width: auto; min-width: 130px; }
+.inp-when { height: 34px; width: auto; min-width: 200px; }
+
+.attach {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 38px;
+  padding: 0 8px 0 12px;
+  border: 1px solid #c6d3cb;
+  border-radius: 6px;
+  background: #fff;
+
+  .attach-name { font-size: 12px; color: #5d6b62; }
+  .spacer { flex: 1; }
+}
+
+// -------------------------------------------------------------- audience ---
+.aud-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 20px 0 10px;
+
+  .spacer { flex: 1; }
+}
+
+.aud-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+
+  @media (max-width: 1200px) { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  @media (max-width: 760px) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+// One account-type tile. Selected is the blue-tinted state on the artboard.
+.aud {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 46px;
+  padding: 8px 12px;
+  border: 1px solid #c6d3cb;
+  border-radius: 7px;
+  background: #fff;
+  cursor: pointer;
+  text-align: left;
+
+  &.on { background: #eff4fa; border-color: #c3d8ee; }
+  &:disabled { opacity: 0.6; cursor: default; }
+  &:hover:not(:disabled):not(.on) { background: #f7faf8; }
+}
+
+.aud-box {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 3.5px;
+  border: 1px solid #c6d3cb;
+  background: #fff;
+  display: grid;
+  place-items: center;
+
+  &.on { background: #1b4f8a; border-color: #1b4f8a; }
+
+  .tick { color: #fff; font-size: 10px; line-height: 1; }
+}
+
+.aud-text { display: flex; flex-direction: column; min-width: 0; }
+.aud-name { font-size: 10.6px; font-weight: 600; color: #47554c; }
+.aud .on + .aud-text .aud-name, .aud.on .aud-name { color: #1b4f8a; }
+.aud-count { font-size: 9.4px; color: #93a29a; margin-top: 2px; }
+
+// ---------------------------------------------------------------- editor ---
+.editor {
+  border: 1px solid #c6d3cb;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.editor-bar {
+  display: flex;
+  gap: 4px;
+  padding: 6px 10px;
+  background: #fafcfb;
+  border-bottom: 1px solid #dee7e1;
+}
+
+.fmt {
+  width: 24px;
+  height: 24px;
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  font-size: 12.4px;
+  color: #47554c;
+  cursor: pointer;
+
+  &:hover { background: #edf2ef; }
+  &.bold { font-weight: 700; }
+  &.italic { font-style: italic; }
+  &.underline { text-decoration: underline; }
+}
+
+.editor-area {
+  display: block;
+  width: 100%;
+  border: 0;
+  padding: 12px 14px;
+  font: inherit;
+  font-size: 12px;
+  line-height: 1.6;
+  color: #16211a;
+  resize: vertical;
+
+  &:focus { outline: none; }
+  &::placeholder { color: #93a29a; }
+}
+
+.tags {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+
+  .tags-label { font-size: 10px; font-weight: 700; color: #5d6b62; }
+}
+
+.tag {
+  padding: 3px 9px;
+  border-radius: 5px;
+  border: 1px solid #c3d8ee;
+  background: #eff4fa;
+  font-size: 10.2px;
+  font-weight: 600;
+  color: #1b4f8a;
+  cursor: pointer;
+
+  &:hover { background: #e2ecf7; }
+}
+
+// -------------------------------------------------------------- delivery ---
+.delivery {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  flex-wrap: wrap;
+}
+
+.radio {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-size: 11.6px;
+  color: #47554c;
+  cursor: pointer;
+
+  .dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 1.5px solid #c6d3cb;
+    background: #fff;
+  }
+
+  &.on {
+    font-weight: 600;
+    color: #1b4f8a;
+
+    .dot { border-color: #1b4f8a; box-shadow: inset 0 0 0 3px #fff, inset 0 0 0 8px #1b4f8a; }
+  }
+}
+
+.card-foot {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #f0f4f2;
+  flex-wrap: wrap;
+
+  .spacer { flex: 1; }
+}
+
+.foot-note { font-size: 10.6px; color: #5d6b62; }
+
+// ---------------------------------------------------------------- tables ---
+.tbl-wrap { overflow-x: auto; }
+
+.em-tbl {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 980px;
+
+  thead th {
+    background: #f7faf8;
+    height: 34px;
+    padding: 0 12px;
+    text-align: left;
+    font-size: 10.4px;
+    font-weight: 600;
+    color: #5d6b62;
+    white-space: nowrap;
+  }
+
+  tbody td {
+    height: 40px;
+    padding: 6px 12px;
+    border-top: 1px solid #f0f4f2;
+    font-size: 11.4px;
+    color: #47554c;
+    vertical-align: middle;
+  }
+
+  tbody tr:hover td { background: #fafcfb; }
+
+  .num { text-align: right; }
+  .strong { font-weight: 600; color: #16211a; }
+  .muted { color: #5d6b62; }
+  .nowrap { white-space: nowrap; }
+  .code { font-weight: 700; color: #1b4f8a; }
+}
+
+.chip {
+  padding: 4px 10px;
+  border-radius: 5px;
+  font-size: 10.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.chip-blue { background: #eff4fa; border: 1px solid #c3d8ee; color: #1b4f8a; }
+.chip-grey { background: #edf2ef; border: 1px solid #dee7e1; color: #5d6b62; }
+
+.pill {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 5px;
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.pill-ok    { background: #f0faf4; border: 1px solid #b7e4c9; color: #0f7b45; }
+.pill-bad   { background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; }
+.pill-info  { background: #eff4fa; border: 1px solid #c3d8ee; color: #1b4f8a; }
+.pill-draft { background: #fefce8; border: 1px solid #fde68a; color: #a16207; }
+
+.link-act {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  font-size: 11.2px;
+  font-weight: 600;
+  color: #1b4f8a;
+  cursor: pointer;
+
+  &:hover { text-decoration: underline; }
+}
+
+.link-go { color: #0f7b45; }
+.link-danger { color: #b91c1c; }
+.act-sep { color: #c6d3cb; margin: 0 7px; }
+
+.tbl-foot {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 18px;
+  border-top: 1px solid #f0f4f2;
+
+  .spacer { flex: 1; }
+
+  .foot-btn {
+    height: 30px;
+    padding: 0 14px;
+    border-radius: 6px;
+    border: 1px solid #c6d3cb;
+    background: #fff;
+    font-size: 11.2px;
+    color: #47554c;
+    cursor: pointer;
+
+    &:hover:not(:disabled) { background: #f7faf8; }
+    &:disabled { opacity: 0.45; cursor: default; }
+  }
+}
+
+// ------------------------------------------------------------ empty state ---
+.empty {
+  padding: 46px 20px 54px;
+  text-align: center;
+
+  .empty-mark {
+    width: 46px;
+    height: 46px;
+    margin: 0 auto 14px;
+    border-radius: 50%;
+    background: #f0f4f2;
+    color: #93a29a;
+    display: grid;
+    place-items: center;
+    font-size: 20px;
+  }
+
+  .empty-title { font-size: 12.4px; font-weight: 600; color: #5d6b62; }
+  .empty-text { margin-top: 6px; font-size: 11px; color: #93a29a; }
+}
+
+// ----------------------------------------------------------------- notes ---
+.note {
+  margin-top: 14px;
+  padding: 10px 14px;
+  background: #eff4fa;
+  border: 1px solid #c3d8ee;
+  border-radius: 7px;
+  font-size: 11.4px;
+  color: #47554c;
+}
+
+.note-bad { background: #fef2f2; border-color: #fecaca; color: #7f1d1d; }
+
+.info-bar {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 12px 16px;
+  margin-bottom: 18px;
+  background: #fefce8;
+  border: 1px solid #fde68a;
+  border-radius: 7px;
+  font-size: 11.6px;
+  color: #47554c;
+
+  .info-mark {
+    flex: none;
+    width: 11px;
+    height: 11px;
+    margin-top: 3px;
+    border-radius: 2.5px;
+    background: #a16207;
+  }
+}
+
+// -------------------------------------------- edit template (81 artboard) ---
+.grid-4 {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+
+  @media (max-width: 1100px) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+.row-even { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+// Code and trigger event are shown but fixed, so they read as facts rather
+// than as fields somebody forgot to enable.
+.inp-flat {
+  background: #f7faf8;
+  font-weight: 700;
+  color: #16211a;
+}
+
+.subj-head {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin: 18px 0 8px;
+
+  .spacer { flex: 1; }
+}

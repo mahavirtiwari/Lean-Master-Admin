@@ -1,0 +1,181 @@
+@if (loading()) {
+  <section class="card"><div class="empty"><div class="empty-text">Loading fee structure…</div></div></section>
+} @else if (data(); as d) {
+  <app-page-intro [title]="heading()" [subtitle]="subtitle()">
+    <a class="btn btn-secondary" routerLink="/fee-structure">All levels</a>
+  </app-page-intro>
+
+  <div class="stack">
+    <!-- ------------------------------------ 1. certification fee & rates -->
+    <section class="card card-pad" [style.--accent]="accent()">
+      <div class="row">
+        <h3 class="card-title">Certification Fee &amp; Rates</h3>
+        <span class="level-pill">{{ d.name }}</span>
+      </div>
+
+      <p class="card-sub">
+        @if (d.isFree) {
+          This level carries no certification fee — it is fully funded by the Government of India.
+        } @else {
+          The fee is inclusive of GST. It is split by subsidy category first; GST and TDS then
+          apply to the MSME share only.
+        }
+      </p>
+
+      <div class="form-grid-4">
+        <div class="field">
+          <label class="field-label" for="fee">TOTAL FEE (INCL. GST)<span class="req">*</span></label>
+          <input
+            id="fee"
+            class="input"
+            type="number"
+            name="fee"
+            [disabled]="!canEdit"
+            [ngModel]="fee()"
+            (ngModelChange)="fee.set($event)"
+          />
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="gst">GST (%)<span class="req">*</span></label>
+          <input
+            id="gst"
+            class="input"
+            type="number"
+            name="gst"
+            [disabled]="!canEdit"
+            [ngModel]="gstPercent()"
+            (ngModelChange)="gstPercent.set($event)"
+          />
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="t194c">TDS 194C (%)<span class="req">*</span></label>
+          <input
+            id="t194c"
+            class="input"
+            type="number"
+            name="t194c"
+            [disabled]="!canEdit"
+            [ngModel]="tds194C()"
+            (ngModelChange)="tds194C.set($event)"
+          />
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="t194j">TDS 194J (%)<span class="req">*</span></label>
+          <input
+            id="t194j"
+            class="input"
+            type="number"
+            name="t194j"
+            [disabled]="!canEdit"
+            [ngModel]="tds194J()"
+            (ngModelChange)="tds194J.set($event)"
+          />
+        </div>
+      </div>
+
+      @if (canEdit) {
+        <div class="row form-foot">
+          @if (message()) {
+            <span class="save-msg">{{ message() }}</span>
+          }
+          <div class="spacer"></div>
+          <button class="btn btn-primary" type="button" (click)="save()" [disabled]="saving()">
+            {{ saving() ? 'Saving…' : 'Save Rates' }}
+          </button>
+        </div>
+      }
+    </section>
+
+    <!-- --------------------------------------------- 2. payment structure -->
+    <section class="card">
+      <div class="card-head">
+        <div>
+          <h3 class="card-title">Payment Structure</h3>
+          <p class="card-sub">
+            The GoI share is released against the fee and carries no GST. The MSME share is
+            inclusive of {{ d.gstPercent | number: '1.0-0' }}% GST; its taxable value is the base
+            for TDS.
+          </p>
+        </div>
+      </div>
+
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th>Code</th>
+              <th>Category</th>
+              <th class="num">Subsidy</th>
+              <th class="num">GoI Share</th>
+              <th class="num">MSME Share</th>
+              <th class="num">GST @ {{ d.gstPercent | number: '1.0-0' }}%</th>
+              <th class="num">MSME Taxable</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of d.rows; track row.code) {
+              <tr>
+                <td class="code">{{ row.code }}</td>
+                <td class="strong">{{ row.name }}</td>
+                <td class="num subsidy">{{ row.subsidyPercent | number: '1.0-0' }}%</td>
+                <td class="num goi">₹ {{ row.goiShare | number }}</td>
+                <td class="num strong">₹ {{ row.msmeShare | number }}</td>
+                <td class="num muted">₹ {{ row.gstAmount | number: '1.2-2' }}</td>
+                <td class="num strong">₹ {{ row.msmeTaxable | number: '1.2-2' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ------------------------------------ 3. TDS deduction & net payable -->
+    <section class="card">
+      <div class="card-head">
+        <div class="row">
+          <h3 class="card-title">TDS Deduction &amp; Net Payable</h3>
+          <span class="tds-chip tds-c">194C @ {{ d.tds194CPercent | number: '1.0-2' }}%</span>
+          <span class="tds-chip tds-j">194J @ {{ d.tds194JPercent | number: '1.0-2' }}%</span>
+        </div>
+      </div>
+
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th>Code</th>
+              <th>Category</th>
+              <th class="num">MSME Taxable</th>
+              <th class="num">TDS 194C</th>
+              <th class="num">Net after 194C</th>
+              <th class="num">TDS 194J</th>
+              <th class="num">Net after 194J</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of d.rows; track row.code) {
+              <tr>
+                <td class="code">{{ row.code }}</td>
+                <td class="strong">{{ row.name }}</td>
+                <td class="num">₹ {{ row.msmeTaxable | number: '1.2-2' }}</td>
+                <td class="num tds-c-val">₹ {{ row.tds194C | number: '1.2-2' }}</td>
+                <td class="num strong">₹ {{ row.netAfter194C | number: '1.2-2' }}</td>
+                <td class="num tds-j-val">₹ {{ row.tds194J | number: '1.2-2' }}</td>
+                <td class="num strong">₹ {{ row.netAfter194J | number: '1.2-2' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <div class="note tds-note">
+        194C applies to payments made to implementing agencies; 194J to consultants, assessors and
+        assessment agencies. Both are deducted from the taxable value, never from the gross —
+        the Government share carries neither GST nor TDS.
+      </div>
+    </section>
+  </div>
+}

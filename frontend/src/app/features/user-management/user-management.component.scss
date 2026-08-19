@@ -1,0 +1,251 @@
+// User Management landing: nine account-type cards in rows of three, banded
+// blue / green / amber as on 2-green.svg.
+
+.type-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+@media (max-width: 1180px) {
+  .type-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.type-card {
+  display: flex;
+  flex-direction: column;
+  // The band is a left rule rather than a tint, so nine cards on one screen
+  // stay readable instead of turning into three blocks of colour.
+  border-left: 3px solid var(--border-card);
+}
+
+.tone-blue {
+  border-left-color: var(--blue);
+}
+.tone-green {
+  border-left-color: var(--green);
+}
+.tone-amber {
+  border-left-color: var(--amber);
+}
+
+.type-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.type-name {
+  font-size: 12.6px;
+  font-weight: 700;
+  color: var(--text-strong);
+  margin: 0;
+}
+
+.type-count {
+  font-size: 19px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.tone-blue .type-count {
+  color: var(--blue);
+}
+.tone-green .type-count {
+  color: var(--green);
+}
+.tone-amber .type-count {
+  color: var(--amber);
+}
+
+.type-desc {
+  flex: 1;
+  font-size: 10.2px;
+  line-height: 1.6;
+  color: var(--text-muted);
+  margin: 10px 0 16px;
+}
+
+.type-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border-divider);
+}
+
+.type-split {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10.2px;
+  font-weight: 600;
+}
+
+.type-link {
+  font-size: 10.8px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.tone-blue .type-link {
+  color: var(--blue);
+}
+.tone-green .type-link {
+  color: var(--green);
+}
+.tone-amber .type-link {
+  color: var(--amber);
+}
+
+// ---------------------------------------------------------------- export ---
+
+.export-step {
+  margin-top: 24px;
+  margin-bottom: 14px;
+  gap: 10px;
+}
+
+.step-no-blue {
+  width: 18px;
+  height: 18px;
+  background: var(--blue);
+  font-size: 10px;
+}
+
+.step-label {
+  font-size: 9.8px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+}
+
+.export-types {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+@media (max-width: 1180px) {
+  .export-types {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.export-type {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border: 1px solid var(--border-card);
+  border-radius: var(--r-md);
+  cursor: pointer;
+}
+
+.export-type:hover {
+  background: var(--surface-subtle);
+}
+
+.export-type.is-checked {
+  border-color: var(--blue-border);
+  background: var(--blue-50);
+}
+
+.export-type input {
+  accent-color: var(--blue);
+  cursor: pointer;
+}
+
+.export-type-name {
+  flex: 1;
+  font-size: 11.6px;
+  color: var(--text-body);
+}
+
+.export-type-count {
+  font-size: 9.8px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.date-range {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.range-dash {
+  color: var(--text-muted);
+}
+
+// ---------------------------------------------------------------- matrix ---
+// Fifteen module columns on one row, so the labels are set small and the cells
+// narrow — the design does the same rather than wrapping the header.
+
+.matrix-tbl thead th {
+  font-size: 8.4px;
+  letter-spacing: 0;
+  padding: 10px 4px;
+  text-align: center;
+  vertical-align: bottom;
+  // The design sets these in mixed case, unlike every other table header on
+  // the portal — fifteen uppercase labels at 8.4px are unreadable.
+  text-transform: none;
+}
+
+.matrix-tbl tbody td {
+  padding: 9px 4px;
+}
+
+.matrix-row-head {
+  text-align: left !important;
+  font-size: 9.4px !important;
+  white-space: nowrap;
+  padding-left: 14px !important;
+  padding-right: 14px !important;
+  min-width: 150px;
+}
+
+.matrix-col {
+  text-align: center;
+  width: 62px;
+}
+
+.is-super td {
+  background: var(--green-50);
+}
+
+.dot-on,
+.dot-off {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+}
+
+.dot-on {
+  background: var(--green);
+}
+
+.dot-off {
+  background: transparent;
+  border: 1px solid var(--border-input);
+}
+
+.matrix-legend {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 12px 20px;
+  border-top: 1px solid var(--border-divider);
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.legend-gap {
+  margin-left: 14px;
+}

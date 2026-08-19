@@ -1,0 +1,80 @@
+// Fee Structure for one level. The level's accent (Bronze #C2410C,
+// Silver #5D6B62, Gold #A16207) tints the pill on the rates card.
+
+.level-pill {
+  padding: 3px 11px;
+  border-radius: var(--r-pill);
+  font-size: 10.2px;
+  font-weight: 600;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, #fff);
+  border: 1px solid color-mix(in srgb, var(--accent) 32%, #fff);
+  white-space: nowrap;
+}
+
+.form-grid-4 {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px 24px;
+  margin-top: 18px;
+}
+
+@media (max-width: 1080px) {
+  .form-grid-4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.save-msg {
+  font-size: 11.2px;
+  font-weight: 600;
+  color: var(--green);
+}
+
+// Subsidy percentage is the scheme's headline number on this table.
+.subsidy {
+  font-weight: 700;
+  color: var(--green);
+}
+
+.goi {
+  font-weight: 600;
+  color: var(--text-body);
+}
+
+// ------------------------------------------------------------------ TDS ---
+// The deck gives each section its own colour: 194C blue, 194J amber.
+
+.tds-chip {
+  padding: 3px 10px;
+  border-radius: var(--r-pill);
+  font-size: 10.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.tds-c {
+  color: var(--blue);
+  background: var(--blue-50);
+  border: 1px solid var(--blue-border);
+}
+
+.tds-j {
+  color: var(--amber);
+  background: var(--amber-50);
+  border: 1px solid var(--amber-border);
+}
+
+.tds-c-val {
+  color: var(--blue);
+  font-weight: 600;
+}
+
+.tds-j-val {
+  color: var(--amber);
+  font-weight: 600;
+}
+
+.tds-note {
+  margin: 0 20px 20px;
+}

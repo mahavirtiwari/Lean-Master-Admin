@@ -1,0 +1,43 @@
+# ---------------------------------------------------------------- secrets ---
+# appsettings.Development.json holds the JWT signing key, the bootstrap admin
+# password and the Udyam API token. It is never committed; the .example file
+# next to it documents every value and how to set it via user secrets.
+appsettings.Development.json
+appsettings.*.Local.json
+*.pfx
+*.snk
+secrets.json
+
+# ------------------------------------------------------------ .NET output ---
+bin/
+obj/
+[Bb]uild/
+[Dd]ebug/
+[Rr]elease/
+TestResults/
+*.user
+*.suo
+*.userprefs
+.vs/
+
+# ------------------------------------------------------------ Angular/node ---
+node_modules/
+dist/
+.angular/
+npm-debug.log*
+yarn-error.log*
+.eslintcache
+
+# ------------------------------------------------------------------- IDE ---
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# ------------------------------------------------------------------ tools ---
+# Local agent/session configuration, not part of the product.
+.claude/
+
+# --------------------------------------------------------------- uploads ---
+# Documents uploaded through the portal at runtime.
+uploads/

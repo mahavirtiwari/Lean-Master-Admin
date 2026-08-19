@@ -1,0 +1,50 @@
+{
+  "//": "Copy this file to appsettings.Development.json and fill in the values.",
+  "//secrets": [
+    "The real appsettings.Development.json is deliberately NOT distributed: it",
+    "holds a JWT signing key, a bootstrap password and the Udyam API token.",
+    "",
+    "For anything beyond a local demo, keep these out of the file entirely and",
+    "use user secrets instead, which live outside the source tree:",
+    "",
+    "  dotnet user-secrets init",
+    "  dotnet user-secrets set \"Jwt:SigningKey\"        \"<64+ random chars>\"",
+    "  dotnet user-secrets set \"Bootstrap:AdminPassword\" \"<a strong password>\"",
+    "  dotnet user-secrets set \"Udyam:Token\"            \"<token from the Ministry>\"",
+    "",
+    "In production use environment variables or the IIS configuration editor."
+  ],
+
+  "ConnectionStrings": {
+    "//": "SQL Server Express with Windows authentication.",
+    "MclsDatabase": "Server=.\\SQLEXPRESS;Database=MCLS;Trusted_Connection=True;TrustServerCertificate=True;MultipleActiveResultSets=True"
+  },
+
+  "Jwt": {
+    "//": "At least 64 random characters. Tokens signed with a guessable key can be forged.",
+    "SigningKey": "",
+    "AccessTokenMinutes": 30,
+    "RefreshTokenDays": 7
+  },
+
+  "Bootstrap": {
+    "//": "Creates the Super Admin on first API start if none exists. Sign in with MCLS-MIN-000001.",
+    "AdminEmail": "devadmin@mcls.local",
+    "AdminPassword": ""
+  },
+
+  "Udyam": {
+    "//": "Ministry Udyam registry. Leave Enabled false to run without it.",
+    "BaseUrl": "https://udyogaadhaar.gov.in/sv/UAMRestServiceAssist.svc",
+    "Token": "",
+    "TimeoutSeconds": 30,
+    "Enabled": false
+  },
+
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  }
+}

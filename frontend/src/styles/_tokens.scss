@@ -1,0 +1,95 @@
+// Design tokens transcribed from the SVG screens in E:\Lean\14-inch-1512.
+//
+// The values are not invented: every colour here appears in the exported
+// designs, and the names describe the role it plays there rather than the hue,
+// so a screen that says "Disable" in #B91C1C reads as `--danger` in the markup.
+//
+// The designs are drawn on a 1512 px artboard and their type sizes are
+// fractional (11.2, 12.5, 18.5). Those are kept as-is instead of being rounded
+// to a scale — rounding them visibly changes the density of the tables, which
+// is the thing that makes these screens look like the deck.
+
+:root {
+  // ----------------------------------------------------------- surfaces ---
+  --page-bg: #f4f7f5;
+  --surface: #ffffff;
+  --surface-muted: #fafcfb;
+  --surface-subtle: #f7faf8;
+  --sidebar-bg: #f0f8f3;
+
+  // -------------------------------------------------------------- text ---
+  --text-strong: #16211a; // headings, table values
+  --text: #33453b; // sidebar items, body
+  --text-body: #47554c; // paragraphs, secondary values
+  --text-muted: #5d6b62; // column headers, captions
+  --text-muted-2: #5d7166;
+  --text-placeholder: #93a29a;
+  --text-faint: #8a9a92;
+
+  // ------------------------------------------------------------ accents ---
+  // Green is the scheme's primary: active nav, positive figures, Save.
+  --green: #0f7b45;
+  --green-dark: #0c6539;
+  --green-100: #e1f0e8;
+  --green-50: #f0faf4;
+  --green-border: #b7e4c9;
+  --green-tint: #d9ebe1;
+
+  // Blue carries links and secondary actions (Edit, View List, Export).
+  --blue: #1b4f8a;
+  --blue-50: #eff4fa;
+  --blue-100: #d9e6f3;
+  --blue-border: #c3d8ee;
+
+  // Red is destructive only: Disable, Delete, required-field asterisks.
+  --danger: #b91c1c;
+  --danger-50: #fef2f2;
+  --danger-border: #fecaca;
+  --brand-red: #952825; // the MCLS mark
+
+  // Amber flags drafts and pending states; orange marks LEAN Bronze.
+  --amber: #a16207;
+  --amber-50: #fefce8;
+  --amber-border: #fde68a;
+  --orange: #c2410c;
+
+  // ----------------------------------------------------------- borders ---
+  --border-input: #c6d3cb;
+  --border-card: #dee7e1;
+  --border-divider: #edf2ef;
+
+  // ------------------------------------------------------------ radius ---
+  --r-sm: 5px;
+  --r-md: 6px;
+  --r-lg: 8px;
+  --r-pill: 999px;
+
+  // ------------------------------------------------------------ layout ---
+  --sidebar-w: 260px;
+  --sidebar-w-collapsed: 76px;
+  --topbar-h: 76px;
+  --content-x: 24px;
+
+  // ------------------------------------------------------------- type ---
+  --font: 'Segoe UI', Inter, system-ui, -apple-system, 'Helvetica Neue', Arial,
+    'DejaVu Sans', sans-serif;
+
+  --fs-label: 9.6px; // uppercase field labels
+  --fs-micro: 10px; // status pills
+  --fs-xs: 10.4px; // helper text, sub-values
+  --fs-sm: 10.6px; // breadcrumb, captions
+  --fs-table-head: 10.4px;
+  --fs-base: 11.2px; // table cells, sidebar sub-items
+  --fs-body: 11.8px; // sidebar items, card body
+  --fs-input: 12.5px;
+  --fs-button: 12.8px;
+  --fs-card-title: 14.5px;
+  --fs-page-title: 18.5px;
+  --fs-section: 21px; // section heading above a list
+  --fs-stat: 25px; // KPI numbers
+
+  // ------------------------------------------------------------ shadow ---
+  --shadow-card: 0 1px 2px rgba(22, 33, 26, 0.04);
+  --shadow-pop: 0 8px 24px rgba(22, 33, 26, 0.12);
+  --shadow-modal: 0 24px 64px rgba(22, 33, 26, 0.22);
+}

@@ -1,0 +1,123 @@
+@if (loading()) {
+  <section class="card"><div class="empty"><div class="empty-text">Loading user…</div></div></section>
+} @else if (user(); as u) {
+  <app-page-intro title="View User" [subtitle]="u.userCode + ' · ' + u.accountTypeName">
+    @if (canEdit) {
+      <div class="row">
+        <a class="btn btn-secondary" [routerLink]="['/user-management/users', u.userId, 'edit']">
+          Edit User
+        </a>
+        <a class="btn btn-ghost-blue" routerLink="/user-management/permissions">Edit Permissions</a>
+      </div>
+    }
+  </app-page-intro>
+
+  <div class="stack">
+    <!-- -------------------------------------------------------- profile -->
+    <section class="card card-pad">
+      <div class="profile">
+        <div class="profile-avatar">{{ u.initials }}</div>
+
+        <div class="profile-main">
+          <h3 class="profile-name">{{ u.fullName }}</h3>
+          <p class="profile-role">{{ u.designation || u.roleName }}</p>
+
+          <span class="pill" [class]="u.statusId === 1 ? 'pill-green' : 'pill-red'">
+            {{ u.statusName }}
+          </span>
+        </div>
+      </div>
+
+      <div class="detail-grid">
+        <div class="detail">
+          <span class="detail-label">USER ID</span>
+          <span class="detail-value">{{ u.userCode }}</span>
+        </div>
+        <div class="detail">
+          <span class="detail-label">EMAIL ADDRESS</span>
+          <span class="detail-value">{{ u.email }}</span>
+        </div>
+        <div class="detail">
+          <span class="detail-label">MOBILE</span>
+          <span class="detail-value">{{ u.mobile || '—' }}</span>
+        </div>
+        <div class="detail">
+          <span class="detail-label">ACCOUNT TYPE</span>
+          <span class="detail-value">{{ u.accountTypeName }}</span>
+        </div>
+        <div class="detail">
+          <span class="detail-label">ROLE</span>
+          <span class="detail-value">{{ u.roleName }}</span>
+        </div>
+        <div class="detail">
+          <span class="detail-label">ORGANISATION</span>
+          <span class="detail-value">{{ u.organisationName || '—' }}</span>
+        </div>
+        <div class="detail">
+          <span class="detail-label">JURISDICTION</span>
+          <span class="detail-value">{{ u.jurisdiction || '—' }}</span>
+        </div>
+        <div class="detail">
+          <span class="detail-label">LAST LOGIN</span>
+          <span class="detail-value">
+            {{ u.lastLoginOnUtc ? (u.lastLoginOnUtc | date: 'dd MMM yyyy, HH:mm') : 'Never' }}
+          </span>
+        </div>
+        <div class="detail">
+          <span class="detail-label">CREATED ON</span>
+          <span class="detail-value">{{ u.createdOnUtc | date: 'dd MMM yyyy' }}</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------------------------------------------------- permissions -->
+    <section class="card">
+      <div class="card-head">
+        <div class="row">
+          <h3 class="card-title">Effective Permissions</h3>
+          <span class="count-chip">{{ moduleCount() }} of 15 modules</span>
+        </div>
+        <span class="small muted">Granted by the role, plus any per-user override</span>
+      </div>
+
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th>Module</th>
+              @for (right of rights; track right) {
+                <th class="perm-col">{{ right }}</th>
+              }
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of grid(); track row.code) {
+              <tr [class.is-muted]="!row.any">
+                <td class="strong">{{ row.label }}</td>
+                @for (cell of row.cells; track $index) {
+                  <td class="perm-col">
+                    @if (cell) {
+                      <svg width="15" height="15" viewBox="0 0 15 15" aria-label="Granted">
+                        <circle cx="7.5" cy="7.5" r="7" fill="var(--green-50)" stroke="var(--green-border)" />
+                        <path
+                          d="M4.4 7.7 6.5 9.8l4.1-4.4"
+                          fill="none"
+                          stroke="var(--green)"
+                          stroke-width="1.7"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        />
+                      </svg>
+                    } @else {
+                      <span class="perm-none" aria-label="Not granted">—</span>
+                    }
+                  </td>
+                }
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+}

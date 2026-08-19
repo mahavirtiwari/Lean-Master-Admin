@@ -1,0 +1,424 @@
+<div class="login">
+  <!-- ================================================ left / brand panel == -->
+  <section class="brand-panel">
+    <!-- The faint emblem the artboard sets bottom-right: two rings at 12% with
+         six spokes at 9%, centred on (702, 768) of the 1512 board. -->
+    <svg class="watermark" viewBox="0 0 240 240" aria-hidden="true">
+      <g opacity="0.12">
+        <circle cx="120" cy="120" r="100" fill="none" stroke="#0F7B45" stroke-width="1.4" />
+        <circle cx="120" cy="120" r="77" fill="none" stroke="#1B4F8A" stroke-width="1.4" />
+      </g>
+      <g opacity="0.09" stroke="#1B4F8A" stroke-width="1.4">
+        <line x1="197" y1="120" x2="220" y2="120" />
+        <line x1="158.5" y1="186.7" x2="170" y2="206.6" />
+        <line x1="81.5" y1="186.7" x2="70" y2="206.6" />
+        <line x1="43" y1="120" x2="20" y2="120" />
+        <line x1="81.5" y1="53.3" x2="70" y2="33.4" />
+        <line x1="158.5" y1="53.3" x2="170" y2="33.4" />
+      </g>
+    </svg>
+
+    <div class="brand-inner">
+      <header class="brand-head">
+        <img
+          class="emblem-logo"
+          src="assets/mcls-logo.png"
+          alt="MSME Competitive (LEAN) Scheme — MCLS"
+          width="206"
+          height="74"
+        />
+        <!--
+          The Ministry's own lockup (State Emblem + bilingual wordmark). If the
+          file is not present the text lockup below stands in, so a missing
+          asset degrades to the wording rather than to a broken-image icon.
+        -->
+        @if (ministryLogoMissing()) {
+          <div>
+            <div class="emblem-goi">GOVERNMENT OF INDIA</div>
+            <div class="emblem-ministry">Ministry of Micro, Small &amp;<br />Medium Enterprises</div>
+          </div>
+        } @else {
+          <img
+            class="ministry-logo"
+            src="assets/msme-logo.svg"
+            alt="Government of India — Ministry of Micro, Small &amp; Medium Enterprises"
+            (error)="ministryLogoMissing.set(true)"
+          />
+        }
+      </header>
+
+      <span class="rule"></span>
+
+      <h1 class="hero">MSME Competitive<br />(LEAN) Scheme</h1>
+      <span class="hero-underline"></span>
+
+      <p class="hero-sub">
+        Helping micro, small and medium enterprises adopt LEAN manufacturing<br />
+        and earn Bronze, Silver and Gold certification.
+      </p>
+
+      <div class="section-label">CERTIFICATION PIPELINE &nbsp;·&nbsp; FY 2026-27</div>
+
+      <div class="pipeline">
+        @for (tier of tiers; track tier.label; let i = $index) {
+          <div class="tier">
+            <div class="tier-label">
+              <span class="tier-dot" [style.background]="tierColours[i]"></span>
+              {{ tier.label }}
+            </div>
+            <div class="tier-row">
+              <span class="tier-value">{{ tier.value }}</span>
+              <span class="tier-delta">{{ tier.delta }}</span>
+            </div>
+          </div>
+        }
+      </div>
+
+      <div class="section-label">NEW TO THE SCHEME?</div>
+
+      <div class="links">
+        @for (link of quickLinks; track link.title) {
+          <a class="quick" [href]="link.href" target="_blank" rel="noopener noreferrer">
+            <span class="quick-bar" [style.background]="link.accent"></span>
+
+            <span class="quick-icon" [style.background]="link.tint">
+              <svg width="17" height="17" viewBox="0 0 16 16" aria-hidden="true">
+                <path
+                  [attr.d]="link.icon"
+                  fill="none"
+                  [attr.stroke]="link.accent"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                @if (link.icon2) {
+                  <path
+                    [attr.d]="link.icon2"
+                    fill="none"
+                    [attr.stroke]="link.accent"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                }
+              </svg>
+            </span>
+
+            <span class="quick-text-wrap">
+              <span class="quick-title">{{ link.title }}</span>
+              <span class="quick-text">{{ link.text }}</span>
+            </span>
+
+            <span class="quick-go">
+              <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
+                <path
+                  d="M4.4 2.2 8.2 6l-3.8 3.8"
+                  fill="none"
+                  [attr.stroke]="link.accent"
+                  stroke-width="1.7"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </span>
+          </a>
+        }
+      </div>
+
+      <span class="rule rule-foot"></span>
+
+      <footer class="brand-foot">
+        <div>
+          Ministry of Micro, Small and Medium Enterprises, Kartavya Bhawan - 03,
+          Kartavya Path, New Delhi - 110001, India
+        </div>
+        <div class="foot-3">© {{ year }} MCLS. All rights reserved.</div>
+      </footer>
+    </div>
+  </section>
+
+  <!-- ================================================ right / form panel == -->
+  <section class="form-panel">
+    <div class="form-top">
+      <!--
+        The picker itself is the Bhashini button, which lives in <body> and is
+        positioned into this corner by a global rule. Only the label showing
+        the active language sits in the markup here — see core/bhashini.ts for
+        why the button is never moved into a component.
+      -->
+      <div class="lang-picker">
+        <span class="lang-current">{{ currentLanguage() }}</span>
+      </div>
+
+      <a
+        href="https://ndie.qcin.org/contact-us/"
+        class="need-help"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true">
+          <circle cx="8" cy="8" r="6.2" fill="none" stroke="currentColor" stroke-width="1.4" />
+          <path
+            d="M6.3 6.2a1.7 1.7 0 1 1 2.2 1.6c-.4.2-.5.5-.5.9M8 11.4v.1"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.4"
+            stroke-linecap="round"
+          />
+        </svg>
+        Need help?
+      </a>
+    </div>
+
+    <div class="form-inner">
+      <div class="welcome">Welcome</div>
+
+      <div class="signin-card">
+        <span class="card-cap"></span>
+
+        <div class="signin-body">
+          <h2 class="signin-title">Sign in</h2>
+          <p class="signin-sub">Use your registered portal credentials to continue.</p>
+
+          <form (ngSubmit)="submit()">
+            <div class="field">
+              <div class="label-row">
+                <label class="field-label" for="userId">USER ID</label>
+              </div>
+
+              <div class="input-wrap">
+                <svg class="lead-icon" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
+                  <circle cx="8" cy="5.4" r="2.6" fill="none" stroke="#1B4F8A" stroke-width="1.4" />
+                  <path
+                    d="M2.8 14v-.6A4.2 4.2 0 0 1 7 9.2h2a4.2 4.2 0 0 1 4.2 4.2v.6"
+                    fill="none"
+                    stroke="#1B4F8A"
+                    stroke-width="1.4"
+                    stroke-linecap="round"
+                  />
+                </svg>
+
+                <input
+                  id="userId"
+                  class="input has-lead"
+                  type="text"
+                  autocomplete="username"
+                  placeholder="Enter your User ID"
+                  [ngModel]="userId()"
+                  (ngModelChange)="userId.set($event)"
+                  name="userId"
+                />
+
+                @if (userId().trim()) {
+                  <span class="tick" aria-label="Entered">
+                    <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+                      <path
+                        d="M3.2 7.2 5.6 9.6 10.8 4"
+                        fill="none"
+                        stroke="#0F7B45"
+                        stroke-width="1.8"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                    </svg>
+                  </span>
+                }
+              </div>
+            </div>
+
+            <div class="field">
+              <div class="label-row">
+                <label class="field-label" for="password">PASSWORD</label>
+                <a class="forgot" href="#">Forgot password?</a>
+              </div>
+
+              <div class="input-wrap">
+                <svg class="lead-icon" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
+                  <path
+                    d="M3.6 7.2h8.8v6.4H3.6zM5.6 7.2V5.2a2.4 2.4 0 0 1 4.8 0v2"
+                    fill="none"
+                    stroke="#1B4F8A"
+                    stroke-width="1.4"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+
+                <input
+                  id="password"
+                  class="input has-lead"
+                  [type]="showPassword() ? 'text' : 'password'"
+                  autocomplete="current-password"
+                  placeholder="Enter your password"
+                  [ngModel]="password()"
+                  (ngModelChange)="password.set($event)"
+                  name="password"
+                />
+
+                <button
+                  type="button"
+                  class="eye"
+                  (click)="showPassword.set(!showPassword())"
+                  [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'"
+                >
+                  <svg width="17" height="17" viewBox="0 0 16 16" aria-hidden="true">
+                    <path
+                      d="M1.4 8S3.8 3.6 8 3.6 14.6 8 14.6 8 12.2 12.4 8 12.4 1.4 8 1.4 8Z"
+                      fill="none"
+                      stroke="#5D6B62"
+                      stroke-width="1.4"
+                      stroke-linejoin="round"
+                    />
+                    <circle cx="8" cy="8" r="2" fill="none" stroke="#5D6B62" stroke-width="1.4" />
+                    @if (showPassword()) {
+                      <path d="M3 13 13 3" stroke="#5D6B62" stroke-width="1.4" stroke-linecap="round" />
+                    }
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <div class="field">
+              <label class="field-label" for="captcha">SECURITY CHECK</label>
+
+              <div class="captcha-row">
+                <div class="input-wrap">
+                  <input
+                    id="captcha"
+                    class="input"
+                    type="text"
+                    autocomplete="off"
+                    placeholder="Enter code"
+                    [ngModel]="captchaInput()"
+                    (ngModelChange)="captchaInput.set($event)"
+                    name="captcha"
+                  />
+                  @if (captchaInput().trim()) {
+                    <span class="tick" aria-label="Entered">
+                      <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+                        <path
+                          d="M3.2 7.2 5.6 9.6 10.8 4"
+                          fill="none"
+                          stroke="#0F7B45"
+                          stroke-width="1.8"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        />
+                      </svg>
+                    </span>
+                  }
+                </div>
+
+                <div class="captcha-box">
+                  @for (glyph of captchaChars(); track $index) {
+                    <span [style.color]="glyph.colour">{{ glyph.char }}</span>
+                  }
+                  <!-- The deck strikes two hairlines across the code. -->
+                  <svg class="captcha-strike" viewBox="0 0 128 44" preserveAspectRatio="none" aria-hidden="true">
+                    <path d="M6 30 122 12" stroke="#5D6B62" stroke-width="1" opacity="0.55" fill="none" />
+                    <path d="M6 16 122 32" stroke="#5D6B62" stroke-width="1" opacity="0.4" fill="none" />
+                  </svg>
+                </div>
+
+                <button
+                  type="button"
+                  class="captcha-refresh"
+                  (click)="refreshCaptcha()"
+                  aria-label="New code"
+                >
+                  <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
+                    <path
+                      d="M13.5 8a5.5 5.5 0 1 1-1.6-3.9M13.5 2v3h-3"
+                      fill="none"
+                      stroke="#1B4F8A"
+                      stroke-width="1.5"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <label class="keep">
+              <input
+                type="checkbox"
+                [ngModel]="keepSignedIn()"
+                (ngModelChange)="keepSignedIn.set($event)"
+                name="keep"
+              />
+              <span>Keep me signed in on this device</span>
+            </label>
+
+            @if (error()) {
+              <div class="login-error" role="alert">{{ error() }}</div>
+            }
+
+            <button class="signin-btn" type="submit" [disabled]="busy()">
+              {{ busy() ? 'Signing in…' : 'Sign in' }}
+              <svg width="14" height="14" viewBox="0 0 12 12" aria-hidden="true">
+                <path
+                  d="M4 1.8 8.2 6 4 10.2"
+                  fill="none"
+                  stroke="#FFFFFF"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </button>
+          </form>
+
+          <p class="authorised">
+            <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true">
+              <path
+                d="M8 1.8 13.4 4v4c0 3.2-2.3 5.5-5.4 6.4C4.9 13.5 2.6 11.2 2.6 8V4L8 1.8Z"
+                fill="none"
+                stroke="#5D6B62"
+                stroke-width="1.3"
+                stroke-linejoin="round"
+              />
+            </svg>
+            Authorised users only. Access is monitored.
+          </p>
+        </div>
+      </div>
+
+      <div class="assurances">
+        @for (item of assurances; track item.title) {
+          <div class="assurance">
+            <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
+              <path
+                [attr.d]="item.icon"
+                fill="none"
+                stroke="#0F7B45"
+                stroke-width="1.4"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+            <div>
+              <div class="assurance-title">{{ item.title }}</div>
+            </div>
+          </div>
+        }
+      </div>
+
+      <p class="not-admin">
+        Not an administrator?
+        <a href="https://lean.msme.gov.in/VerifyUdyam/Register" target="_blank" rel="noopener noreferrer">
+          Go to the MSME portal
+          <svg width="11" height="11" viewBox="0 0 12 12" aria-hidden="true">
+            <path
+              d="M4.4 2.2 8.2 6l-3.8 3.8"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.7"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </a>
+      </p>
+    </div>
+  </section>
+</div>

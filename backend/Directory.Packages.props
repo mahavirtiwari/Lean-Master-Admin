@@ -1,0 +1,98 @@
+<Project>
+
+  <!--
+    Central package management: versions live here, project files reference
+    packages by name only. Stops the four projects drifting onto different
+    versions of EF Core or the JWT handler.
+
+    Versions were resolved against nuget.org rather than guessed. Two lines are
+    deliberately held back from "latest" for licensing reasons — see the
+    Testing group.
+  -->
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
+  </PropertyGroup>
+
+  <ItemGroup Label="Entity Framework Core">
+    <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="10.0.11" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.11" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.11" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.11" />
+  </ItemGroup>
+
+  <ItemGroup Label="Identity and authentication">
+    <PackageVersion Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.11" />
+    <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.11" />
+    <PackageVersion Include="System.IdentityModel.Tokens.Jwt" Version="8.22.0" />
+  </ItemGroup>
+
+  <ItemGroup Label="API">
+    <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.11" />
+    <PackageVersion Include="Swashbuckle.AspNetCore" Version="10.2.3" />
+    <PackageVersion Include="Asp.Versioning.Mvc" Version="10.2.1" />
+    <PackageVersion Include="Asp.Versioning.Mvc.ApiExplorer" Version="10.2.1" />
+  </ItemGroup>
+
+  <ItemGroup Label="Validation">
+    <PackageVersion Include="FluentValidation" Version="10.4.0" />
+    <PackageVersion Include="FluentValidation.DependencyInjectionExtensions" Version="10.4.0" />
+  </ItemGroup>
+
+  <ItemGroup Label="Logging">
+    <PackageVersion Include="Serilog.AspNetCore" Version="10.0.0" />
+    <PackageVersion Include="Serilog.Sinks.File" Version="7.0.0" />
+    <PackageVersion Include="Serilog.Sinks.MSSqlServer" Version="10.0.0" />
+    <PackageVersion Include="Serilog.Enrichers.Environment" Version="3.0.1" />
+  </ItemGroup>
+
+  <ItemGroup Label="Resilience and health">
+    <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="10.9.0" />
+    <PackageVersion Include="AspNetCore.HealthChecks.SqlServer" Version="9.0.0" />
+    <PackageVersion Include="AspNetCore.HealthChecks.UI.Client" Version="9.0.0" />
+  </ItemGroup>
+
+  <ItemGroup Label="Export">
+    <!-- MIT. Needed for the 'export' right the permission model grants. -->
+    <PackageVersion Include="ClosedXML" Version="0.105.1" />
+  </ItemGroup>
+
+  <ItemGroup Label="Testing">
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.9.0" />
+    <PackageVersion Include="xunit" Version="2.9.3" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.5" />
+
+    <!--
+      Held at 7.x deliberately. FluentAssertions changed to a paid commercial
+      licence at 8.0; 7.x is the last Apache-2.0 line. A government portal
+      should not acquire a per-seat licence obligation for its test assertions
+      without that being an explicit, budgeted decision.
+    -->
+    <PackageVersion Include="FluentAssertions" Version="7.2.2" />
+
+    <PackageVersion Include="NSubstitute" Version="6.2.0" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.0.11" />
+    <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.11" />
+  </ItemGroup>
+
+  <ItemGroup Label="Build">
+    <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="10.0.400" />
+  </ItemGroup>
+
+  <!--
+    Transitive pins. These are pulled in by packages above at versions carrying
+    known high-severity advisories; TreatWarningsAsErrors turns NU1903 into a
+    build failure, which is what surfaced them. Pinned to patched releases in
+    the same major line so nothing above sees an API change.
+
+    Review these whenever the packages that bring them in are upgraded — once
+    the parent ships a patched version, the pin becomes redundant and should go.
+  -->
+  <ItemGroup Label="Security pins (transitive)">
+    <!-- via Swashbuckle.AspNetCore — GHSA-v5pm-xwqc-g5wc -->
+    <PackageVersion Include="Microsoft.OpenApi" Version="2.12.0" />
+    <!-- via Serilog.Sinks.MSSqlServer / SqlClient — several advisories -->
+    <PackageVersion Include="System.Security.Cryptography.Xml" Version="10.0.11" />
+  </ItemGroup>
+
+</Project>

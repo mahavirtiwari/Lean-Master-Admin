@@ -1,0 +1,193 @@
+// Upload Documents. Upload card with a drag-and-drop target beside the fields,
+// then the ten-column role matrix, then the library.
+
+.filter-w {
+  width: 180px;
+  flex: none;
+}
+
+.upload-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 24px;
+  margin-top: 18px;
+}
+
+@media (max-width: 1180px) {
+  .upload-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.upload-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.label-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+// ------------------------------------------------------------- dropzone ---
+
+.dropzone {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 168px;
+  padding: 20px;
+  border: 1.5px dashed var(--border-input);
+  border-radius: var(--r-lg);
+  background: var(--surface-muted);
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.12s ease, background 0.12s ease;
+}
+
+.dropzone:hover,
+.dropzone.is-dragging {
+  border-color: var(--green);
+  background: var(--green-50);
+}
+
+.dropzone.has-file {
+  border-style: solid;
+  border-color: var(--green-border);
+  background: var(--green-50);
+}
+
+// The input covers the zone so a click anywhere opens the picker, and a drop
+// still lands on the label's handlers.
+.dropzone-input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.drop-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-strong);
+}
+
+.drop-hint {
+  font-size: 10.2px;
+  color: var(--text-muted);
+}
+
+// --------------------------------------------------------- role matrix ---
+
+.role-head {
+  margin-top: 26px;
+}
+
+.role-title {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text-strong);
+  margin: 0;
+}
+
+.role-sub {
+  margin-top: 6px;
+}
+
+.role-tbl {
+  margin-top: 12px;
+}
+
+// Ten columns plus a name, so the headers are set small and centred rather
+// than wrapped — the same treatment the permission matrix uses.
+.role-tbl thead th {
+  font-size: 9.4px;
+  letter-spacing: 0;
+  padding: 10px 4px;
+  text-align: center;
+  vertical-align: bottom;
+  text-transform: none;
+}
+
+.role-name-col {
+  text-align: left !important;
+  min-width: 230px;
+  padding-left: 14px !important;
+}
+
+.role-col {
+  width: 68px;
+  text-align: center;
+}
+
+.role-box {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--green);
+  cursor: pointer;
+}
+
+// The row being composed sits above the existing library rows and is tinted so
+// it reads as the editable one.
+.role-new-row td {
+  background: var(--green-50);
+}
+
+.tick-dot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--green);
+}
+
+.tick-none {
+  color: var(--border-input);
+}
+
+.role-note {
+  font-size: 10.6px;
+  color: var(--text-muted);
+  margin: 12px 0 0;
+}
+
+// ----------------------------------------------------------- delete ---
+
+.del-doc {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 16px;
+  padding: 12px 14px;
+  border: 1px solid var(--border-card);
+  border-radius: var(--r-md);
+  background: var(--surface-muted);
+}
+
+.del-doc-name {
+  flex: 1;
+  font-size: 12.4px;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.del-doc-roles {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.del-points {
+  margin: 16px 0 18px;
+  padding-left: 18px;
+  font-size: 10.6px;
+  line-height: 1.7;
+  color: var(--text-body);
+}

@@ -1,0 +1,263 @@
+<div class="shell" [class.is-collapsed]="collapsed()">
+  <!-- ----------------------------------------------------------- sidebar -->
+  <aside class="sidebar">
+    <div class="brand" [class.is-collapsed]="collapsed()">
+      <!-- The scheme's own mark, lifted from the SVG exports where it sits at
+           190x68 in the sidebar of all 95 in-portal screens. -->
+      <img
+        class="brand-logo"
+        src="assets/mcls-logo.png"
+        alt="MSME Competitive (LEAN) Scheme — MCLS"
+        width="190"
+        height="68"
+      />
+    </div>
+
+    <nav class="nav">
+      @for (item of menu(); track item.menuItemId) {
+        @if (item.children.length === 0) {
+          <a
+            class="nav-item"
+            [class.is-active]="isActive(item)"
+            [routerLink]="linkOf(item)"
+            [queryParams]="queryOf(item)"
+            [title]="item.label"
+          >
+            <span class="nav-icon">
+              <svg width="17" height="17" viewBox="0 0 16 16" aria-hidden="true">
+                <use [attr.href]="'#icon-' + (item.iconKey || 'dot')"></use>
+              </svg>
+            </span>
+            @if (!collapsed()) {
+              <span class="nav-label">{{ item.label }}</span>
+            }
+          </a>
+        } @else {
+          <!-- A parent both navigates to its own landing screen and opens its
+               children. Toggling only would leave /user-management,
+               /handholding, /assessments, /fee-structure, /incentives and
+               /settings unreachable from the sidebar. -->
+          <a
+            class="nav-item nav-parent"
+            [class.is-active]="isActive(item)"
+            [class.is-open-parent]="isGroupActive(item)"
+            [routerLink]="linkOf(item)"
+            [queryParams]="queryOf(item)"
+            (click)="openGroup(item)"
+            [title]="item.label"
+          >
+            <span class="nav-icon">
+              <svg width="17" height="17" viewBox="0 0 16 16" aria-hidden="true">
+                <use [attr.href]="'#icon-' + (item.iconKey || 'dot')"></use>
+              </svg>
+            </span>
+            @if (!collapsed()) {
+              <span class="nav-label">{{ item.label }}</span>
+              <button
+                type="button"
+                class="chev-btn"
+                (click)="$event.preventDefault(); $event.stopPropagation(); toggleGroup(item)"
+                [attr.aria-expanded]="isGroupOpen(item)"
+                [attr.aria-label]="(isGroupOpen(item) ? 'Collapse ' : 'Expand ') + item.label"
+              >
+                <svg
+                  class="chev"
+                  [class.is-open]="isGroupOpen(item)"
+                  width="12"
+                  height="12"
+                  viewBox="0 0 12 12"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M4 2.5 8 6l-4 3.5"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.6"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </button>
+            }
+          </a>
+
+          @if (isGroupOpen(item) && !collapsed()) {
+            <div class="subnav">
+              @for (child of item.children; track child.menuItemId) {
+                <a
+                  class="subnav-item"
+                  [class.is-active]="isActive(child)"
+                  [routerLink]="linkOf(child)"
+                  [queryParams]="queryOf(child)"
+                >
+                  {{ child.label }}
+                </a>
+              }
+            </div>
+          }
+        }
+      }
+    </nav>
+
+    <div class="sidebar-foot">
+      <div class="who">
+        <div class="avatar avatar-sm">{{ user()?.initials }}</div>
+        @if (!collapsed()) {
+          <div class="who-text">
+            <div class="who-name">{{ user()?.fullName }}</div>
+            <div class="who-role">{{ user()?.designation || user()?.roleName }}</div>
+          </div>
+        }
+      </div>
+    </div>
+  </aside>
+
+  <!-- ------------------------------------------------------------- main -->
+  <div class="main">
+    <header class="topbar">
+      <button
+        type="button"
+        class="icon-btn"
+        (click)="collapsed.set(!collapsed())"
+        [attr.aria-label]="collapsed() ? 'Expand menu' : 'Collapse menu'"
+      >
+        <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
+          <path
+            d="M2.5 4.5h13M2.5 9h13M2.5 13.5h13"
+            fill="none"
+            stroke="#33453B"
+            stroke-width="1.6"
+            stroke-linecap="round"
+          />
+        </svg>
+      </button>
+
+      <div class="topbar-titles">
+        <div class="crumb">
+          <span class="crumb-home">Home</span>
+          @for (part of breadcrumb(); track $index) {
+            <span class="crumb-sep">›</span>
+            <span class="crumb-part" [class.is-last]="$last">{{ part }}</span>
+          }
+        </div>
+        <h1 class="page-title">{{ pageTitle() }}</h1>
+      </div>
+
+      <div class="spacer"></div>
+
+      <button type="button" class="icon-btn" aria-label="Notifications">
+        <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
+          <path
+            d="M9 2.5a4.2 4.2 0 0 0-4.2 4.2v3l-1.3 2.3h11L13.2 9.7v-3A4.2 4.2 0 0 0 9 2.5ZM7.3 14a1.8 1.8 0 0 0 3.4 0"
+            fill="none"
+            stroke="#33453B"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+        <span class="dot"></span>
+      </button>
+
+      <div class="user-chip">
+        <button
+          type="button"
+          class="avatar"
+          (click)="userMenuOpen.set(!userMenuOpen())"
+          [attr.aria-expanded]="userMenuOpen()"
+          aria-label="Account menu"
+        >
+          {{ user()?.initials }}
+        </button>
+
+        @if (userMenuOpen()) {
+          <div class="user-menu">
+            <div class="user-menu-head">
+              <div class="user-menu-name">{{ user()?.fullName }}</div>
+              <div class="user-menu-meta">{{ user()?.userCode }}</div>
+              <div class="user-menu-meta">{{ user()?.email }}</div>
+            </div>
+            <div class="user-menu-body">
+              <div class="user-menu-row">
+                <span class="muted">Role</span><span>{{ user()?.roleName }}</span>
+              </div>
+              <div class="user-menu-row">
+                <span class="muted">Account type</span><span>{{ user()?.accountTypeName }}</span>
+              </div>
+              <div class="user-menu-row">
+                <span class="muted">Jurisdiction</span><span>{{ user()?.jurisdiction }}</span>
+              </div>
+            </div>
+            <button type="button" class="signout" (click)="logout()">Sign out</button>
+          </div>
+        }
+      </div>
+    </header>
+
+    <main class="content">
+      <router-outlet />
+    </main>
+  </div>
+</div>
+
+<!-- Sidebar glyphs, defined once and referenced by <use> so the sprite is not
+     re-parsed for every one of the fifteen modules. -->
+<svg width="0" height="0" style="position: absolute" aria-hidden="true">
+  <defs>
+    <g id="icon-dot" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+      <circle cx="8" cy="8" r="2.6" />
+    </g>
+    <g id="icon-grid" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round">
+      <path d="M2.4 2.4h4.6v4.6H2.4zM9 2.4h4.6v2.9H9zM9 7.3h4.6v6.3H9zM2.4 9.3h4.6v4.3H2.4z" />
+    </g>
+    <g id="icon-hands" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M8 13.5s-4.8-2.8-4.8-6.2A2.6 2.6 0 0 1 8 5.6a2.6 2.6 0 0 1 4.8 1.7c0 3.4-4.8 6.2-4.8 6.2Z" />
+    </g>
+    <g id="icon-clipboard" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M4 2.4h8v11.2H4zM6.2 6h3.6M6.2 8.6h3.6M6.2 11.2h2.2" />
+    </g>
+    <g id="icon-users" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="6.4" cy="6" r="2.2" />
+      <path d="M2.6 13.2c0-2.1 1.7-3.4 3.8-3.4s3.8 1.3 3.8 3.4M11 4.2a2 2 0 0 1 0 3.9M12 9.9c1.4.4 2.4 1.4 2.4 3.3" />
+    </g>
+    <g id="icon-factory" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round">
+      <path d="M2.6 13.4V7l5.4-4.4L13.4 7v6.4z" />
+      <path d="M6.4 13.4V9.4h3.2v4" />
+    </g>
+    <g id="icon-sliders" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+      <path d="M3 4.6h10M3 8h10M3 11.4h6" />
+    </g>
+    <g id="icon-list" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3.4 2.6h9.2v10.8H3.4z" />
+      <path d="M6 5.6h4M6 8.2h4M6 10.8h2.4" />
+    </g>
+    <g id="icon-rupee" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="8" cy="8" r="5.6" />
+      <path d="M6.2 5.6h3.6M6.2 8h3.6M9.2 5.6c0 2-3 1.6-3 2.4l3 3.4" />
+    </g>
+    <g id="icon-gift" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round">
+      <path d="M2.6 7.2h10.8v6.2H2.6zM2.6 4.6h10.8v2.6H2.6zM8 4.6v8.8" />
+      <path d="M8 4.6S6.9 2.4 5.6 2.4a1.4 1.4 0 0 0 0 2.2M8 4.6s1.1-2.2 2.4-2.2a1.4 1.4 0 0 1 0 2.2" />
+    </g>
+    <g id="icon-cpu" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="5.2" y="5.2" width="5.6" height="5.6" rx="1" />
+      <path d="M6.6 2.6v2.6M9.4 2.6v2.6M6.6 10.8v2.6M9.4 10.8v2.6M2.6 6.6h2.6M2.6 9.4h2.6M10.8 6.6h2.6M10.8 9.4h2.6" />
+    </g>
+    <g id="icon-doc" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M4.2 2.4h5L12 5.2v8.4H4.2zM9 2.4v3h3" />
+      <path d="M8 11V7.6M6.4 9.2 8 7.6l1.6 1.6" />
+    </g>
+    <g id="icon-chart" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M2.6 13.4h10.8" />
+      <path d="M4.6 13.4V8.4M7.4 13.4V4.2M10.2 13.4v-3.6M13 13.4V6.4" />
+    </g>
+    <g id="icon-mail" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round">
+      <rect x="2.4" y="3.8" width="11.2" height="8.4" rx="1.2" />
+      <path d="m2.8 4.6 5.2 4 5.2-4" />
+    </g>
+    <g id="icon-cog" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="8" cy="8" r="2.1" />
+      <path d="M8 1.8v1.7M8 12.5v1.7M14.2 8h-1.7M3.5 8H1.8M12.4 3.6l-1.2 1.2M4.8 11.2l-1.2 1.2M12.4 12.4l-1.2-1.2M4.8 4.8 3.6 3.6" />
+    </g>
+  </defs>
+</svg>

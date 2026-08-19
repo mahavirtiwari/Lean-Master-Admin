@@ -1,0 +1,197 @@
+<header class="em-head">
+  <div>
+    <h2 class="em-title">Edit Template</h2>
+    <p class="em-sub">{{ subtitle() }}</p>
+  </div>
+  <div class="spacer"></div>
+  <div class="em-actions">
+    <button class="btn-ghost" type="button" (click)="cancel()">Cancel</button>
+    @if (canEdit) {
+      <button class="btn-solid" type="button" [disabled]="saving()" (click)="save()">
+        {{ saving() ? 'Saving…' : 'Save Template' }}
+      </button>
+    }
+  </div>
+</header>
+
+@if (message(); as note) {
+  <div class="note" [class.note-bad]="failed()" style="margin-bottom: 18px">{{ note }}</div>
+}
+
+@if (loading()) {
+  <section class="card"><div class="empty"><div class="empty-title">Loading…</div></div></section>
+} @else if (template(); as t) {
+  <!-- ---------------------------------------------------- template details -->
+  <section class="card">
+    <div class="card-pad">
+      <h3 class="card-title">Template Details</h3>
+      <p class="card-sub">
+        The trigger event is fixed — it decides when this email is sent automatically
+      </p>
+
+      <div class="grid-4">
+        <div class="field">
+          <label class="lbl">TEMPLATE CODE</label>
+          <input class="inp inp-flat" [value]="t.code" readonly />
+        </div>
+
+        <div class="field">
+          <label class="lbl" for="tname">TEMPLATE NAME<span class="req">*</span></label>
+          <input
+            id="tname"
+            class="inp"
+            [disabled]="!canEdit"
+            [value]="name()"
+            (input)="name.set($any($event.target).value)"
+          />
+        </div>
+
+        <div class="field">
+          <label class="lbl">TRIGGER EVENT</label>
+          <input class="inp inp-flat" [value]="t.triggerEvent || '—'" readonly />
+        </div>
+
+        <div class="field">
+          <label class="lbl" for="tstatus">STATUS</label>
+          <select
+            id="tstatus"
+            class="inp"
+            [disabled]="!canEdit"
+            [value]="isActive() ? 'active' : 'disabled'"
+            (change)="isActive.set($any($event.target).value === 'active')"
+          >
+            <option value="active">Active</option>
+            <option value="disabled">Disabled</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ------------------------------------------------------- email content -->
+  <section class="card">
+    <div class="card-pad">
+      <h3 class="card-title">Email Content</h3>
+      <p class="card-sub">Subject and message can be edited as needed</p>
+
+      <div class="subj-head">
+        <label class="lbl" for="tsubj">SUBJECT<span class="req">*</span></label>
+        <div class="spacer"></div>
+        <span class="foot-note">Merge tags are replaced when the email is sent</span>
+      </div>
+
+      <input
+        id="tsubj"
+        class="inp"
+        [disabled]="!canEdit"
+        [value]="subject()"
+        (input)="subject.set($any($event.target).value)"
+      />
+
+      <label class="lbl lbl-block" for="tbody">MESSAGE<span class="req">*</span></label>
+      <div class="editor">
+        <div class="editor-bar">
+          <button type="button" class="fmt bold">B</button>
+          <button type="button" class="fmt italic">I</button>
+          <button type="button" class="fmt underline">U</button>
+        </div>
+        <textarea
+          id="tbody"
+          class="editor-area"
+          rows="10"
+          [disabled]="!canEdit"
+          [value]="body()"
+          (input)="body.set($any($event.target).value)"
+        ></textarea>
+      </div>
+
+      @if (mergeTags().length) {
+        <label class="lbl lbl-block">AVAILABLE MERGE TAGS</label>
+        <div class="tags">
+          @for (tag of mergeTags(); track tag) {
+            <button class="tag" type="button" [disabled]="!canEdit" (click)="insertTag(tag)">
+              {{ tag }}
+            </button>
+          }
+        </div>
+      }
+    </div>
+  </section>
+
+  <!-- -------------------------------------------------- recipients & delivery -->
+  <section class="card">
+    <div class="card-pad">
+      <h3 class="card-title">Recipients &amp; Delivery</h3>
+      <p class="card-sub">Only these account types receive the email when it fires</p>
+
+      <div class="aud-head">
+        <span class="lbl">SENT TO<span class="req">*</span></span>
+        @if (selectedTypes().length) {
+          <span class="chip chip-blue">
+            {{ selectedTypes().length }} {{ selectedTypes().length === 1 ? 'role' : 'roles' }}
+          </span>
+        }
+      </div>
+
+      <div class="aud-grid">
+        @for (a of accountTypes(); track a.accountTypeId) {
+          <button
+            type="button"
+            class="aud"
+            [class.on]="isSelected(a.accountTypeId)"
+            [disabled]="!canEdit"
+            (click)="toggleType(a.accountTypeId)"
+          >
+            <span class="aud-box" [class.on]="isSelected(a.accountTypeId)">
+              @if (isSelected(a.accountTypeId)) { <span class="tick">✓</span> }
+            </span>
+            <span class="aud-text">
+              <span class="aud-name">{{ a.name }}</span>
+              <span class="aud-count">{{ a.activeUsers }} active</span>
+            </span>
+          </button>
+        }
+      </div>
+
+      <div class="row-2 row-even">
+        <div class="field">
+          <label class="lbl" for="reply">REPLY-TO ADDRESS</label>
+          <input
+            id="reply"
+            class="inp"
+            type="email"
+            placeholder="no-reply@mcls.msme.gov.in"
+            [disabled]="!canEdit"
+            [value]="replyTo()"
+            (input)="replyTo.set($any($event.target).value)"
+          />
+        </div>
+
+        <div class="field">
+          <label class="lbl" for="copy">COPY TO</label>
+          <input
+            id="copy"
+            class="inp"
+            type="email"
+            placeholder="Optional — internal mailbox"
+            [disabled]="!canEdit"
+            [value]="copyTo()"
+            (input)="copyTo.set($any($event.target).value)"
+          />
+        </div>
+      </div>
+
+      <div class="card-foot">
+        <span class="foot-note">Changes apply to emails sent after saving</span>
+        <div class="spacer"></div>
+        <button class="btn-ghost" type="button" (click)="cancel()">Cancel</button>
+        <button class="btn-ghost" type="button" (click)="sendTest()">Send Test</button>
+        @if (canEdit) {
+          <button class="btn-solid" type="button" [disabled]="saving()" (click)="save()">
+            Save Template
+          </button>
+        }
+      </div>
+    </div>
+  </section>
+}

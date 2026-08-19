@@ -1,0 +1,304 @@
+<header class="em-head">
+  <div>
+    <h2 class="em-title">Emailer</h2>
+    <p class="em-sub">Bulk email campaigns and transactional templates for portal users</p>
+  </div>
+  <div class="spacer"></div>
+  <div class="em-actions">
+    <button class="btn-ghost" type="button" (click)="manageTemplates()">Manage Templates</button>
+    @if (canEdit) {
+      <button class="btn-solid" type="button" (click)="save(true)" [disabled]="saving()">
+        {{ saving() ? 'Sending…' : 'Create Campaign' }}
+      </button>
+    }
+  </div>
+</header>
+
+<!-- ------------------------------------------------------- count tiles -->
+<div class="kpi-row">
+  <div class="kpi">
+    <span class="kpi-tile tile-blue">✉</span>
+    <div>
+      <div class="kpi-label">CAMPAIGNS</div>
+      <div class="kpi-value">{{ summary().campaigns | number }}</div>
+    </div>
+  </div>
+  <div class="kpi">
+    <span class="kpi-tile tile-blue">▤</span>
+    <div>
+      <div class="kpi-label">TEMPLATES</div>
+      <div class="kpi-value">{{ summary().templates | number }}</div>
+    </div>
+  </div>
+  <div class="kpi">
+    <span class="kpi-tile tile-green">👥</span>
+    <div>
+      <div class="kpi-label">RECIPIENTS</div>
+      <div class="kpi-value">{{ summary().recipients | number }}</div>
+    </div>
+  </div>
+  <div class="kpi">
+    <span class="kpi-tile tile-amber">◔</span>
+    <div>
+      <div class="kpi-label">DELIVERY RATE</div>
+      <div class="kpi-value">{{ summary().deliveryRate }}%</div>
+    </div>
+  </div>
+</div>
+
+<!-- ------------------------------------------------------ compose card -->
+<section class="card card-accent">
+  <div class="card-pad">
+    <h3 class="card-title">Compose Campaign</h3>
+    <p class="card-sub">
+      Pick the account types to reach — every active user holding those roles receives it
+    </p>
+
+    @if (message(); as note) {
+      <div class="note" [class.note-bad]="failed()">{{ note }}</div>
+    }
+
+    <div class="row-2">
+      <div class="field">
+        <label class="lbl" for="tpl">TEMPLATE</label>
+        <select
+          id="tpl"
+          class="inp"
+          [value]="templateId()"
+          (change)="chooseTemplate($any($event.target).value)"
+        >
+          <option value="">No template — write from scratch</option>
+          @for (t of templates(); track t.emailTemplateId) {
+            <option [value]="t.emailTemplateId">{{ t.name }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="field">
+        <label class="lbl" for="subj">SUBJECT<span class="req">*</span></label>
+        <input
+          id="subj"
+          class="inp"
+          placeholder="e.g. LEAN Silver assessment schedule — Batch 14"
+          [value]="subject()"
+          (input)="subject.set($any($event.target).value)"
+        />
+      </div>
+    </div>
+
+    <!-- audience -->
+    <div class="aud-head">
+      <span class="lbl">SEND TO<span class="req">*</span></span>
+      @if (selectedTypes().length) {
+        <span class="chip-blue">
+          {{ selectedTypes().length }} {{ selectedTypes().length === 1 ? 'role' : 'roles' }}
+          · {{ reach() | number }} recipients
+        </span>
+      }
+      <div class="spacer"></div>
+      <button class="link-act" type="button" (click)="toggleAll()">
+        {{ allSelected() ? 'Clear all' : 'Select all' }}
+      </button>
+    </div>
+
+    <div class="aud-grid">
+      @for (t of accountTypes(); track t.accountTypeId) {
+        <button
+          type="button"
+          class="aud"
+          [class.on]="isSelected(t.accountTypeId)"
+          [disabled]="!canEdit"
+          (click)="toggleType(t.accountTypeId)"
+        >
+          <span class="aud-box" [class.on]="isSelected(t.accountTypeId)">
+            @if (isSelected(t.accountTypeId)) { <span class="tick">✓</span> }
+          </span>
+          <span class="aud-text">
+            <span class="aud-name">{{ t.name }}</span>
+            <span class="aud-count">{{ t.activeUsers | number }} active</span>
+          </span>
+        </button>
+      }
+    </div>
+
+    <div class="row-2">
+      <div class="field">
+        <label class="lbl" for="extra">ADDITIONAL RECIPIENTS</label>
+        <input
+          id="extra"
+          class="inp"
+          placeholder="Add individual email addresses"
+          [value]="extraRecipients()"
+          (input)="extraRecipients.set($any($event.target).value)"
+        />
+      </div>
+
+      <div class="field">
+        <label class="lbl">ATTACHMENTS</label>
+        <div class="attach">
+          <span class="attach-name">No file chosen</span>
+          <div class="spacer"></div>
+          <button class="btn-mini" type="button" (click)="sendTest()">Browse</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- message -->
+    <label class="lbl lbl-block" for="msg">MESSAGE<span class="req">*</span></label>
+    <div class="editor">
+      <div class="editor-bar">
+        <button type="button" class="fmt bold">B</button>
+        <button type="button" class="fmt italic">I</button>
+        <button type="button" class="fmt underline">U</button>
+      </div>
+      <textarea
+        id="msg"
+        class="editor-area"
+        rows="10"
+        placeholder="Dear {{ '{{user_name}}' }}, …"
+        [value]="body()"
+        (input)="body.set($any($event.target).value)"
+      ></textarea>
+    </div>
+
+    @if (mergeTags().length) {
+      <div class="tags">
+        <span class="tags-label">Merge tags</span>
+        @for (tag of mergeTags(); track tag) {
+          <button class="tag" type="button" (click)="insertTag(tag)">{{ tag }}</button>
+        }
+      </div>
+    }
+
+    <!-- delivery -->
+    <label class="lbl lbl-block">DELIVERY</label>
+    <div class="delivery">
+      <button type="button" class="radio" [class.on]="delivery() === 'now'" (click)="delivery.set('now')">
+        <span class="dot"></span> Send now
+      </button>
+      <button type="button" class="radio" [class.on]="delivery() === 'later'" (click)="delivery.set('later')">
+        <span class="dot"></span> Schedule for later
+      </button>
+
+      @if (delivery() === 'later') {
+        <input
+          class="inp inp-when"
+          type="datetime-local"
+          [value]="scheduledFor()"
+          (change)="scheduledFor.set($any($event.target).value)"
+        />
+      }
+    </div>
+
+    <div class="card-foot">
+      <span class="foot-note">Disabled users are skipped automatically</span>
+      <div class="spacer"></div>
+      @if (canEdit) {
+        <button class="btn-ghost" type="button" [disabled]="saving()" (click)="save(false)">
+          Save as Draft
+        </button>
+        <button class="btn-ghost" type="button" (click)="sendTest()">Send Test</button>
+        <button class="btn-solid" type="button" [disabled]="saving()" (click)="save(true)">
+          Send Campaign
+        </button>
+      }
+    </div>
+  </div>
+</section>
+
+<!-- ----------------------------------------------------- campaign history -->
+<section class="card">
+  <div class="card-top">
+    <h3 class="card-title">Campaign History</h3>
+    <span class="chip" [class.chip-blue]="total() > 0" [class.chip-grey]="total() === 0">
+      {{ total() | number }} campaigns
+    </span>
+    <div class="spacer"></div>
+
+    <input
+      class="inp inp-search"
+      type="search"
+      placeholder="Search campaigns…"
+      [value]="search()"
+      (input)="search.set($any($event.target).value)"
+      (keyup.enter)="page.set(1); load()"
+    />
+
+    <select
+      class="inp inp-status"
+      [value]="statusFilter()"
+      (change)="statusFilter.set($any($event.target).value); page.set(1); load()"
+    >
+      <option value="">All Status</option>
+      @for (s of statuses; track s) {
+        <option [value]="s">{{ s }}</option>
+      }
+    </select>
+  </div>
+
+  <div class="tbl-wrap">
+    <table class="em-tbl">
+      <thead>
+        <tr>
+          <th class="num">S.NO</th>
+          <th>SUBJECT</th>
+          <th>TEMPLATE</th>
+          <th class="num">RECIPIENTS</th>
+          <th>SENT ON</th>
+          <th class="num">DELIVERED</th>
+          <th class="num">OPENED</th>
+          <th>STATUS</th>
+          <th>ACTIONS</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (c of history(); track c.emailCampaignId; let i = $index) {
+          <tr>
+            <td class="num muted">{{ rangeFrom() + i }}</td>
+            <td class="strong">{{ c.subject }}</td>
+            <td>{{ c.name }}</td>
+            <td class="num strong">{{ c.recipientCount | number }}</td>
+            <td>{{ formatDate(c.sentOnUtc) }}</td>
+            <td class="num">{{ c.sentCount | number }}</td>
+            <td class="num">{{ c.failedCount ? (c.sentCount - c.failedCount | number) : '—' }}</td>
+            <td><span class="pill" [class]="statusClass(c.status)">{{ c.status }}</span></td>
+            <td class="nowrap">
+              <button class="link-act" type="button" (click)="view(c)">View</button>
+              <span class="act-sep">|</span>
+              <button class="link-act link-go" type="button" (click)="resend(c)">Resend</button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  @if (history().length === 0) {
+    <!-- 79-Emailer-no-data.svg -->
+    <div class="empty">
+      <div class="empty-mark">✉</div>
+      <div class="empty-title">No campaigns created</div>
+      <div class="empty-text">
+        Compose one above — it will appear here once saved or sent.
+      </div>
+    </div>
+  } @else {
+    <div class="tbl-foot">
+      <span class="foot-note">
+        Showing {{ rangeFrom() | number }}-{{ rangeTo() | number }} of {{ total() | number }} campaigns
+      </span>
+      <div class="spacer"></div>
+      <button class="foot-btn" type="button" [disabled]="page() <= 1" (click)="page.set(page() - 1); load()">
+        Previous
+      </button>
+      <button
+        class="foot-btn"
+        type="button"
+        [disabled]="rangeTo() >= total()"
+        (click)="page.set(page() + 1); load()"
+      >
+        Next
+      </button>
+    </div>
+  }
+</section>

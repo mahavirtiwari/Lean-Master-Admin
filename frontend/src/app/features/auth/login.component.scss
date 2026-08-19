@@ -1,0 +1,710 @@
+// Sign-in screen, transcribed from 0-Login Screen.svg (1512 x 982).
+//
+// Two full-height columns, not a header/body/footer stack: the brand panel runs
+// 0-832 and the form panel 832-1512, which is why the emblem and the footer
+// both sit inside the left column and "Need help?" sits in the right.
+//
+// Every colour below appears in the export — the brandwash and rightwash
+// gradients, the dot texture, the green-to-blue top accent, the blue card cap
+// and the blue submit button.
+
+.login {
+  display: grid;
+  // 832 : 680 on the artboard.
+  grid-template-columns: 55% 45%;
+  min-height: 100vh;
+}
+
+// ============================================================ brand panel ===
+
+.brand-panel {
+  position: relative;
+  // #F7FCF9 -> #EAF6EF at 55% -> #DBEDE3
+  background:
+    linear-gradient(160deg, #f7fcf9 0%, #eaf6ef 55%, #dbede3 100%);
+  border-right: 1px solid #d9ebe1;
+  overflow: hidden;
+}
+
+// The 22 px dot grid laid over the wash: 1.5 r circles in green at 6%.
+.brand-panel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle at 1.6px 1.6px, rgba(15, 123, 69, 0.06) 1.5px, transparent 1.5px);
+  background-size: 22px 22px;
+  pointer-events: none;
+}
+
+// The 4 px accent along the top of the brand panel only.
+.brand-panel::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #0f7b45 0%, #1b4f8a 55%, #1b4f8a 100%);
+}
+
+.brand-inner {
+  position: relative;
+  z-index: 1;
+  padding: 44px 60px 40px;
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+.brand-head {
+  display: flex;
+  align-items: center;
+  gap: 34px;
+}
+
+.emblem-logo {
+  width: 206px;
+  height: 74px;
+  object-fit: contain;
+  flex: none;
+}
+
+// The Ministry lockup sits beside the scheme mark at the same optical height.
+.ministry-logo {
+  height: 62px;
+  width: auto;
+  max-width: 300px;
+  object-fit: contain;
+  flex: none;
+}
+
+.emblem-goi {
+  font-size: 9.4px;
+  font-weight: 700;
+  letter-spacing: 1.1px;
+  color: var(--green);
+}
+
+.emblem-ministry {
+  font-size: 12.8px;
+  font-weight: 700;
+  line-height: 1.4;
+  color: var(--text-strong);
+  margin-top: 4px;
+}
+
+// The green hairlines above the hero and below the quick links.
+.rule {
+  display: block;
+  height: 1px;
+  margin: 30px 0 0;
+  background: linear-gradient(90deg, rgba(15, 123, 69, 0.55), rgba(15, 123, 69, 0.05));
+}
+
+.rule-foot {
+  margin-top: auto;
+}
+
+.hero {
+  font-size: 38px;
+  font-weight: 700;
+  line-height: 1.22;
+  color: var(--text-strong);
+  margin: 46px 0 0;
+}
+
+// The 64 x 4 green bar the artboard sets under the title.
+.hero-underline {
+  display: block;
+  width: 64px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--green);
+  margin-top: 18px;
+}
+
+.hero-sub {
+  font-size: 12.6px;
+  line-height: 1.62;
+  color: var(--text-body);
+  margin: 22px 0 0;
+}
+
+.section-label {
+  font-size: 9.6px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  color: var(--text-muted);
+  margin-top: 34px;
+}
+
+// ------------------------------------------------------- pipeline card ---
+// One card (708 x 96) split into three tiers, with a 3 px green top edge.
+
+.pipeline {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  margin-top: 14px;
+  background: #fff;
+  border: 1px solid var(--border-card);
+  border-top: 3px solid var(--green);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+}
+
+.tier {
+  padding: 16px 22px;
+}
+
+.tier + .tier {
+  border-left: 1px solid var(--border-divider);
+}
+
+.tier-label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 9.4px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  color: var(--text-muted);
+}
+
+// 8 x 8 rounded square, one colour per certification level.
+.tier-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  flex: none;
+}
+
+.tier-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-top: 9px;
+}
+
+.tier-value {
+  font-size: 25px;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.tier-delta {
+  font-size: 10.4px;
+  font-weight: 700;
+  color: var(--green);
+}
+
+// ---------------------------------------------------------- quick links ---
+
+.links {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-top: 14px;
+}
+
+.quick {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 22px 16px 26px;
+  background: #fff;
+  border: 1px solid var(--border-card);
+  border-radius: var(--r-lg);
+  text-decoration: none;
+  overflow: hidden;
+  transition: border-color 0.12s ease, box-shadow 0.12s ease;
+}
+
+// The 3.5 px accent down the card's leading edge.
+.quick-bar {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3.5px;
+}
+
+.quick-text-wrap {
+  flex: 1;
+  min-width: 0;
+}
+
+// Trailing chevron in its own 32 px ring, as drawn.
+.quick-go {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  flex: none;
+  border: 1px solid var(--border-input);
+  border-radius: 50%;
+  background: #fff;
+  transition: background 0.12s ease;
+}
+
+.quick:hover .quick-go {
+  background: var(--surface-muted);
+}
+
+.quick:hover {
+  border-color: var(--green-border);
+  box-shadow: 0 2px 10px rgba(15, 123, 69, 0.09);
+  text-decoration: none;
+}
+
+.quick-icon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--r-md);
+  flex: none;
+}
+
+.quick-title {
+  display: block;
+  font-size: 13.4px;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.quick-text {
+  display: block;
+  font-size: 10.6px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.brand-foot {
+  font-size: 10.8px;
+  color: var(--text-body);
+  padding-top: 22px;
+}
+
+
+.foot-3 {
+  font-size: 10px;
+  color: var(--text-faint);
+  margin-top: 14px;
+}
+
+// ============================================================= form panel ===
+
+.form-panel {
+  // #FBFCFB -> #F1F5F2
+  background: linear-gradient(180deg, #fbfcfb 0%, #f1f5f2 100%);
+  display: flex;
+  flex-direction: column;
+  padding: 0 60px 40px 114px;
+}
+
+.form-top {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 26px;
+  padding: 30px 0 0;
+}
+
+.need-help {
+  font-size: 11.2px;
+  font-weight: 600;
+  color: var(--blue);
+}
+
+// The Bhashini picker, moved up here from its default floating corner. The
+// plugin's button only shows a glyph, so the active language is named beside
+// it — otherwise the reader cannot tell what the page is currently in.
+.lang-picker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.lang-current {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-body);
+  white-space: nowrap;
+}
+
+.lang-slot {
+  display: flex;
+  align-items: center;
+
+  // The plugin positions its own button fixed to a corner; inside this slot it
+  // has to sit in the flow like any other control.
+  ::ng-deep #bhashini-translation {
+    position: static !important;
+    inset: auto !important;
+    margin: 0 !important;
+    transform: none !important;
+    box-shadow: none !important;
+  }
+}
+
+.form-inner {
+  max-width: 452px;
+  width: 100%;
+  margin-top: 78px;
+}
+
+
+.welcome {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-strong);
+  margin-top: 9px;
+}
+
+// ------------------------------------------------------- sign-in card ---
+// 452 x 486, rx 14, with a 14 px blue cap across the top and the deck's
+// offset drop shadow.
+
+.signin-card {
+  position: relative;
+  margin-top: 26px;
+  background: #fff;
+  border: 1px solid var(--border-card);
+  border-radius: 14px;
+  box-shadow: 6px 10px 0 rgba(22, 33, 26, 0.045);
+  overflow: hidden;
+}
+
+.card-cap {
+  display: block;
+  height: 7px;
+  background: var(--blue);
+}
+
+.signin-body {
+  padding: 26px 36px 24px;
+}
+
+.signin-title {
+  font-size: 25px;
+  font-weight: 700;
+  color: var(--text-strong);
+  margin: 0;
+}
+
+.signin-sub {
+  font-size: 11.8px;
+  color: var(--text-muted);
+  margin: 8px 0 24px;
+}
+
+.signin-card .field + .field {
+  margin-top: 18px;
+}
+
+.label-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+
+.forgot {
+  font-size: 10.6px;
+  font-weight: 600;
+  color: var(--blue);
+}
+
+.signin-card .input {
+  height: 44px;
+  font-size: 12.8px;
+  border-radius: 7px;
+}
+
+.signin-card .input:focus {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(27, 79, 138, 0.12);
+}
+
+.pw-wrap {
+  position: relative;
+}
+
+.pw-toggle {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 0;
+  background: none;
+  font-family: inherit;
+  font-size: 10.6px;
+  font-weight: 600;
+  color: var(--blue);
+  cursor: pointer;
+}
+
+// 192 / 128 / 44 across the 380 field row.
+.captcha-row {
+  display: grid;
+  grid-template-columns: 192fr 128fr 44px;
+  gap: 8px;
+  align-items: center;
+}
+
+.captcha-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  height: 44px;
+  border: 1px solid var(--border-card);
+  border-radius: 7px;
+  background: #edf2ef;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  user-select: none;
+}
+
+.captcha-refresh {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--border-input);
+  border-radius: 7px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.keep {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 22px;
+  font-size: 11.6px;
+  color: var(--text-body);
+  cursor: pointer;
+}
+
+// The artboard draws this checked, in blue.
+.keep input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--blue);
+  cursor: pointer;
+}
+
+.login-error {
+  margin-top: 16px;
+  padding: 11px 14px;
+  border-radius: var(--r-md);
+  background: var(--danger-50);
+  border: 1px solid var(--danger-border);
+  font-size: 11.4px;
+  font-weight: 600;
+  color: var(--danger);
+}
+
+// Blue, not the portal green — this is the one primary action the deck
+// renders in #1B4F8A.
+.signin-btn {
+  width: 100%;
+  height: 48px;
+  margin-top: 22px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--blue);
+  color: #fff;
+  font-family: inherit;
+  font-size: 13.8px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.signin-btn:hover:not(:disabled) {
+  background: #163f6f;
+}
+
+.signin-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.authorised {
+  text-align: center;
+  font-size: 10.4px;
+  color: var(--text-muted);
+  margin: 18px 0 0;
+}
+
+.assurances {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-top: 30px;
+}
+
+.assurance-title {
+  font-size: 10.8px;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+
+.not-admin {
+  font-size: 11.2px;
+  color: var(--text-muted);
+  margin: 30px 0 0;
+}
+
+.not-admin a {
+  font-weight: 700;
+}
+
+// ============================================================= narrow ===
+// Below the artboard width the brand panel is dropped rather than squeezed —
+// the form is what a signing-in user needs.
+
+@media (max-width: 1080px) {
+  .login {
+    grid-template-columns: 1fr;
+  }
+
+  .brand-panel {
+    display: none;
+  }
+
+  .form-panel {
+    padding: 0 32px 40px;
+    align-items: center;
+  }
+
+  .form-inner {
+    margin-top: 40px;
+  }
+}
+
+// ============================================== icons, ticks, watermark ===
+
+.watermark {
+  position: absolute;
+  right: -40px;
+  bottom: 40px;
+  width: 300px;
+  height: 300px;
+  pointer-events: none;
+}
+
+// ------------------------------------------------------- field affixes ---
+
+.input-wrap {
+  position: relative;
+}
+
+.lead-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.signin-card .input.has-lead {
+  padding-left: 40px;
+}
+
+// The pale green badge the deck puts on a completed field.
+.tick {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--green-50);
+  pointer-events: none;
+}
+
+.eye {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: none;
+  cursor: pointer;
+}
+
+.eye:hover {
+  background: var(--surface-muted);
+}
+
+// The captcha input has no leading glyph, so its tick sits alone.
+.captcha-row .input {
+  padding-right: 38px;
+}
+
+.captcha-box {
+  position: relative;
+}
+
+.captcha-strike {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+// --------------------------------------------------------- affordances ---
+
+.need-help {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+
+.signin-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+}
+
+.authorised {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+
+.assurance {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+}
+
+.assurance svg {
+  flex: none;
+  margin-top: 1px;
+}
+
+.not-admin a {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}

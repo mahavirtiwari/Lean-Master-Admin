@@ -1,0 +1,18 @@
+// Create / Edit User — three numbered sections, per 49, 52 and 59.
+
+.type-field {
+  max-width: 420px;
+}
+
+// On edit the organisation is shown rather than typed: it is registered with
+// the account and renaming it is not what this screen is for.
+.org-readonly {
+  max-width: 620px;
+}
+
+.detail-value {
+  font-size: 12.4px;
+  font-weight: 600;
+  color: var(--text-strong);
+  padding-top: 4px;
+}

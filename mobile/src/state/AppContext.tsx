@@ -1,5 +1,4 @@
 import NetInfo from '@react-native-community/netinfo';
-import * as SecureStore from 'expo-secure-store';
 import React, {
   createContext,
   useCallback,
@@ -11,6 +10,7 @@ import React, {
 } from 'react';
 
 import { request, setBearer } from '../api/client';
+import { deleteItem, getItem, setItem } from './secureStore';
 import { clearDraft, openDatabase, pendingCount, readDraft, writeDraft } from '../offline/db';
 import { drainOutbox } from '../offline/sync';
 
@@ -84,8 +84,8 @@ export function AppProvider({ children }: { children: React.ReactNode }): React.
       await openDatabase();
 
       const [token, storedUser, stored] = await Promise.all([
-        SecureStore.getItemAsync(TOKEN_KEY),
-        SecureStore.getItemAsync(USER_KEY),
+        getItem(TOKEN_KEY),
+        getItem(USER_KEY),
         readDraft(),
       ]);
 
@@ -147,15 +147,15 @@ export function AppProvider({ children }: { children: React.ReactNode }): React.
     };
 
     setBearer(response.accessToken);
-    await SecureStore.setItemAsync(TOKEN_KEY, response.accessToken);
-    await SecureStore.setItemAsync(USER_KEY, JSON.stringify(signedIn));
+    await setItem(TOKEN_KEY, response.accessToken);
+    await setItem(USER_KEY, JSON.stringify(signedIn));
     setUser(signedIn);
   }, []);
 
   const signOut = useCallback(async () => {
     setBearer(null);
-    await SecureStore.deleteItemAsync(TOKEN_KEY);
-    await SecureStore.deleteItemAsync(USER_KEY);
+    await deleteItem(TOKEN_KEY);
+    await deleteItem(USER_KEY);
     setUser(null);
   }, []);
 

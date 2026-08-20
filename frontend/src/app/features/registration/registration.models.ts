@@ -42,6 +42,9 @@ export interface RegistrationPlant {
   pincode: string | null;
   state: string | null;
   district: string | null;
+  /** True when this plant is already on the scheme; it cannot be taken again. */
+  isRegistered: boolean;
+  registeredLeanId: string | null;
 }
 
 export interface RegistrationActivity {

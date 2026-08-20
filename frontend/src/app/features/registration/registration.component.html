@@ -343,6 +343,7 @@
               class="pick"
               type="button"
               [class.on]="selectedPlantIndex() === p.index"
+              [class.blocked]="p.isRegistered"
               (click)="pickPlant(p.index)"
             >
               <span class="pick-radio"></span>
@@ -351,8 +352,15 @@
                 <span class="pick-addr">
                   {{ p.address }}{{ p.district ? ', ' + p.district : '' }}{{ p.state ? ', ' + p.state : '' }}{{ p.pincode ? ' ' + p.pincode : '' }}
                 </span>
+                @if (p.isRegistered) {
+                  <span class="pick-warn">
+                    Already registered under {{ p.registeredLeanId }} — choose another plant.
+                  </span>
+                }
               </span>
-              @if (selectedPlantIndex() === p.index) {
+              @if (p.isRegistered) {
+                <span class="pick-tag pick-tag-bad">Registered</span>
+              } @else if (selectedPlantIndex() === p.index) {
                 <span class="pick-tag">Selected</span>
               }
             </button>

@@ -332,6 +332,19 @@ export class RegistrationComponent {
   // ------------------------------------------------- R4: unit and activity ---
 
   pickPlant(index: number): void {
+    const plant = this.plants().find((p) => p.index === index);
+
+    // The server rejects it too; this is so the applicant is told at the tap
+    // rather than after filling in the SPOC details.
+    if (plant?.isRegistered) {
+      this.failed.set(true);
+      this.message.set(
+        `${plant.unitName ?? 'That plant'} is already registered under ${plant.registeredLeanId}. ` +
+          'Choose another plant, or sign in with that LEAN ID.',
+      );
+      return;
+    }
+
     this.selectedPlantIndex.set(index);
     // The activity belongs to the chosen location, so changing the location
     // clears it rather than silently keeping the previous one.

@@ -1555,3 +1555,12 @@ a.head-mark:hover .ministry { text-decoration: underline; }
     background: #eff4fa;
   }
 }
+
+// A plant already on the scheme: shown, but not selectable.
+.pick-warn {
+  display: block;
+  margin-top: 6px;
+  font-size: 10.4px;
+  font-weight: 600;
+  color: #b91c1c;
+}

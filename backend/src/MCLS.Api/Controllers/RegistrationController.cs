@@ -161,14 +161,15 @@ public sealed class RegistrationController(
             .Select(e => new { e.LeanId })
             .SingleOrDefaultAsync(ct);
 
+        // An enterprise may hold several plants and register each of them, so a
+        // Udyam number that is already on the scheme is not turned away here.
+        // The plant is what may not be registered twice, and that is checked
+        // at R4 where the plant is actually chosen.
         if (existing is not null)
         {
-            return Conflict(new
-            {
-                message = "This Udyam number is already registered for the LEAN Scheme. " +
-                          "Please sign in instead.",
-                leanId = existing.LeanId,
-            });
+            logger.LogInformation(
+                "Udyam {Udyam} is already registered as {LeanId}; continuing for another plant.",
+                udyamNo, existing.LeanId);
         }
 
         var record = await udyam.GetAsync(udyamNo, mobile, ct);
@@ -216,7 +217,7 @@ public sealed class RegistrationController(
             sessionToken = draft.SessionToken,
             currentStep = draft.CurrentStep,
             enterprise = Describe(record),
-            plants = DescribePlants(record),
+            plants = await DescribePlants(record, ct),
             activities = await DescribeActivities(record, ct),
         });
     }
@@ -237,7 +238,7 @@ public sealed class RegistrationController(
             currentStep = draft.CurrentStep,
             udyamRegistrationNo = draft.UdyamRegistrationNo,
             enterprise = record is null ? null : Describe(record),
-            plants = record is null ? null : DescribePlants(record),
+            plants = record is null ? null : await DescribePlants(record, ct),
             activities = record is null ? null : await DescribeActivities(record, ct),
             selectedUnitIdNo = draft.SelectedUnitIdNo,
             selectedNicFiveDigit = draft.SelectedNicFiveDigit,
@@ -271,9 +272,27 @@ public sealed class RegistrationController(
         // activity the registry never reported.
         if (record is not null)
         {
-            if (!record.Plants.Any(p => p.UnitIdNo == request.UnitIdNo))
+            var chosen = record.Plants.FirstOrDefault(p => p.UnitIdNo == request.UnitIdNo);
+
+            if (chosen is null)
             {
                 return BadRequest(new { message = "That unit is not on the Udyam record." });
+            }
+
+            // One plant, one registration. The enterprise may come back for a
+            // different plant, which is why R2 lets a known Udyam number
+            // through, but the same plant may not be registered twice.
+            var takenBy = await RegisteredPlantOwnerAsync(chosen.PlantIdNo, chosen.UnitIdNo, ct);
+
+            if (takenBy is not null)
+            {
+                return Conflict(new
+                {
+                    code = "PLANT_ALREADY_REGISTERED",
+                    message = $"{chosen.UnitName ?? "That plant"} is already registered under " +
+                              $"{takenBy}. Choose another plant, or sign in with that LEAN ID.",
+                    leanId = takenBy,
+                });
             }
 
             var activity = record.Activities.FirstOrDefault(a => a.NicFiveDigit == request.NicFiveDigit);
@@ -326,13 +345,23 @@ public sealed class RegistrationController(
 
         var email = request.Email.Trim().ToLowerInvariant();
 
-        // The SPOC e-mail becomes the sign-in identity, so it has to be free.
-        if (await db.Users.AnyAsync(u => u.Email == email, ct))
+        // One address may stand behind at most three registrations. A
+        // consultant registering for a few clients is ordinary; one address
+        // behind dozens is not.
+        //
+        // Note this is a cap, not a bar: an address that already has a portal
+        // account is fine, because the plants it registers are attached to
+        // that same account rather than to a second one.
+        var used = await SpocEmailUseCountAsync(email, ct);
+
+        if (used >= MaxRegistrationsPerSpocEmail)
         {
             return Conflict(new
             {
-                message = "That e-mail address already has a portal account. " +
-                          "Use a different address, or sign in with it.",
+                code = "SPOC_EMAIL_LIMIT",
+                message = $"{request.Email.Trim()} has already been used for " +
+                          $"{MaxRegistrationsPerSpocEmail} registrations, which is the limit. " +
+                          "Use a different SPOC e-mail address.",
             });
         }
 
@@ -724,6 +753,33 @@ public sealed class RegistrationController(
                 return;
             }
 
+            // A SPOC who registers a second or third plant keeps one login:
+            // Identity holds e-mail unique, and two accounts for one person
+            // would leave password reset ambiguous. The new enterprise is
+            // attached to the account they already have.
+            var existing = await db.Users.AsTracking()
+                .FirstOrDefaultAsync(u => u.Email == draft.SpocEmail, ct);
+
+            if (existing is not null)
+            {
+                enterprise.PrimaryUserId = existing.Id;
+                await db.SaveChangesAsync(ct);
+
+                await email.QueueTemplatedAsync("APPLICANT_ADDITIONAL_PLANT", draft.SpocEmail!, existing.Id,
+                    new Dictionary<string, string>
+                    {
+                        ["unit_name"] = enterprise.Name,
+                        ["lean_id"] = leanId,
+                        ["user_code"] = existing.UserCode,
+                        ["login_url"] = $"{Request.Headers.Origin}/msme/login",
+                        ["support_email"] = "consultancy.zed@qcin.org",
+                    }, ct);
+
+                logger.LogInformation(
+                    "{LeanId} attached to the existing account {UserCode}.", leanId, existing.UserCode);
+                return;
+            }
+
             var password = GenerateApplicantPassword();
 
             var user = new ApplicationUser
@@ -811,6 +867,45 @@ public sealed class RegistrationController(
         return new string([.. chars]);
     }
 
+    /// <summary>How many completed registrations one SPOC address may hold.</summary>
+    private const int MaxRegistrationsPerSpocEmail = 3;
+
+    /// <summary>
+    /// The LEAN ID of the enterprise already registered against this plant, or
+    /// null when it is free.
+    ///
+    /// PlantIdNo is the registry's own identifier for a plant and is what the
+    /// check keys on. UnitIdNo is the fallback for older records that carry no
+    /// plant id; it is not used on its own because the registry repeats it
+    /// across the units of one enterprise.
+    /// </summary>
+    private async Task<string?> RegisteredPlantOwnerAsync(
+        string? plantIdNo, string? unitIdNo, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(plantIdNo) && string.IsNullOrWhiteSpace(unitIdNo))
+        {
+            return null;
+        }
+
+        return await db.EnterprisePlants.AsNoTracking()
+            .Where(p => !string.IsNullOrEmpty(plantIdNo)
+                ? p.PlantIdNo == plantIdNo
+                : p.UnitIdNo == unitIdNo && p.PlantIdNo == null)
+            .Select(p => p.Enterprise.LeanId)
+            .FirstOrDefaultAsync(ct);
+    }
+
+    /// <summary>
+    /// How many enterprises already name this address as their SPOC.
+    ///
+    /// A consultant registering on behalf of a handful of clients is normal;
+    /// one address behind dozens of registrations is not, so the scheme caps
+    /// it at <see cref="MaxRegistrationsPerSpocEmail"/>.
+    /// </summary>
+    private Task<int> SpocEmailUseCountAsync(string email, CancellationToken ct)
+        => db.Enterprises.AsNoTracking()
+            .CountAsync(e => e.ContactEmail == email, ct);
+
     // ----------------------------------------------------------------- helpers ---
 
     private Task<Registration?> Load(Guid token, CancellationToken ct)
@@ -827,9 +922,22 @@ public sealed class RegistrationController(
     /// none at all — so the index is what the browser selects by. Selecting by
     /// UnitIdNo made every unit with the same value light up at once.
     /// </summary>
-    private static List<RegistrationPlantDto> DescribePlants(UdyamRecord r)
-        => r.Plants.Select((p, i) => new RegistrationPlantDto(
-            i, p.UnitIdNo, p.UnitName, p.Address, p.Pincode, p.StateName, p.DistrictName)).ToList();
+    private async Task<List<RegistrationPlantDto>> DescribePlants(UdyamRecord r, CancellationToken ct)
+    {
+        var plants = new List<RegistrationPlantDto>(r.Plants.Count);
+
+        for (var i = 0; i < r.Plants.Count; i++)
+        {
+            var p = r.Plants[i];
+            var owner = await RegisteredPlantOwnerAsync(p.PlantIdNo, p.UnitIdNo, ct);
+
+            plants.Add(new RegistrationPlantDto(
+                i, p.UnitIdNo, p.UnitName, p.Address, p.Pincode, p.StateName, p.DistrictName,
+                owner is not null, owner));
+        }
+
+        return plants;
+    }
 
     /// <summary>
     /// Activities, each marked with whether the scheme actually covers it.
@@ -919,7 +1027,11 @@ public sealed record RegistrationPlantDto(
     string? Address,
     string? Pincode,
     string? State,
-    string? District);
+    string? District,
+    // Set when this plant is already on the scheme, so R4 can show it as
+    // unavailable instead of failing when the applicant presses Continue.
+    bool IsRegistered,
+    string? RegisteredLeanId);
 
 public sealed record RegistrationActivityDto(
     int Index,

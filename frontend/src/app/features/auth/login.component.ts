@@ -3,38 +3,6 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 
 import { AuthService } from '../../core/auth.service';
-import { readPreferred } from '../../core/bhashini';
-
-/**
- * The 22 scheduled languages plus English, keyed by the code Bhashini stores in
- * localStorage. Used only to name the current selection next to the picker —
- * the plugin's own button shows a glyph and not which language is active.
- */
-const LANGUAGE_NAMES: Record<string, string> = {
-  en: 'English',
-  as: 'Assamese',
-  bn: 'Bengali',
-  brx: 'Bodo',
-  doi: 'Dogri',
-  gom: 'Konkani',
-  gu: 'Gujarati',
-  hi: 'Hindi',
-  kn: 'Kannada',
-  ks: 'Kashmiri',
-  mai: 'Maithili',
-  ml: 'Malayalam',
-  mni: 'Manipuri',
-  mr: 'Marathi',
-  ne: 'Nepali',
-  or: 'Odia',
-  pa: 'Punjabi',
-  sa: 'Sanskrit',
-  sat: 'Santali',
-  sd: 'Sindhi',
-  ta: 'Tamil',
-  te: 'Telugu',
-  ur: 'Urdu',
-};
 
 /**
  * The sign-in screen (0-Login Screen.svg / 0a-Login Entered.svg).
@@ -59,8 +27,6 @@ export class LoginComponent {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
 
-  /** The language Bhashini is currently showing the page in. */
-  readonly currentLanguage = signal(languageName(readPreferred()));
 
   /** Set when assets/msme-logo.svg is absent, so the text lockup takes over. */
   readonly ministryLogoMissing = signal(false);
@@ -214,6 +180,3 @@ function makeCaptcha(): string {
 }
 
 
-function languageName(code: string): string {
-  return LANGUAGE_NAMES[code] ?? code.toUpperCase();
-}

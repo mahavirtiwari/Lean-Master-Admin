@@ -218,7 +218,14 @@ internal sealed class EnterpriseConfiguration : IEntityTypeConfiguration<Enterpr
         b.Property(x => x.ContactMobile).HasMaxLength(20).IsUnicode(false);
         b.Property(x => x.Gstin).HasMaxLength(15).IsUnicode(false);
         b.Property(x => x.Pan).HasMaxLength(10).IsUnicode(false);
+        b.Property(x => x.LeanId).HasMaxLength(30).IsUnicode(false);
         b.HasIndex(x => x.UdyamRegistrationNo).IsUnique();
+
+        // msme.Enterprise records its creation as RegisteredOnUtc; there is no
+        // CreatedOnUtc column. The property only exists because the entity
+        // implements IAuditable, so it is mapped away rather than left for EF
+        // to infer — unmapped, every INSERT names a column the table lacks.
+        b.Ignore(x => x.CreatedOnUtc);
 
         b.HasOne(x => x.Sector).WithMany().HasForeignKey(x => x.SectorId).OnDelete(DeleteBehavior.Restrict);
         b.HasOne(x => x.State).WithMany().HasForeignKey(x => x.StateId).OnDelete(DeleteBehavior.Restrict);
@@ -851,5 +858,82 @@ internal sealed class PaymentGatewayConfiguration : IEntityTypeConfiguration<Pay
         b.Property(x => x.MerchantKeyMask).HasMaxLength(60);
         b.Property(x => x.SuccessRate).HasPrecision(5, 2);
         b.HasIndex(x => x.Code).IsUnique();
+    }
+}
+
+internal sealed class RegistrationConfiguration : IEntityTypeConfiguration<Registration>
+{
+    public void Configure(EntityTypeBuilder<Registration> b)
+    {
+        b.ToTable("Registration", "msme");
+        b.HasKey(x => x.RegistrationId);
+        b.Property(x => x.UdyamRegistrationNo).HasMaxLength(30).IsRequired().IsUnicode(false);
+        b.Property(x => x.UdyamMobile).HasMaxLength(15).IsRequired().IsUnicode(false);
+        b.Property(x => x.SelectedUnitIdNo).HasMaxLength(60);
+        b.Property(x => x.SelectedNicFiveDigit).HasMaxLength(10).IsUnicode(false);
+        b.Property(x => x.SpocName).HasMaxLength(200);
+        b.Property(x => x.SpocDesignation).HasMaxLength(150);
+        b.Property(x => x.SpocMobile).HasMaxLength(15).IsUnicode(false);
+        b.Property(x => x.SpocEmail).HasMaxLength(256);
+        b.Property(x => x.Status).HasMaxLength(15).IsRequired().IsUnicode(false);
+        b.Property(x => x.PledgeAcceptedBy).HasMaxLength(200);
+        b.Property(x => x.PledgeAcceptedIp).HasMaxLength(45).IsUnicode(false);
+        b.HasIndex(x => x.SessionToken).IsUnique();
+
+        b.HasOne(x => x.AwarenessProgram).WithMany()
+            .HasForeignKey(x => x.AwarenessProgramId).OnDelete(DeleteBehavior.Restrict);
+        b.HasOne(x => x.Enterprise).WithMany()
+            .HasForeignKey(x => x.EnterpriseId).OnDelete(DeleteBehavior.Restrict);
+    }
+}
+
+internal sealed class AwarenessProgramConfiguration : IEntityTypeConfiguration<AwarenessProgram>
+{
+    public void Configure(EntityTypeBuilder<AwarenessProgram> b)
+    {
+        b.ToTable("AwarenessProgram", "master");
+        b.HasKey(x => x.AwarenessProgramId);
+        b.Property(x => x.Name).HasMaxLength(250).IsRequired();
+        b.Property(x => x.Venue).HasMaxLength(250);
+    }
+}
+
+// EnterprisePlant and EnterpriseActivity had DbSets but no mapping, so EF fell
+// back to pluralised names in the default schema and every insert failed on
+// "Invalid object name". Nothing had written to them before the registration
+// wizard: the demo data was loaded by SQL.
+internal sealed class EnterprisePlantConfiguration : IEntityTypeConfiguration<EnterprisePlant>
+{
+    public void Configure(EntityTypeBuilder<EnterprisePlant> b)
+    {
+        b.ToTable("EnterprisePlant", "msme");
+        b.HasKey(x => x.EnterprisePlantId);
+        b.Property(x => x.UdyamApplicationId).HasMaxLength(50).IsUnicode(false);
+        b.Property(x => x.UnitIdNo).HasMaxLength(60);
+        b.Property(x => x.UnitName).HasMaxLength(250);
+        b.Property(x => x.UamNo).HasMaxLength(50);
+        b.Property(x => x.PlantIdNo).HasMaxLength(50);
+        b.Property(x => x.AddressLine).HasMaxLength(500);
+        b.Property(x => x.Pincode).HasMaxLength(6).IsUnicode(false);
+        b.Property(x => x.LgDistrictCode).HasMaxLength(10).IsUnicode(false);
+        b.Property(x => x.StateNameRaw).HasMaxLength(120);
+        b.Property(x => x.DistrictNameRaw).HasMaxLength(120);
+    }
+}
+
+internal sealed class EnterpriseActivityConfiguration : IEntityTypeConfiguration<EnterpriseActivity>
+{
+    public void Configure(EntityTypeBuilder<EnterpriseActivity> b)
+    {
+        b.ToTable("EnterpriseActivity", "msme");
+        b.HasKey(x => x.EnterpriseActivityId);
+        b.Property(x => x.UdyamApplicationId).HasMaxLength(50).IsUnicode(false);
+        b.Property(x => x.Activity).HasMaxLength(120);
+        b.Property(x => x.NicTwoDigit).HasMaxLength(5).IsUnicode(false);
+        b.Property(x => x.NicFourDigit).HasMaxLength(5).IsUnicode(false);
+        b.Property(x => x.NicFiveDigit).HasMaxLength(10).IsUnicode(false);
+        b.Property(x => x.NicTwoDigitName).HasMaxLength(300);
+        b.Property(x => x.NicFourDigitName).HasMaxLength(300);
+        b.Property(x => x.NicFiveDigitName).HasMaxLength(300);
     }
 }

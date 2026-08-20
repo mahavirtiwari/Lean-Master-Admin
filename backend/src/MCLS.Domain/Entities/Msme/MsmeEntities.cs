@@ -8,6 +8,20 @@ namespace MCLS.Domain.Entities.Msme;
 public class Enterprise : IAuditable, IConcurrencyAware
 {
     public int EnterpriseId { get; set; }
+
+    /// <summary>
+    /// The scheme's own number, issued when registration completes — e.g.
+    /// LEAN-MH-2025-00456. Distinct from the Udyam number: Udyam identifies the
+    /// enterprise to the Ministry, this identifies it to the LEAN scheme, and
+    /// it is what the applicant signs in with.
+    /// </summary>
+    public string? LeanId { get; set; }
+
+    /// <summary>The plant chosen at registration; decides where assessment happens.</summary>
+    public int? SelectedPlantId { get; set; }
+
+    /// <summary>The NIC activity chosen at registration; decides the questionnaire set.</summary>
+    public int? SelectedActivityId { get; set; }
     public string UdyamRegistrationNo { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
 
@@ -280,4 +294,75 @@ public class EnterprisePlant
     public string? DistrictNameRaw { get; set; }
 
     public DateTime CreatedOnUtc { get; set; }
+}
+
+/// <summary>
+/// An applicant's in-progress registration (R1-R9).
+///
+/// Deliberately separate from <see cref="Enterprise"/>. The wizard is eight
+/// steps long and unauthenticated, so most drafts are abandoned; writing them
+/// progressively into Enterprise would put half-built records into the master
+/// data that every admin screen counts as registered MSMEs. The Enterprise and
+/// its user account are created once, from a draft that reached the pledge.
+/// </summary>
+public class Registration
+{
+    public int RegistrationId { get; set; }
+
+    /// <summary>
+    /// The handle the browser carries between steps. Opaque and random rather
+    /// than the row id: the wizard has no signed-in user, so a sequential
+    /// identifier would let anyone read another applicant's draft.
+    /// </summary>
+    public Guid SessionToken { get; set; }
+
+    public string UdyamRegistrationNo { get; set; } = string.Empty;
+    public string UdyamMobile { get; set; } = string.Empty;
+
+    /// <summary>The registry response verbatim, so later steps survive it going down.</summary>
+    public string? UdyamPayload { get; set; }
+
+    public string? SelectedUnitIdNo { get; set; }
+    public string? SelectedNicFiveDigit { get; set; }
+
+    public string? SpocName { get; set; }
+    public string? SpocDesignation { get; set; }
+    public string? SpocMobile { get; set; }
+    public string? SpocEmail { get; set; }
+
+    public bool? AttendedAwareness { get; set; }
+    public int? AwarenessProgramId { get; set; }
+
+    /// <summary>Hashed, never stored in the clear.</summary>
+    public byte[]? OtpHash { get; set; }
+    public DateTime? OtpSentOnUtc { get; set; }
+    public byte OtpAttempts { get; set; }
+    public DateTime? EmailVerifiedOnUtc { get; set; }
+
+    public DateTime? PledgeAcceptedOnUtc { get; set; }
+    public string? PledgeAcceptedBy { get; set; }
+    public string? PledgeAcceptedIp { get; set; }
+
+    public byte CurrentStep { get; set; } = 2;
+
+    /// <summary>Draft, Completed or Abandoned.</summary>
+    public string Status { get; set; } = "Draft";
+
+    public int? EnterpriseId { get; set; }
+    public DateTime StartedOnUtc { get; set; }
+    public DateTime? CompletedOnUtc { get; set; }
+
+    public AwarenessProgram? AwarenessProgram { get; set; }
+    public Enterprise? Enterprise { get; set; }
+}
+
+/// <summary>A LEAN awareness programme an applicant may have attended (R5).</summary>
+public class AwarenessProgram
+{
+    public int AwarenessProgramId { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public DateOnly? HeldOn { get; set; }
+    public string? Venue { get; set; }
+    public short? StateId { get; set; }
+    public bool IsActive { get; set; } = true;
 }

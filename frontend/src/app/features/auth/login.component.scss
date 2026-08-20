@@ -308,7 +308,9 @@
   align-items: center;
   justify-content: flex-end;
   gap: 26px;
-  padding: 30px 0 0;
+  // The right reserve is the Bhashini picker's width; it is fixed to the
+  // corner by a global rule, so "Need help?" is held clear of it.
+  padding: 26px 96px 0 0;
 }
 
 .need-help {
@@ -320,33 +322,8 @@
 // The Bhashini picker, moved up here from its default floating corner. The
 // plugin's button only shows a glyph, so the active language is named beside
 // it — otherwise the reader cannot tell what the page is currently in.
-.lang-picker {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
 
-.lang-current {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--text-body);
-  white-space: nowrap;
-}
 
-.lang-slot {
-  display: flex;
-  align-items: center;
-
-  // The plugin positions its own button fixed to a corner; inside this slot it
-  // has to sit in the flow like any other control.
-  ::ng-deep #bhashini-translation {
-    position: static !important;
-    inset: auto !important;
-    margin: 0 !important;
-    transform: none !important;
-    box-shadow: none !important;
-  }
-}
 
 .form-inner {
   max-width: 452px;
@@ -707,4 +684,31 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
+}
+
+// On a phone the three-across captcha squeezes the field to about 70 px. The
+// code and its refresh keep the first row; the field takes the full width
+// beneath them, where it can actually be typed into.
+@media (max-width: 480px) {
+  .captcha-row {
+    grid-template-columns: 1fr 44px;
+    gap: 8px 10px;
+  }
+
+  .captcha-box {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .captcha-refresh,
+  .captcha-new {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .captcha-row .input-wrap,
+  .captcha-row > .input {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
 }

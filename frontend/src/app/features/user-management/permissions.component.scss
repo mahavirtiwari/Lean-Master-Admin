@@ -9,7 +9,7 @@
 
 @media (max-width: 1180px) {
   .perm-layout {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
@@ -163,4 +163,27 @@
   font-size: 11.2px;
   font-weight: 600;
   color: var(--green);
+}
+
+// ============================================================== narrow ===
+@media (max-width: 620px) {
+  // The side list is a picker on a phone, not a column: it is capped so the
+  // matrix below it is reachable without scrolling past every module.
+  .side-list {
+    max-height: 260px;
+  }
+
+  .perm-side {
+    position: static;
+  }
+
+  .matrix-head-right {
+    align-items: flex-start;
+    width: 100%;
+  }
+
+  .matrix-foot {
+    flex-wrap: wrap;
+    padding: 12px 14px;
+  }
 }

@@ -1,0 +1,937 @@
+// MSME applicant registration — R1-R9, on the 1440-wide artboards.
+//
+// A separate visual frame from the admin shell: no sidebar, a public
+// Government header and footer, and the eight-step rail across the top. The
+// palette is shared with the admin portal deliberately — it is the same scheme.
+
+:host {
+  display: block;
+  min-height: 100vh;
+  background: #f4f7f5;
+}
+
+// ------------------------------------------------------------------ header ---
+// 1440x88 white band, then the 3 px green rule the artboard puts beneath it.
+.pub-head {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  height: 88px;
+  padding: 0 40px;
+  background: #fff;
+  border-bottom: 3px solid #0f7b45;
+
+  .spacer { flex: 1; }
+
+  // The hairline between the emblem and the wordmark.
+  .head-rule {
+    width: 1px;
+    height: 44px;
+    background: #c6d3cb;
+  }
+}
+
+.head-mark {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  .goi { font-size: 9.2px; font-weight: 700; letter-spacing: 0.9px; color: #0f7b45; }
+  .ministry { font-size: 12.4px; font-weight: 700; color: #16211a; }
+}
+
+.head-logo { height: 46px; width: auto; object-fit: contain; }
+
+.head-link {
+  font-size: 11.4px;
+  font-weight: 500;
+  color: #47554c;
+  background: none;
+  border: 0;
+  cursor: pointer;
+
+  &:hover { text-decoration: underline; }
+}
+
+.head-sep { color: #c6d3cb; }
+.head-lang { font-size: 11.4px; font-weight: 600; color: #1b4f8a; }
+
+.head-signin {
+  height: 34px;
+  padding: 0 18px;
+  border-radius: 6px;
+  border: 1px solid #c6d3cb;
+  background: #fff;
+  font-size: 12.4px;
+  font-weight: 600;
+  color: #16211a;
+  cursor: pointer;
+
+  &:hover { background: #f7faf8; }
+}
+
+// -------------------------------------------------------------- step rail ---
+// The rail sits on its own #F0F8F3 band, 104 tall, closed by a #D9EBE1 rule.
+.rail {
+  display: flex;
+  align-items: flex-start;
+  height: 104px;
+  padding: 26px 40px 0;
+  background: #f0f8f3;
+  border-bottom: 1px solid #d9ebe1;
+  overflow-x: auto;
+}
+
+// One step: a 30px circle with the connector running in from the left. No
+// boxes — the artboard draws circles joined by a hairline, nothing more.
+.rail-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 11px;
+  flex: 1 0 140px;
+  position: relative;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: default;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 14px;
+    right: 50%;
+    width: 100%;
+    height: 1px;
+    background: #c6d3cb;
+  }
+
+  &:first-child::before { display: none; }
+
+  // The connector is green only once the step BEHIND it is done.
+  &.done::before,
+  &.on::before { background: #0f7b45; }
+
+  .marker {
+    position: relative;
+    z-index: 1;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-size: 12.4px;
+    font-weight: 700;
+    background: #fff;
+    color: #5d6b62;
+    border: 1px solid #c6d3cb;
+  }
+
+  .label {
+    font-size: 10.4px;
+    font-weight: 500;
+    color: #5d6b62;
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  // Done: solid green.
+  &.done {
+    .marker { background: #0f7b45; color: #fff; border-color: #0f7b45; }
+  }
+
+  // Current: blue, with the pale halo the artboard rings it with.
+  &.on {
+    .marker {
+      background: #1b4f8a;
+      color: #fff;
+      border-color: #1b4f8a;
+      box-shadow: 0 0 0 4px #d9e6f3;
+    }
+
+    .label { font-weight: 700; color: #16211a; }
+  }
+
+  &:not(:disabled) { cursor: pointer; }
+}
+
+// -------------------------------------------------------------- page body ---
+.pub-body {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 32px 0 60px;
+
+  @media (max-width: 1200px) { padding: 32px 40px 60px; }
+}
+
+.step-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 22px;
+
+  .step-no {
+    flex: none;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: #0f7b45;
+    color: #fff;
+    display: grid;
+    place-items: center;
+    font-size: 11.6px;
+    font-weight: 700;
+  }
+
+  .step-title { margin: 0; font-size: 16px; font-weight: 700; color: #16211a; }
+  .step-sub { margin: 5px 0 0; font-size: 11.4px; color: #5d6b62; }
+  .spacer { flex: 1; }
+}
+
+// R1 hero
+.hero {
+  margin-bottom: 30px;
+
+  .hero-title { margin: 0; font-size: 30px; font-weight: 700; color: #16211a; }
+  .hero-sub { margin: 10px 0 0; font-size: 13px; color: #5d6b62; }
+}
+
+.landing {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 26px;
+
+  @media (max-width: 940px) { grid-template-columns: minmax(0, 1fr); }
+}
+
+// ------------------------------------------------------------------ cards ---
+.card {
+  background: #fff;
+  border: 1px solid #dee7e1;
+  border-radius: 10px;
+  padding: 24px;
+  margin-bottom: 20px;
+}
+
+.card-title { margin: 0 0 4px; font-size: 20px; font-weight: 700; color: #16211a; }
+.card-line { margin: 0 0 6px; font-size: 12px; color: #5d6b62; }
+.card-note { margin-top: 14px; font-size: 10.6px; color: #5d6b62; }
+
+.need-title { margin: 0 0 16px; font-size: 15px; font-weight: 700; color: #16211a; }
+
+.need {
+  display: flex;
+  gap: 12px;
+  padding: 11px 0;
+
+  .need-dot {
+    flex: none;
+    width: 7px;
+    height: 7px;
+    margin-top: 6px;
+    border-radius: 50%;
+    background: #0f7b45;
+  }
+
+  .need-name { font-size: 11.8px; font-weight: 700; color: #16211a; }
+  .need-hint { margin-top: 3px; font-size: 10.2px; color: #5d6b62; }
+}
+
+.divider { height: 1px; background: #edf2ef; margin: 22px 0 16px; }
+.already { font-size: 9.6px; font-weight: 700; letter-spacing: 0.4px; color: #5d6b62; }
+
+// ------------------------------------------------------------------ notice ---
+.notice {
+  display: flex;
+  gap: 12px;
+  padding: 14px 18px;
+  margin-bottom: 22px;
+  background: #eff4fa;
+  border: 1px solid #c3d8ee;
+  border-radius: 8px;
+  font-size: 11.6px;
+  color: #47554c;
+  line-height: 1.6;
+
+  .notice-mark {
+    flex: none;
+    width: 10px;
+    height: 10px;
+    margin-top: 4px;
+    border-radius: 2px;
+    background: #1b4f8a;
+  }
+}
+
+.notice-bad { background: #fef2f2; border-color: #fecaca; color: #7f1d1d;
+  .notice-mark { background: #b91c1c; } }
+.notice-ok { background: #f0faf4; border-color: #b7e4c9; color: #14532d;
+  .notice-mark { background: #0f7b45; } }
+
+// ------------------------------------------------------------------ fields ---
+.grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px;
+
+  @media (max-width: 800px) { grid-template-columns: minmax(0, 1fr); }
+}
+
+.grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 22px;
+
+  @media (max-width: 900px) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+.field { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+
+.lbl {
+  font-size: 9.6px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  color: #5d6b62;
+}
+
+.req { color: #b91c1c; margin-left: 2px; }
+.hint { font-size: 9.8px; color: #5d6b62; }
+.hint-blue { font-size: 9.8px; font-weight: 600; color: #1b4f8a; }
+
+.inp {
+  height: 44px;
+  padding: 0 14px;
+  background: #fff;
+  border: 1px solid #c6d3cb;
+  border-radius: 7px;
+  font: inherit;
+  font-size: 13px;
+  color: #16211a;
+  width: 100%;
+
+  &::placeholder { color: #93a29a; }
+  &:focus { outline: none; border-color: #0f7b45; box-shadow: 0 0 0 3px rgb(15 123 69 / 12%); }
+  &:disabled { background: #f7faf8; color: #5d6b62; }
+}
+
+// Read-only Udyam values on R3 read as facts, not as fields to fill.
+.ro-value {
+  font-size: 12.4px;
+  font-weight: 600;
+  color: #16211a;
+  padding: 9px 0;
+  border-bottom: 1px solid #edf2ef;
+  word-break: break-word;
+}
+
+.check {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  margin-top: 18px;
+  cursor: pointer;
+
+  input { margin-top: 2px; width: 16px; height: 16px; accent-color: #0f7b45; }
+  span { font-size: 11.6px; color: #47554c; line-height: 1.5; }
+}
+
+// ------------------------------------------------------------- pick tiles ---
+.pick {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  width: 100%;
+  padding: 18px 20px;
+  margin-bottom: 14px;
+  background: #fff;
+  border: 1.5px solid #dee7e1;
+  border-radius: 9px;
+  cursor: pointer;
+  text-align: left;
+
+  &:hover:not(.on):not(.blocked) { border-color: #c3d8ee; }
+
+  // Selected is BLUE on the artboard, not green.
+  &.on { border-color: #1b4f8a; background: #eff4fa; }
+
+  // An activity outside the scheme's sectors is shown, but not choosable.
+  &.blocked {
+    border-color: #fecaca;
+    background: #fef7f7;
+    cursor: not-allowed;
+  }
+
+  .pick-radio {
+    flex: none;
+    width: 16px;
+    height: 16px;
+    margin-top: 3px;
+    border-radius: 50%;
+    border: 1px solid #c6d3cb;
+    background: #fff;
+  }
+
+  &.on .pick-radio {
+    border-color: #1b4f8a;
+    box-shadow: inset 0 0 0 2px #fff, inset 0 0 0 8px #1b4f8a;
+  }
+
+  .pick-body { flex: 1; min-width: 0; }
+  .pick-name { font-size: 13px; font-weight: 700; color: #16211a; }
+  .pick-addr { margin-top: 5px; font-size: 11.2px; color: #5d6b62; }
+  // The 73x22 chip on the trailing edge.
+  .pick-tag {
+    flex: none;
+    padding: 3px 11px;
+    border: 1px solid #c3d8ee;
+    border-radius: 5px;
+    background: #fff;
+    font-size: 10.4px;
+    font-weight: 600;
+    color: #1b4f8a;
+    white-space: nowrap;
+  }
+
+  .pick-tag-bad { border-color: #fecaca; color: #b91c1c; }
+}
+
+.nic-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid #edf2ef;
+
+  @media (max-width: 800px) { grid-template-columns: minmax(0, 1fr); }
+
+  .nic-lbl { font-size: 8.8px; font-weight: 700; letter-spacing: 0.3px; color: #5d6b62; }
+  .nic-val { margin-top: 5px; font-size: 10.4px; font-weight: 600; color: #16211a; }
+}
+
+// ---------------------------------------------------------------- yes / no ---
+.yesno { display: flex; gap: 26px; margin-top: 10px; }
+
+.radio {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-size: 12.2px;
+  color: #47554c;
+  cursor: pointer;
+
+  .dot { width: 15px; height: 15px; border-radius: 50%; border: 2px solid #c6d3cb; background: #fff; }
+
+  &.on {
+    font-weight: 700;
+    color: #16211a;
+    .dot { border-color: #0f7b45; box-shadow: inset 0 0 0 3px #fff, inset 0 0 0 8px #0f7b45; }
+  }
+}
+
+// -------------------------------------------------------------------- OTP ---
+.otp-wrap { text-align: center; padding: 26px 0 10px; }
+.otp-title { margin: 0; font-size: 20px; font-weight: 700; color: #16211a; }
+.otp-sub { margin: 10px 0 4px; font-size: 12px; color: #5d6b62; }
+.otp-mail { font-size: 12.6px; font-weight: 700; color: #1b4f8a; }
+
+.otp-boxes { display: flex; justify-content: center; gap: 14px; margin: 30px 0 16px; }
+
+.otp-box {
+  width: 54px;
+  height: 62px;
+  text-align: center;
+  font-size: 26px;
+  font-weight: 700;
+  color: #16211a;
+  border: 1.5px solid #c6d3cb;
+  border-radius: 9px;
+  background: #fff;
+
+  &:focus { outline: none; border-color: #0f7b45; box-shadow: 0 0 0 3px rgb(15 123 69 / 12%); }
+}
+
+.otp-resend { font-size: 11.4px; color: #5d6b62; }
+
+.link-btn {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  font-size: 11.4px;
+  font-weight: 700;
+  color: #1b4f8a;
+  cursor: pointer;
+
+  &:disabled { color: #c6d3cb; cursor: default; }
+  &:hover:not(:disabled) { text-decoration: underline; }
+}
+
+// ------------------------------------------------------------------ pledge ---
+.pledge {
+  background: #fbfdfc;
+  border: 1px solid #dee7e1;
+  border-radius: 9px;
+  padding: 24px 26px;
+
+  .pledge-head { font-size: 11px; font-weight: 700; letter-spacing: 0.6px; color: #0f7b45; }
+  .pledge-who { margin-top: 14px; font-size: 11.4px; font-weight: 700; color: #16211a; }
+  .pledge-unit { margin-top: 5px; font-size: 10.6px; color: #5d6b62; }
+
+  p { margin: 22px 0 0; font-size: 11.6px; line-height: 1.75; color: #47554c; }
+  .pledge-date { margin-top: 20px; font-size: 10.6px; color: #5d6b62; text-align: right; }
+}
+
+// ---------------------------------------------------------------- summary ---
+.sum-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+
+  @media (max-width: 900px) { grid-template-columns: minmax(0, 1fr); }
+}
+
+.sum-card {
+  background: #fff;
+  border: 1px solid #dee7e1;
+  border-radius: 9px;
+  padding: 20px 22px;
+}
+
+.sum-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 12px;
+
+  .sum-title { font-size: 11.6px; font-weight: 700; color: #16211a; }
+  .spacer { flex: 1; }
+}
+
+.sum-row {
+  display: flex;
+  gap: 14px;
+  padding: 7px 0;
+
+  .sum-key { flex: none; width: 130px; font-size: 10.4px; color: #5d6b62; }
+  .sum-val { flex: 1; font-size: 10.8px; font-weight: 600; color: #16211a; word-break: break-word; }
+}
+
+// ----------------------------------------------------------------- success ---
+.done-wrap { text-align: center; padding: 20px 0 6px; }
+
+.done-mark {
+  width: 62px;
+  height: 62px;
+  margin: 0 auto 22px;
+  border-radius: 50%;
+  background: #f0faf4;
+  border: 2px solid #b7e4c9;
+  color: #0f7b45;
+  display: grid;
+  place-items: center;
+  font-size: 28px;
+}
+
+.done-title { margin: 0; font-size: 26px; font-weight: 700; color: #16211a; }
+.done-sub { margin: 12px 0 0; font-size: 12.4px; color: #5d6b62; }
+
+.cred {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 26px;
+  margin-top: 28px;
+  text-align: left;
+
+  @media (max-width: 700px) { grid-template-columns: minmax(0, 1fr); }
+}
+
+.cred-val {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+  font-size: 21px;
+  font-weight: 700;
+  color: #16211a;
+}
+
+.sent-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  margin-top: 14px;
+  text-align: left;
+
+  @media (max-width: 900px) { grid-template-columns: minmax(0, 1fr); }
+
+  .sent-name { font-size: 11.4px; font-weight: 700; color: #16211a; }
+  .sent-hint { margin-top: 4px; font-size: 10px; color: #5d6b62; }
+}
+
+// ----------------------------------------------------------------- actions ---
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 26px;
+
+  .spacer { flex: 1; }
+}
+
+.btn-primary,
+.btn-ghost {
+  height: 46px;
+  padding: 0 26px;
+  border-radius: 8px;
+  font-size: 13.4px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.btn-primary {
+  background: #0f7b45;
+  border: 1px solid #0f7b45;
+  color: #fff;
+
+  &:hover:not(:disabled) { background: #0c6539; }
+}
+
+.btn-ghost {
+  background: #fff;
+  border: 1px solid #c6d3cb;
+  color: #16211a;
+
+  &:hover:not(:disabled) { background: #f7faf8; }
+}
+
+.btn-primary:disabled, .btn-ghost:disabled { opacity: 0.55; cursor: default; }
+
+// ------------------------------------------------------------------ footer ---
+// Generic only, laid out as the artboard draws it: who runs the scheme and the
+// build on the left, statutory links on the right. Guides live on the page
+// itself, in reach of what the reader is doing.
+.pub-foot {
+  border-top: 1px solid #dee7e1;
+  background: #fff;
+  padding: 24px 40px;
+}
+
+.foot-inner {
+  display: flex;
+  align-items: flex-start;
+  gap: 24px;
+  max-width: 1120px;
+  margin: 0 auto;
+  flex-wrap: wrap;
+
+  .spacer { flex: 1; }
+}
+
+.foot-left { min-width: 0; }
+
+.foot-a { font-size: 10.8px; color: #47554c; }
+
+.foot-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 9px;
+  margin-top: 8px;
+  font-size: 10px;
+  color: #8a9a92;
+}
+
+.foot-dot { color: #c6d3cb; }
+
+.foot-links {
+  display: flex;
+  gap: 34px;
+  padding-top: 2px;
+}
+
+.foot-link {
+  font-size: 10.8px;
+  font-weight: 600;
+  color: #1b4f8a;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+
+  &:hover { text-decoration: underline; }
+}
+
+// ------------------------------------------------- header language slot ---
+// The Bhashini button is position:fixed to the viewport's top-right corner
+// (styles.scss), because moving it into a component does not survive Angular
+// tearing that view down. The header therefore reserves room at its right
+// edge rather than trying to hold the button itself — the same approach the
+// admin top bar takes.
+.pub-head { padding-right: 96px; }
+
+// The Ministry wordmark is a link; it should not look like body text turned blue.
+a.head-mark { text-decoration: none; }
+a.head-mark:hover .ministry { text-decoration: underline; }
+
+// ----------------------------------------------------- manual / guide links ---
+.manual {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.manual-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  font-size: 11.6px;
+  font-weight: 600;
+  color: #1b4f8a;
+  cursor: pointer;
+  text-align: left;
+
+  &:hover { text-decoration: underline; }
+
+  .manual-icon {
+    flex: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 5px;
+    background: #eff4fa;
+    display: grid;
+    place-items: center;
+    font-size: 9px;
+  }
+}
+
+// ------------------------------------------------- not-eligible dialog (8) ---
+.modal-back {
+  position: fixed;
+  inset: 0;
+  background: rgb(22 33 26 / 45%);
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  z-index: 80;
+}
+
+.modal {
+  width: 100%;
+  max-width: 460px;
+  background: #fff;
+  border-radius: 12px;
+  padding: 30px 32px 26px;
+  text-align: center;
+  box-shadow: 0 18px 48px rgb(22 33 26 / 22%);
+}
+
+.modal-mark {
+  width: 52px;
+  height: 52px;
+  margin: 0 auto 18px;
+  border-radius: 50%;
+  background: #fef2f2;
+  border: 2px solid #fecaca;
+  color: #b91c1c;
+  display: grid;
+  place-items: center;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.modal-title { margin: 0 0 12px; font-size: 17px; font-weight: 700; color: #16211a; }
+
+.modal-text {
+  margin: 0 0 10px;
+  font-size: 11.8px;
+  line-height: 1.65;
+  color: #47554c;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 22px;
+}
+
+// --------------------------------------------------------- footer columns ---
+.foot-cols { display: flex; gap: 54px; }
+
+.foot-col {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-start;
+
+  .foot-head {
+    font-size: 9.2px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: #5d6b62;
+    margin-bottom: 2px;
+  }
+}
+
+// ------------------------------------------------- applicant sign-in (item 4) ---
+.signin-wrap {
+  display: grid;
+  place-items: center;
+  padding: 40px 0 20px;
+}
+
+.signin-card {
+  width: 100%;
+  max-width: 470px;
+  padding: 34px 36px 30px;
+}
+
+.signin-title { margin: 0; font-size: 21px; font-weight: 700; color: #16211a; }
+.signin-sub { margin: 10px 0 4px; font-size: 12px; color: #5d6b62; }
+
+.pwd-wrap {
+  position: relative;
+
+  .inp { padding-right: 46px; }
+}
+
+.pwd-eye {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  cursor: pointer;
+  font-size: 14px;
+
+  &:hover { background: #f0f4f2; }
+}
+
+// ------------------------------------------------------------- LEAN mark ---
+.head-lean {
+  height: 54px;
+  width: auto;
+  object-fit: contain;
+  flex: none;
+}
+
+// --------------------------------------------------- captcha (sign-in) ---
+.captcha-row {
+  display: grid;
+  grid-template-columns: 1fr 128px 40px;
+  gap: 10px;
+  align-items: center;
+}
+
+// The code itself: per-glyph colour with two hairlines struck across it, as
+// the master sign-in draws it.
+.captcha-box {
+  position: relative;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 1px solid #c6d3cb;
+  border-radius: 7px;
+  background: #f7faf8;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  user-select: none;
+}
+
+.captcha-strike {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.captcha-new {
+  height: 44px;
+  width: 40px;
+  border: 1px solid #c6d3cb;
+  border-radius: 7px;
+  background: #fff;
+  font-size: 16px;
+  color: #47554c;
+  cursor: pointer;
+
+  &:hover { background: #f7faf8; }
+}
+
+// ================================================================ narrow ===
+// The public pages are the ones an applicant is most likely to open on a
+// phone, so they carry a fuller set of rules than the admin screens.
+
+@media (max-width: 760px) {
+  .pub-head {
+    height: auto;
+    min-height: 0;
+    padding: 12px 14px;
+    gap: 12px;
+    flex-wrap: wrap;
+
+    // Breaking on the spacer drops the links to their own line rather than
+    // letting them run off the right edge.
+    .spacer {
+      flex: 0 0 100%;
+      height: 0;
+    }
+
+    .head-rule { height: 32px; }
+  }
+
+  .head-lean { height: 38px; }
+  .head-logo { height: 34px; }
+  .head-signin { margin-left: auto; }
+
+  .rail {
+    height: auto;
+    padding: 18px 14px 0;
+  }
+
+  .pub-body { padding: 20px 14px 32px; }
+
+  .pub-foot {
+    padding: 18px 14px;
+
+    .foot-inner {
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .spacer { display: none; }
+  }
+
+  .foot-links {
+    gap: 18px;
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 560px) {
+  // Two per row rather than one long strip the reader has to scroll.
+  .foot-links { gap: 14px; }
+
+  .head-link { font-size: 10.8px; }
+
+  .card { border-radius: 10px; }
+}

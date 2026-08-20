@@ -1,0 +1,777 @@
+<!-- ================================================== public header (all) == -->
+<header class="pub-head">
+  <!-- The artboard leads with the scheme mark and sets the Ministry lockup
+       after the rule. The emblem already carries the Ministry's name in both
+       scripts, so no wordmark is repeated beside it. -->
+  <img class="head-lean" src="assets/mcls-logo.png"
+       alt="MSME Competitive (LEAN) Scheme — MCLS" />
+  <span class="head-rule"></span>
+  <a href="https://www.msme.gov.in/" target="_blank" rel="noopener noreferrer" title="Ministry of MSME">
+    <img class="head-logo" src="assets/msme-logo.svg"
+         alt="Ministry of Micro, Small &amp; Medium Enterprises" />
+  </a>
+
+  <div class="spacer"></div>
+
+  <button class="head-link" type="button" (click)="manualVideo()">User Manual</button>
+  <span class="head-sep">|</span>
+  <button class="head-link" type="button" (click)="help()">Help</button>
+
+  <button class="head-signin" type="button" (click)="signIn()">Sign in</button>
+</header>
+
+<!-- =========================================================== step rail == -->
+<nav class="rail" aria-label="Registration progress">
+  @for (label of steps; track label; let i = $index) {
+    <button
+      class="rail-step"
+      type="button"
+      [class.on]="step() === i + 1"
+      [class.done]="step() > i + 1"
+      [disabled]="step() <= i + 1 || !draft()"
+      (click)="goTo(i + 1)"
+    >
+      <span class="marker">{{ step() > i + 1 ? '✓' : i + 1 }}</span>
+      <span class="label">{{ label }}</span>
+    </button>
+  }
+</nav>
+
+<main class="pub-body">
+  @if (message(); as note) {
+    <div class="notice" [class.notice-bad]="failed()" [class.notice-ok]="!failed()">
+      <span class="notice-mark"></span>
+      <span>{{ note }}</span>
+    </div>
+  }
+
+  @switch (step()) {
+    <!-- ======================================= R1: registration landing == -->
+    @case (1) {
+      <div class="hero">
+        <h1 class="hero-title">Register your enterprise for the LEAN Scheme</h1>
+        <p class="hero-sub">
+          One registration covers all three certification levels. Apply for a level later from
+          your dashboard.
+        </p>
+      </div>
+
+      <div class="landing">
+        <section class="card">
+          <h2 class="card-title">New Registration</h2>
+          <p class="card-line">Start a fresh application using your Udyam Registration Number.</p>
+          <p class="card-line">Takes about 10 minutes. Available on web and the mobile app.</p>
+
+          <div class="actions">
+            <button class="btn-primary" type="button" (click)="start()">
+              Start New Registration
+            </button>
+          </div>
+
+          <p class="card-note">Registration is common for LEAN Bronze, Silver and Gold.</p>
+
+          <div class="manual">
+            <button class="manual-link" type="button" (click)="manualVideo()">
+              <span class="manual-icon">▶</span> Watch the registration video
+            </button>
+            <button class="manual-link" type="button" (click)="manualDocument()">
+              <span class="manual-icon">▤</span> Download the registration manual
+            </button>
+          </div>
+
+          <div class="divider"></div>
+          <div class="already">ALREADY REGISTERED?</div>
+          <div class="actions">
+            <button class="btn-ghost" type="button" (click)="signIn()">Sign in</button>
+          </div>
+        </section>
+
+        <section class="card">
+          <h3 class="need-title">What you'll need</h3>
+
+          <div class="need">
+            <span class="need-dot"></span>
+            <div>
+              <div class="need-name">Udyam Registration Number</div>
+              <div class="need-hint">Format UDYAM-XX-00-XXXXXXX</div>
+            </div>
+          </div>
+          <div class="need">
+            <span class="need-dot"></span>
+            <div>
+              <div class="need-name">Udyam-registered mobile number</div>
+              <div class="need-hint">Validated against Udyam records</div>
+            </div>
+          </div>
+          <div class="need">
+            <span class="need-dot"></span>
+            <div>
+              <div class="need-name">SPOC email address</div>
+              <div class="need-hint">Receives the OTP, LEAN ID and password</div>
+            </div>
+          </div>
+          <div class="need">
+            <span class="need-dot"></span>
+            <div>
+              <div class="need-name">Plant / unit address &amp; NIC code</div>
+              <div class="need-hint">2-digit, 4-digit and 5-digit classification</div>
+            </div>
+          </div>
+        </section>
+      </div>
+    }
+
+    <!-- ========================================= R2: Udyam verification == -->
+    @case (2) {
+      <div class="step-head">
+        <span class="step-no">2</span>
+        <div>
+          <h2 class="step-title">Udyam Verification</h2>
+          <p class="step-sub">
+            Enter the Udyam Registration Number and the mobile number registered against it
+          </p>
+        </div>
+      </div>
+
+      <section class="card">
+        <div class="notice">
+          <span class="notice-mark"></span>
+          <span>
+            Validation is done entirely through the Udyam API by matching your mobile number to
+            Udyam records. No OTP is sent at this step.
+          </span>
+        </div>
+
+        <div class="grid-2">
+          <div class="field">
+            <label class="lbl" for="udyam">UDYAM REGISTRATION NUMBER<span class="req">*</span></label>
+            <input
+              id="udyam"
+              class="inp"
+              placeholder="UDYAM-MH-26-0014582"
+              [value]="udyamNo()"
+              (input)="udyamNo.set($any($event.target).value)"
+            />
+            <span class="hint">Format: UDYAM-XX-00-XXXXXXX</span>
+          </div>
+
+          <div class="field">
+            <label class="lbl" for="umobile">UDYAM-REGISTERED MOBILE NUMBER<span class="req">*</span></label>
+            <input
+              id="umobile"
+              class="inp"
+              inputmode="numeric"
+              placeholder="+91 98765 43210"
+              [value]="udyamMobile()"
+              (input)="udyamMobile.set($any($event.target).value)"
+            />
+            <span class="hint">Must match the mobile recorded on the Udyam certificate</span>
+          </div>
+        </div>
+
+        <label class="check">
+          <input type="checkbox" [checked]="authorised()" (change)="authorised.set($any($event.target).checked)" />
+          <span>I confirm I am authorised to register this enterprise for the LEAN Scheme</span>
+        </label>
+
+        <p class="card-note">
+          Your details are fetched from the Udyam database and cannot be edited here.
+        </p>
+
+        <div class="actions">
+          <div class="spacer"></div>
+          <button class="btn-ghost" type="button" (click)="back()">Cancel</button>
+          <button class="btn-primary" type="button" [disabled]="busy()" (click)="verifyUdyam()">
+            {{ busy() ? 'Validating…' : 'Validate with Udyam' }}
+          </button>
+        </div>
+      </section>
+    }
+
+    <!-- ========================================== R3: enterprise details == -->
+    @case (3) {
+      <div class="step-head">
+        <span class="step-no">3</span>
+        <div>
+          <h2 class="step-title">Enterprise Details</h2>
+          <p class="step-sub">
+            Validated from the MSME database, Ministry of MSME — these fields are read-only
+          </p>
+        </div>
+      </div>
+
+      @if (draft()?.enterprise; as e) {
+        <section class="card">
+          <div class="grid-2">
+            <div class="field">
+              <span class="lbl">ENTERPRISE NAME</span>
+              <span class="ro-value">{{ e.enterpriseName || '—' }}</span>
+            </div>
+            <div class="field">
+              <span class="lbl">UDYAM REGISTRATION NUMBER</span>
+              <span class="ro-value">{{ e.udyamNumber }}</span>
+            </div>
+          </div>
+
+          <div class="grid-3" style="margin-top: 18px">
+            <div class="field">
+              <span class="lbl">NAME OF ENTREPRENEUR</span>
+              <span class="ro-value">{{ e.ownerName || '—' }}</span>
+            </div>
+            <div class="field">
+              <span class="lbl">GENDER</span>
+              <span class="ro-value">{{ e.gender || '—' }}</span>
+            </div>
+            <div class="field">
+              <span class="lbl">SOCIAL CATEGORY</span>
+              <span class="ro-value">{{ e.socialCategory || '—' }}</span>
+            </div>
+          </div>
+
+          <div class="field" style="margin-top: 18px">
+            <span class="lbl">REGISTERED ADDRESS (AS PER UDYAM)</span>
+            <span class="ro-value">
+              {{ e.address || '—' }}{{ e.districtName ? ', ' + e.districtName : '' }}{{ e.stateName ? ', ' + e.stateName : '' }}{{ e.pincode ? ' ' + e.pincode : '' }}
+            </span>
+          </div>
+
+          <div class="grid-3" style="margin-top: 18px">
+            <div class="field">
+              <span class="lbl">ENTERPRISE TYPE</span>
+              <span class="ro-value">{{ e.enterpriseType || '—' }}</span>
+            </div>
+            <div class="field">
+              <span class="lbl">DATE OF UDYAM REGISTRATION</span>
+              <span class="ro-value">{{ e.appliedDate || e.commencementDate || '—' }}</span>
+            </div>
+            <div class="field">
+              <span class="lbl">MAJOR ACTIVITY</span>
+              <span class="ro-value">{{ e.majorActivity || '—' }}</span>
+            </div>
+          </div>
+
+          <div class="grid-3" style="margin-top: 18px">
+            <div class="field">
+              <span class="lbl">ORGANISATION TYPE</span>
+              <span class="ro-value">{{ e.organisationType || '—' }}</span>
+            </div>
+            <div class="field">
+              <span class="lbl">PAN</span>
+              <span class="ro-value">{{ e.pan || '—' }}</span>
+            </div>
+            <div class="field">
+              <span class="lbl">NUMBER OF EMPLOYEES</span>
+              <span class="ro-value">{{ e.totalEmployees ?? '—' }}</span>
+            </div>
+          </div>
+
+          <div class="actions">
+            <div class="spacer"></div>
+            <button class="btn-ghost" type="button" (click)="back()">Back</button>
+            <button class="btn-primary" type="button" (click)="step.set(4)">Continue</button>
+          </div>
+        </section>
+      }
+    }
+
+    <!-- ======================================== R4: plant and activity == -->
+    @case (4) {
+      <div class="step-head">
+        <span class="step-no">4</span>
+        <div>
+          <h2 class="step-title">Plant Location &amp; Activity</h2>
+          <p class="step-sub">Select one plant location and the activity carried out there</p>
+        </div>
+      </div>
+
+      <section class="card">
+        <span class="lbl">PLEASE SELECT ANY ONE PLANT LOCATION</span>
+
+        <div style="margin-top: 14px">
+          @for (p of plants(); track p.index) {
+            <button
+              class="pick"
+              type="button"
+              [class.on]="selectedPlantIndex() === p.index"
+              (click)="pickPlant(p.index)"
+            >
+              <span class="pick-radio"></span>
+              <span class="pick-body">
+                <span class="pick-name">{{ p.unitName || 'Unit ' + (p.index + 1) }}</span>
+                <span class="pick-addr">
+                  {{ p.address }}{{ p.district ? ', ' + p.district : '' }}{{ p.state ? ', ' + p.state : '' }}{{ p.pincode ? ' ' + p.pincode : '' }}
+                </span>
+              </span>
+              @if (selectedPlantIndex() === p.index) {
+                <span class="pick-tag">Selected</span>
+              }
+            </button>
+          }
+        </div>
+
+        @if (chosenPlant(); as unit) {
+          <span class="lbl" style="display: block; margin-top: 24px">
+            PLEASE SELECT PLANT ACTIVITY FOR THE SELECTED LOCATION
+          </span>
+          <p class="card-note" style="margin: 6px 0 0">{{ unit.unitName }} — {{ unit.address }}</p>
+
+          @if (noEligibleActivity()) {
+            <div class="notice notice-bad" style="margin-top: 14px">
+              <span class="notice-mark"></span>
+              <span>
+                None of the activities on this Udyam registration is in a sector the LEAN Scheme
+                currently covers. Please contact the helpline before continuing.
+              </span>
+            </div>
+          }
+
+        <div style="margin-top: 14px">
+          @for (a of activities(); track a.index) {
+            <button
+              class="pick"
+              type="button"
+              [class.on]="selectedActivityIndex() === a.index"
+              [class.blocked]="!a.isEligible"
+              (click)="pickActivity(a)"
+            >
+              <span class="pick-radio"></span>
+              <span class="pick-body">
+                <span class="pick-name">{{ a.nicFiveDigitName || a.activity }}</span>
+
+                <span class="nic-row">
+                  <span>
+                    <span class="nic-lbl">NIC 2-DIGIT</span>
+                    <span class="nic-val">{{ a.nicTwoDigit }} — {{ a.nicTwoDigitName }}</span>
+                  </span>
+                  <span>
+                    <span class="nic-lbl">NIC 4-DIGIT</span>
+                    <span class="nic-val">{{ a.nicFourDigit }} — {{ a.nicFourDigitName }}</span>
+                  </span>
+                  <span>
+                    <span class="nic-lbl">NIC 5-DIGIT</span>
+                    <span class="nic-val">{{ a.nicFiveDigit }} — {{ a.nicFiveDigitName }}</span>
+                  </span>
+                </span>
+              </span>
+              @if (selectedActivityIndex() === a.index) {
+                <span class="pick-tag">Selected</span>
+              } @else if (!a.isEligible) {
+                <span class="pick-tag pick-tag-bad">Not covered</span>
+              }
+            </button>
+          }
+        </div>
+        } @else {
+          <p class="card-note" style="margin-top: 22px">
+            Select a plant location above to see the activities recorded against it.
+          </p>
+        }
+
+        <p class="card-note">
+          The NIC classification determines the LEAN questionnaire set applied to your assessment.
+        </p>
+
+        <div class="actions">
+          <div class="spacer"></div>
+          <button class="btn-ghost" type="button" (click)="back()">Back</button>
+          <button class="btn-primary" type="button" [disabled]="busy()" (click)="saveUnit()">
+            Continue
+          </button>
+        </div>
+      </section>
+    }
+
+    <!-- ======================================= R5: SPOC and awareness == -->
+    @case (5) {
+      <div class="step-head">
+        <span class="step-no">5</span>
+        <div>
+          <h2 class="step-title">SPOC Contact Details &amp; Awareness Program</h2>
+          <p class="step-sub">
+            The single point of contact receives the OTP, LEAN ID and system password
+          </p>
+        </div>
+      </div>
+
+      <section class="card">
+        <div class="grid-2">
+          <div class="field">
+            <label class="lbl" for="sname">FULL NAME<span class="req">*</span></label>
+            <input id="sname" class="inp" placeholder="e.g. Rakesh Sharma"
+                   [value]="spocName()" (input)="spocName.set($any($event.target).value)" />
+          </div>
+          <div class="field">
+            <label class="lbl" for="sdesig">DESIGNATION<span class="req">*</span></label>
+            <input id="sdesig" class="inp" placeholder="e.g. Plant Head"
+                   [value]="spocDesignation()" (input)="spocDesignation.set($any($event.target).value)" />
+          </div>
+        </div>
+
+        <div class="grid-2" style="margin-top: 18px">
+          <div class="field">
+            <label class="lbl" for="smob">MOBILE NUMBER<span class="req">*</span></label>
+            <input id="smob" class="inp" inputmode="numeric" placeholder="+91 98765 43210"
+                   [value]="spocMobile()" (input)="spocMobile.set($any($event.target).value)" />
+          </div>
+          <div class="field">
+            <label class="lbl" for="smail">EMAIL ADDRESS<span class="req">*</span></label>
+            <input id="smail" class="inp" type="email" placeholder="spoc@sharmaauto.in"
+                   [value]="spocEmail()" (input)="spocEmail.set($any($event.target).value)" />
+            <span class="hint-blue">OTP will be sent to this address for verification</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h3 class="card-title" style="font-size: 13.4px">Awareness Program Participation</h3>
+        <p class="card-line">Have you participated in any LEAN Awareness Program?</p>
+
+        <div class="yesno">
+          <button class="radio" type="button" [class.on]="attendedAwareness() === true"
+                  (click)="attendedAwareness.set(true)">
+            <span class="dot"></span> Yes
+          </button>
+          <button class="radio" type="button" [class.on]="attendedAwareness() === false"
+                  (click)="attendedAwareness.set(false); awarenessProgramId.set('')">
+            <span class="dot"></span> No
+          </button>
+        </div>
+
+        @if (attendedAwareness() === true) {
+          <div class="field" style="margin-top: 18px; max-width: 560px">
+            <label class="lbl" for="prog">SELECT PROGRAM</label>
+            <select id="prog" class="inp" [value]="awarenessProgramId()"
+                    (change)="awarenessProgramId.set($any($event.target).value)">
+              <option value="">Select the programme attended</option>
+              @for (p of programs(); track p.awarenessProgramId) {
+                <option [value]="p.awarenessProgramId">
+                  {{ p.name }}{{ p.heldOn ? ' — ' + p.heldOn : '' }}
+                </option>
+              }
+            </select>
+            <span class="hint">Shown only when "Yes" is selected</span>
+          </div>
+        }
+
+        <p class="card-note">An OTP is sent to the SPOC email address to verify it.</p>
+
+        <div class="actions">
+          <div class="spacer"></div>
+          <button class="btn-ghost" type="button" (click)="back()">Back</button>
+          <button class="btn-primary" type="button" [disabled]="busy()" (click)="saveSpoc()">
+            {{ busy() ? 'Sending…' : 'Send OTP & Continue' }}
+          </button>
+        </div>
+      </section>
+    }
+
+    <!-- ================================================= R6: e-mail OTP == -->
+    @case (6) {
+      <section class="card">
+        <div class="otp-wrap">
+          <h2 class="otp-title">Verify your email address</h2>
+          <p class="otp-sub">We have sent a 6-digit OTP to</p>
+          <span class="otp-mail">{{ spocEmail() }}</span>
+
+          <div class="otp-boxes">
+            @for (d of otp(); track $index; let i = $index) {
+              <input
+                class="otp-box"
+                [id]="'otp-' + i"
+                inputmode="numeric"
+                maxlength="1"
+                [value]="d"
+                (input)="setOtpDigit(i, $any($event.target).value)"
+              />
+            }
+          </div>
+
+          <div class="otp-resend">
+            Didn't receive it?
+            <button class="link-btn" type="button" [disabled]="resendIn() > 0" (click)="sendOtp()">
+              {{ resendLabel }}
+            </button>
+          </div>
+
+          <div class="actions">
+            <div class="spacer"></div>
+            <button class="btn-ghost" type="button" (click)="back()">Back</button>
+            <button class="btn-primary" type="button" [disabled]="busy()" (click)="verifyOtp()">
+              Verify &amp; Continue
+            </button>
+            <div class="spacer"></div>
+          </div>
+        </div>
+      </section>
+    }
+
+    <!-- ==================================================== R7: summary == -->
+    @case (7) {
+      <div class="step-head">
+        <span class="step-no">6</span>
+        <div>
+          <h2 class="step-title">Summary</h2>
+          <p class="step-sub">Review your details before accepting the LEAN Pledge</p>
+        </div>
+      </div>
+
+      <div class="sum-grid">
+        <section class="sum-card">
+          <div class="sum-head"><span class="sum-title">Enterprise</span></div>
+          <div class="sum-row">
+            <span class="sum-key">Enterprise name</span>
+            <span class="sum-val">{{ draft()?.enterprise?.enterpriseName || '—' }}</span>
+          </div>
+          <div class="sum-row">
+            <span class="sum-key">Udyam number</span>
+            <span class="sum-val">{{ draft()?.enterprise?.udyamNumber }}</span>
+          </div>
+          <div class="sum-row">
+            <span class="sum-key">Enterprise type</span>
+            <span class="sum-val">{{ draft()?.enterprise?.enterpriseType || '—' }}</span>
+          </div>
+          <div class="sum-row">
+            <span class="sum-key">Entrepreneur</span>
+            <span class="sum-val">{{ draft()?.enterprise?.ownerName || '—' }}</span>
+          </div>
+        </section>
+
+        <section class="sum-card">
+          <div class="sum-head">
+            <span class="sum-title">Selected Unit</span>
+            <div class="spacer"></div>
+            <button class="link-btn" type="button" (click)="goTo(4)">Edit</button>
+          </div>
+          <div class="sum-row">
+            <span class="sum-key">Unit</span>
+            <span class="sum-val">{{ chosenPlant()?.unitName || '—' }}</span>
+          </div>
+          <div class="sum-row">
+            <span class="sum-key">District / State</span>
+            <span class="sum-val">
+              {{ chosenPlant()?.district }}{{ chosenPlant()?.state ? ', ' + chosenPlant()?.state : '' }}
+            </span>
+          </div>
+          <div class="sum-row">
+            <span class="sum-key">Pincode</span>
+            <span class="sum-val">{{ chosenPlant()?.pincode || '—' }}</span>
+          </div>
+          <div class="sum-row">
+            <span class="sum-key">Address</span>
+            <span class="sum-val">{{ chosenPlant()?.address || '—' }}</span>
+          </div>
+        </section>
+
+        <section class="sum-card">
+          <div class="sum-head">
+            <span class="sum-title">Selected Activity</span>
+            <div class="spacer"></div>
+            <button class="link-btn" type="button" (click)="goTo(4)">Edit</button>
+          </div>
+          <div class="sum-row">
+            <span class="sum-key">Activity</span>
+            <span class="sum-val">{{ chosenActivity()?.nicFiveDigitName || '—' }}</span>
+          </div>
+          <div class="sum-row">
+            <span class="sum-key">NIC 2 / 4 / 5</span>
+            <span class="sum-val">
+              {{ chosenActivity()?.nicTwoDigit }} / {{ chosenActivity()?.nicFourDigit }} /
+              {{ chosenActivity()?.nicFiveDigit }}
+            </span>
+          </div>
+        </section>
+
+        <section class="sum-card">
+          <div class="sum-head">
+            <span class="sum-title">SPOC &amp; Awareness</span>
+            <div class="spacer"></div>
+            <button class="link-btn" type="button" (click)="goTo(5)">Edit</button>
+          </div>
+          <div class="sum-row">
+            <span class="sum-key">SPOC name</span>
+            <span class="sum-val">{{ spocName() }}</span>
+          </div>
+          <div class="sum-row">
+            <span class="sum-key">Designation</span>
+            <span class="sum-val">{{ spocDesignation() }}</span>
+          </div>
+          <div class="sum-row">
+            <span class="sum-key">Email</span>
+            <span class="sum-val">{{ spocEmail() }}</span>
+          </div>
+          <div class="sum-row">
+            <span class="sum-key">Awareness program</span>
+            <span class="sum-val">
+              {{ attendedAwareness() ? (chosenProgram()?.name || 'Yes') : 'Not attended' }}
+            </span>
+          </div>
+        </section>
+      </div>
+
+      <div class="actions">
+        <div class="spacer"></div>
+        <button class="btn-ghost" type="button" (click)="back()">Back</button>
+        <button class="btn-primary" type="button" (click)="toPledge()">Continue to Pledge</button>
+      </div>
+    }
+
+    <!-- ================================================= R8: LEAN pledge == -->
+    @case (8) {
+      <div class="step-head">
+        <span class="step-no">7</span>
+        <div>
+          <h2 class="step-title">LEAN Pledge</h2>
+          <p class="step-sub">
+            Read the pledge, download a copy for your records, and accept to continue
+          </p>
+        </div>
+        <div class="spacer"></div>
+        <button class="btn-ghost" type="button" (click)="downloadPledge()">Download Pledge</button>
+      </div>
+
+      <section class="card">
+        <div class="pledge">
+          <div class="pledge-head">LEAN PLEDGE</div>
+          <div class="pledge-who">
+            {{ draft()?.enterprise?.enterpriseName }} · {{ draft()?.enterprise?.udyamNumber }}
+          </div>
+          <div class="pledge-unit">
+            {{ chosenPlant()?.unitName }} — {{ chosenPlant()?.address }}
+          </div>
+
+          @for (para of pledgeBody; track para) {
+            <p>{{ para }}</p>
+          }
+
+          <div class="pledge-date">Date: {{ today }}</div>
+        </div>
+
+        <label class="check">
+          <input type="checkbox" [checked]="pledgeAccepted()"
+                 (change)="pledgeAccepted.set($any($event.target).checked)" />
+          <span>
+            <strong>I have read and accept the LEAN Pledge on behalf of the enterprise</strong><br />
+            Accepted by {{ spocName() }}, {{ spocDesignation() }} · {{ today }}
+          </span>
+        </label>
+
+        <div class="actions">
+          <div class="spacer"></div>
+          <button class="btn-ghost" type="button" (click)="back()">Back</button>
+          <button class="btn-primary" type="button"
+                  [disabled]="busy() || !pledgeAccepted()" (click)="complete()">
+            {{ busy() ? 'Submitting…' : 'Accept & Complete Registration' }}
+          </button>
+        </div>
+      </section>
+    }
+
+    <!-- ============================================ R9: registration done == -->
+    @case (9) {
+      <section class="card">
+        <div class="done-wrap">
+          <div class="done-mark">✓</div>
+          <h2 class="done-title">Registration complete</h2>
+          <p class="done-sub">
+            Your LEAN ID and password have been sent to the verified SPOC email address.
+          </p>
+
+          <div class="cred">
+            <div>
+              <span class="lbl">YOUR LEAN ID</span>
+              <div class="cred-val">
+                {{ result()?.leanId }}
+                <button class="link-btn" type="button" (click)="copyLeanId()">Copy</button>
+              </div>
+              <span class="hint">System-generated · use this to sign in</span>
+            </div>
+            <div>
+              <span class="lbl">SYSTEM PASSWORD</span>
+              <div class="cred-val">••••••••••••</div>
+              <span class="hint">Sent to {{ result()?.spocEmail }} · change is optional</span>
+            </div>
+          </div>
+
+          <div style="margin-top: 30px; text-align: left">
+            <span class="lbl">SENT TO YOUR EMAIL</span>
+            <div class="sent-grid">
+              <div>
+                <div class="sent-name">Unique LEAN ID</div>
+                <div class="sent-hint">{{ result()?.leanId }}</div>
+              </div>
+              <div>
+                <div class="sent-name">System-generated password</div>
+                <div class="sent-hint">Change is optional, from profile settings</div>
+              </div>
+              <div>
+                <div class="sent-name">LEAN Pledge copy</div>
+                <div class="sent-hint">Includes unit name, address, Udyam number and date</div>
+              </div>
+            </div>
+          </div>
+
+          <p class="card-note" style="text-align: left; margin-top: 26px">
+            Next: sign in and apply for LEAN Bronze, Silver or Gold from your dashboard.<br />
+            No email yet? Check your Spam or Junk folder before contacting the helpline.
+          </p>
+
+          <div class="actions">
+            <div class="spacer"></div>
+            <button class="btn-ghost" type="button" (click)="downloadPledge()">Download Pledge</button>
+            <button class="btn-primary" type="button" (click)="signIn()">Sign in to Dashboard</button>
+          </div>
+        </div>
+      </section>
+    }
+  }
+  <!-- ==================== not-eligible dialog (item 8) ==================== -->
+  @if (ineligible(); as bad) {
+    <div class="modal-back" (click)="dismissIneligible()">
+      <div class="modal" role="alertdialog" aria-modal="true" (click)="$event.stopPropagation()">
+        <div class="modal-mark">!</div>
+        <h3 class="modal-title">Sector not eligible</h3>
+        <p class="modal-text">
+          <strong>NIC {{ bad.nicTwoDigit }} — {{ bad.nicTwoDigitName }}</strong> is not currently
+          covered by the LEAN Scheme, so this activity cannot be registered.
+        </p>
+        <p class="modal-text">
+          Choose an activity in a covered sector, or contact the helpline if you believe this is
+          an error.
+        </p>
+        <div class="modal-actions">
+          <button class="btn-ghost" type="button" (click)="help()">Contact helpline</button>
+          <button class="btn-primary" type="button" (click)="dismissIneligible()">
+            Choose another activity
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</main>
+
+<!-- ================================================== public footer (all) == -->
+<footer class="pub-foot">
+  <div class="foot-inner">
+    <div class="foot-left">
+      <div class="foot-a">
+        Ministry of Micro, Small and Medium Enterprises, Kartavya Bhawan - 03,
+        Kartavya Path, New Delhi - 110001, India
+      </div>
+      <div class="foot-meta">
+        <span>© {{ year }} MCLS. All Rights Reserved.</span>
+        <span class="foot-dot">·</span>
+        <span>Version {{ appVersion }}</span>
+        <span class="foot-dot">·</span>
+        <span>Updated {{ releasedOn }}</span>
+      </div>
+    </div>
+
+    <div class="spacer"></div>
+
+    <nav class="foot-links" aria-label="Footer">
+      <button class="foot-link" type="button" (click)="help()">Terms of Use</button>
+      <button class="foot-link" type="button" (click)="help()">Privacy Policy</button>
+      <button class="foot-link" type="button" (click)="help()">Help</button>
+    </nav>
+  </div>
+</footer>

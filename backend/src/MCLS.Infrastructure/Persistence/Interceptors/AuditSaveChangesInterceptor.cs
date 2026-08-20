@@ -85,6 +85,19 @@ public sealed class AuditSaveChangesInterceptor(
     }
 
     /// <summary>Sets CreatedOn/CreatedBy and ModifiedOn/ModifiedBy.</summary>
+    /// <summary>
+    /// Marks a property unmodified when the entity actually maps it. An
+    /// IAuditable whose table lacks the column has it ignored in the model, and
+    /// EntityEntry.Property would throw for a name it cannot find.
+    /// </summary>
+    private static void SuppressIfMapped(EntityEntry entry, string propertyName)
+    {
+        if (entry.Metadata.FindProperty(propertyName) is not null)
+        {
+            entry.Property(propertyName).IsModified = false;
+        }
+    }
+
     private void StampAuditColumns(DbContext context)
     {
         var now = clock.UtcNow;
@@ -102,9 +115,14 @@ public sealed class AuditSaveChangesInterceptor(
                 case EntityState.Modified:
                     entry.Entity.ModifiedOnUtc = now;
                     entry.Entity.ModifiedByUserId = userId;
+
                     // Guard against a detached-graph update blanking these.
-                    entry.Property(e => e.CreatedOnUtc).IsModified = false;
-                    entry.Property(e => e.CreatedByUserId).IsModified = false;
+                    // Checked rather than assumed: not every IAuditable maps
+                    // all four columns — msme.Enterprise records its creation
+                    // as RegisteredOnUtc and has no CreatedOnUtc column, so
+                    // asking for the property by name would throw on save.
+                    SuppressIfMapped(entry, nameof(IAuditable.CreatedOnUtc));
+                    SuppressIfMapped(entry, nameof(IAuditable.CreatedByUserId));
                     break;
             }
         }

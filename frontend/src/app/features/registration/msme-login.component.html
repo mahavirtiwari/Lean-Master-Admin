@@ -1,24 +1,18 @@
 <div class="login">
   <!-- ================================================ left / brand panel == -->
   <section class="brand-panel">
-    <!-- The faint emblem the artboard sets bottom-right: two rings at 12% with
-         six spokes at 9%, centred on (702, 768) of the 1512 board. -->
-    <svg class="watermark" viewBox="0 0 240 240" aria-hidden="true">
-      <g opacity="0.12">
-        <circle cx="120" cy="120" r="100" fill="none" stroke="#0F7B45" stroke-width="1.4" />
-        <circle cx="120" cy="120" r="77" fill="none" stroke="#1B4F8A" stroke-width="1.4" />
-      </g>
-      <g opacity="0.09" stroke="#1B4F8A" stroke-width="1.4">
-        <line x1="197" y1="120" x2="220" y2="120" />
-        <line x1="158.5" y1="186.7" x2="170" y2="206.6" />
-        <line x1="81.5" y1="186.7" x2="70" y2="206.6" />
-        <line x1="43" y1="120" x2="20" y2="120" />
-        <line x1="81.5" y1="53.3" x2="70" y2="33.4" />
-        <line x1="158.5" y1="53.3" x2="170" y2="33.4" />
-      </g>
+    <!-- Two meshing gears set into the bottom-right corner. -->
+    <svg class="watermark" viewBox="0 0 400 400" aria-hidden="true">
+      @for (gear of gears; track gear.path) {
+        <g opacity="0.13" fill="none" [attr.stroke]="gear.stroke" stroke-width="2" stroke-linejoin="round">
+          <path [attr.d]="gear.path" />
+          <circle [attr.cx]="gear.hub.cx" [attr.cy]="gear.hub.cy" [attr.r]="gear.hub.r" />
+        </g>
+      }
     </svg>
 
     <div class="brand-inner">
+      <!-- The scheme mark leads, the Ministry lockup follows the rule. -->
       <header class="brand-head">
         <img
           class="emblem-logo"
@@ -27,11 +21,9 @@
           width="206"
           height="74"
         />
-        <!--
-          The Ministry's own lockup (State Emblem + bilingual wordmark). If the
-          file is not present the text lockup below stands in, so a missing
-          asset degrades to the wording rather than to a broken-image icon.
-        -->
+
+        <span class="head-rule"></span>
+
         @if (ministryLogoMissing()) {
           <div>
             <div class="emblem-goi">GOVERNMENT OF INDIA</div>
@@ -53,23 +45,21 @@
       <span class="hero-underline"></span>
 
       <p class="hero-sub">
-        Helping micro, small and medium enterprises adopt LEAN manufacturing<br />
-        and earn Bronze, Silver and Gold certification.
+        Sign in with the LEAN ID issued when your enterprise registered, to apply<br />
+        for a certification level and follow your assessment.
       </p>
 
-      <div class="section-label">CERTIFICATION PIPELINE &nbsp;·&nbsp; FY 2026-27</div>
+      <div class="section-label">ONE REGISTRATION &nbsp;·&nbsp; THREE LEVELS</div>
 
       <div class="pipeline">
-        @for (tier of tiers; track tier.label; let i = $index) {
+        @for (tier of tiers; track tier.value) {
           <div class="tier">
             <div class="tier-label">
-              <span class="tier-dot" [style.background]="tierColours[i]"></span>
+              <span class="tier-dot" [style.background]="tier.colour"></span>
               {{ tier.label }}
             </div>
-            <div class="tier-row">
-              <span class="tier-value">{{ tier.value }}</span>
-              <span class="tier-delta">{{ tier.delta }}</span>
-            </div>
+            <div class="tier-value">{{ tier.value }}</div>
+            <div class="tier-note">{{ tier.note }}</div>
           </div>
         }
       </div>
@@ -78,7 +68,7 @@
 
       <div class="links">
         @for (link of quickLinks; track link.title) {
-          <a class="quick" [href]="link.href" target="_blank" rel="noopener noreferrer">
+          <button class="quick" type="button" (click)="go(link)">
             <span class="quick-bar" [style.background]="link.accent"></span>
 
             <span class="quick-icon" [style.background]="link.tint">
@@ -121,7 +111,7 @@
                 />
               </svg>
             </span>
-          </a>
+          </button>
         }
       </div>
 
@@ -132,7 +122,9 @@
           Ministry of Micro, Small and Medium Enterprises, Kartavya Bhawan - 03,
           Kartavya Path, New Delhi - 110001, India
         </div>
-        <div class="foot-3">© {{ year }} MCLS. All rights reserved.</div>
+        <div class="foot-3">
+          © {{ year }} MCLS. All rights reserved. · Version {{ appVersion }} · Updated {{ releasedOn }}
+        </div>
       </footer>
     </div>
   </section>
@@ -141,10 +133,10 @@
   <section class="form-panel">
     <div class="form-top">
       <!--
-        The picker is the Bhashini button, which lives in <body> and is
+        The picker is the Bhashini button itself, which lives in <body> and is
         positioned into this corner by a global rule — see core/bhashini.ts for
-        why it is never moved into a component. It now names the active
-        language itself, so nothing is repeated here.
+        why it is never moved into a component. It names the active language on
+        its own, so nothing is repeated here.
       -->
       <a
         href="https://ndie.qcin.org/contact-us/"
@@ -174,13 +166,11 @@
 
         <div class="signin-body">
           <h2 class="signin-title">Sign in</h2>
-          <p class="signin-sub">Use your registered portal credentials to continue.</p>
+          <p class="signin-sub">Use the LEAN ID sent to your registered SPOC email address.</p>
 
           <form (ngSubmit)="submit()">
             <div class="field">
-              <div class="label-row">
-                <label class="field-label" for="userId">USER ID</label>
-              </div>
+              <label class="field-label" for="leanId">LEAN ID</label>
 
               <div class="input-wrap">
                 <svg class="lead-icon" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
@@ -195,17 +185,16 @@
                 </svg>
 
                 <input
-                  id="userId"
+                  id="leanId"
                   class="input has-lead"
                   type="text"
                   autocomplete="username"
-                  placeholder="Enter your User ID"
-                  [ngModel]="userId()"
-                  (ngModelChange)="userId.set($event)"
-                  name="userId"
+                  placeholder="LEAN-MH-2025-00456"
+                  [value]="leanId()"
+                  (input)="leanId.set($any($event.target).value)"
                 />
 
-                @if (userId().trim()) {
+                @if (leanId().trim()) {
                   <span class="tick" aria-label="Entered">
                     <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
                       <path
@@ -220,13 +209,12 @@
                   </span>
                 }
               </div>
+
+              <span class="hint">Sent to your SPOC email when registration completed</span>
             </div>
 
             <div class="field">
-              <div class="label-row">
-                <label class="field-label" for="password">PASSWORD</label>
-                <a class="forgot" href="#">Forgot password?</a>
-              </div>
+              <label class="field-label" for="password">PASSWORD</label>
 
               <div class="input-wrap">
                 <svg class="lead-icon" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
@@ -245,9 +233,8 @@
                   [type]="showPassword() ? 'text' : 'password'"
                   autocomplete="current-password"
                   placeholder="Enter your password"
-                  [ngModel]="password()"
-                  (ngModelChange)="password.set($event)"
-                  name="password"
+                  [value]="password()"
+                  (input)="password.set($any($event.target).value)"
                 />
 
                 <button
@@ -271,6 +258,8 @@
                   </svg>
                 </button>
               </div>
+
+              <span class="hint">The system password was emailed to you. You may change it later.</span>
             </div>
 
             <div class="field">
@@ -284,9 +273,8 @@
                     type="text"
                     autocomplete="off"
                     placeholder="Enter code"
-                    [ngModel]="captchaInput()"
-                    (ngModelChange)="captchaInput.set($event)"
-                    name="captcha"
+                    [value]="captchaInput()"
+                    (input)="captchaInput.set($any($event.target).value)"
                   />
                   @if (captchaInput().trim()) {
                     <span class="tick" aria-label="Entered">
@@ -304,7 +292,7 @@
                   }
                 </div>
 
-                <div class="captcha-box">
+                <div class="captcha-box" aria-label="Security code">
                   @for (glyph of captchaChars(); track $index) {
                     <span [style.color]="glyph.colour">{{ glyph.char }}</span>
                   }
@@ -335,16 +323,6 @@
               </div>
             </div>
 
-            <label class="keep">
-              <input
-                type="checkbox"
-                [ngModel]="keepSignedIn()"
-                (ngModelChange)="keepSignedIn.set($event)"
-                name="keep"
-              />
-              <span>Keep me signed in on this device</span>
-            </label>
-
             @if (error()) {
               <div class="login-error" role="alert">{{ error() }}</div>
             }
@@ -374,47 +352,26 @@
                 stroke-linejoin="round"
               />
             </svg>
-            Authorised users only. Access is monitored.
+            Registered enterprises only. Access is monitored.
           </p>
+
+          <div class="card-divider"></div>
+
+          <!-- The new-user card. The wash is the page's own green-to-blue
+               accent rather than the artboard's teal-to-lime, so it sits with
+               the rest of the portal instead of introducing a third palette. -->
+          <section class="new-user">
+            <h3 class="new-user-title">New User</h3>
+            <p class="new-user-text">
+              If you are a first time user, click below on &ldquo;Register Now&rdquo;.
+            </p>
+            <button class="new-user-btn" type="button" (click)="register()">
+              REGISTER NOW
+            </button>
+          </section>
         </div>
       </div>
 
-      <div class="assurances">
-        @for (item of assurances; track item.title) {
-          <div class="assurance">
-            <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
-              <path
-                [attr.d]="item.icon"
-                fill="none"
-                stroke="#0F7B45"
-                stroke-width="1.4"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
-            </svg>
-            <div>
-              <div class="assurance-title">{{ item.title }}</div>
-            </div>
-          </div>
-        }
-      </div>
-
-      <p class="not-admin">
-        Not an administrator?
-        <a href="https://lean.msme.gov.in/VerifyUdyam/Register" target="_blank" rel="noopener noreferrer">
-          Go to the MSME portal
-          <svg width="11" height="11" viewBox="0 0 12 12" aria-hidden="true">
-            <path
-              d="M4.4 2.2 8.2 6l-3.8 3.8"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.7"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            />
-          </svg>
-        </a>
-      </p>
     </div>
   </section>
 </div>

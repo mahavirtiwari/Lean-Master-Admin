@@ -68,7 +68,7 @@
 
 @media (max-width: 1180px) {
   .geo-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
@@ -82,7 +82,7 @@
 
 @media (max-width: 900px) {
   .geo-body {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
@@ -189,7 +189,7 @@
 }
 
 @media (max-width: 1180px) {
-  .demo-grid { grid-template-columns: 1fr; }
+  .demo-grid { grid-template-columns: minmax(0, 1fr); }
 }
 
 .donut-row {

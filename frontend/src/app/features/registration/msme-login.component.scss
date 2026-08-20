@@ -1,0 +1,627 @@
+// =============================================================================
+// MSME applicant sign-in.
+//
+// Deliberately the same frame as the administrator sign-in (features/auth):
+// a 55/45 split with the brand wash and gear watermark on the left and the
+// card on the right. Only the content differs — an applicant signs in with a
+// LEAN ID and is offered registration, where an administrator is not.
+// =============================================================================
+
+:host { display: block; }
+
+.login {
+  display: grid;
+  // 832 : 680 on the artboard.
+  grid-template-columns: 55% 45%;
+  min-height: 100vh;
+}
+
+// ============================================================ brand panel ===
+
+.brand-panel {
+  position: relative;
+  background: linear-gradient(160deg, #f7fcf9 0%, #eaf6ef 55%, #dbede3 100%);
+  border-right: 1px solid #d9ebe1;
+  overflow: hidden;
+}
+
+// The 22 px dot grid laid over the wash.
+.brand-panel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle at 1.6px 1.6px, rgba(15, 123, 69, 0.06) 1.5px, transparent 1.5px);
+  background-size: 22px 22px;
+  pointer-events: none;
+}
+
+// The 4 px accent along the top of the brand panel only.
+.brand-panel::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #0f7b45 0%, #1b4f8a 55%, #1b4f8a 100%);
+}
+
+// The industrial gear pair set into the bottom-right of the panel.
+.watermark {
+  position: absolute;
+  right: -60px;
+  bottom: -70px;
+  width: 470px;
+  height: 470px;
+  pointer-events: none;
+}
+
+.brand-inner {
+  position: relative;
+  z-index: 1;
+  padding: 44px 60px 40px;
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+// The scheme mark leads, the Ministry lockup follows — the artboard order.
+.brand-head {
+  display: flex;
+  align-items: center;
+  gap: 30px;
+}
+
+.emblem-logo {
+  width: 206px;
+  height: 74px;
+  object-fit: contain;
+  flex: none;
+}
+
+.head-rule {
+  width: 1px;
+  height: 52px;
+  background: #c6d3cb;
+  flex: none;
+}
+
+.ministry-logo {
+  height: 62px;
+  width: auto;
+  max-width: 300px;
+  object-fit: contain;
+  flex: none;
+}
+
+.emblem-goi {
+  font-size: 9.4px;
+  font-weight: 700;
+  letter-spacing: 1.1px;
+  color: var(--green);
+}
+
+.emblem-ministry {
+  font-size: 12.8px;
+  font-weight: 700;
+  line-height: 1.4;
+  color: var(--text-strong);
+  margin-top: 4px;
+}
+
+.rule {
+  display: block;
+  height: 1px;
+  margin: 30px 0 0;
+  background: linear-gradient(90deg, rgba(15, 123, 69, 0.55), rgba(15, 123, 69, 0.05));
+}
+
+.rule-foot { margin-top: auto; }
+
+.hero {
+  font-size: 38px;
+  font-weight: 700;
+  line-height: 1.22;
+  color: var(--text-strong);
+  margin: 46px 0 0;
+}
+
+.hero-underline {
+  display: block;
+  width: 64px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--green);
+  margin-top: 18px;
+}
+
+.hero-sub {
+  font-size: 12.6px;
+  line-height: 1.62;
+  color: var(--text-body);
+  margin: 22px 0 0;
+}
+
+.section-label {
+  font-size: 9.6px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  color: var(--text-muted);
+  margin-top: 34px;
+}
+
+// ---------------------------------------------------------- level card ---
+
+.pipeline {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  margin-top: 14px;
+  background: #fff;
+  border: 1px solid var(--border-card);
+  border-top: 3px solid var(--green);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+}
+
+.tier { padding: 16px 22px; }
+
+.tier + .tier { border-left: 1px solid var(--border-divider); }
+
+.tier-label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 9.4px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  color: var(--text-muted);
+}
+
+.tier-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  flex: none;
+}
+
+.tier-value {
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--text-strong);
+  margin-top: 9px;
+}
+
+.tier-note {
+  font-size: 10.2px;
+  color: var(--text-muted);
+  margin-top: 5px;
+  line-height: 1.45;
+}
+
+// ---------------------------------------------------------- quick links ---
+
+.links {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-top: 14px;
+}
+
+.quick {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 22px 16px 26px;
+  background: #fff;
+  border: 1px solid var(--border-card);
+  border-radius: var(--r-lg);
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+  overflow: hidden;
+  transition: border-color 0.12s ease, box-shadow 0.12s ease;
+
+  &:hover {
+    border-color: var(--green-border);
+    box-shadow: 0 2px 10px rgba(15, 123, 69, 0.09);
+    text-decoration: none;
+  }
+}
+
+.quick-bar {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3.5px;
+}
+
+.quick-icon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--r-md);
+  flex: none;
+}
+
+.quick-text-wrap {
+  flex: 1;
+  min-width: 0;
+}
+
+.quick-title {
+  display: block;
+  font-size: 13.4px;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.quick-text {
+  display: block;
+  font-size: 10.6px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.quick-go {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  flex: none;
+  border: 1px solid var(--border-input);
+  border-radius: 50%;
+  background: #fff;
+  transition: background 0.12s ease;
+}
+
+.quick:hover .quick-go { background: var(--surface-muted); }
+
+.brand-foot {
+  font-size: 10.8px;
+  color: var(--text-body);
+  padding-top: 22px;
+}
+
+.foot-3 {
+  font-size: 10px;
+  color: var(--text-faint);
+  margin-top: 14px;
+}
+
+// ============================================================= form panel ===
+
+.form-panel {
+  background: linear-gradient(180deg, #fbfcfb 0%, #f1f5f2 100%);
+  display: flex;
+  flex-direction: column;
+  padding: 0 60px 40px 114px;
+}
+
+.form-top {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 26px;
+  // Space at the right for the Bhashini picker, which is fixed to the corner
+  // by a global rule and never re-parented — see core/bhashini.ts. The reserve
+  // is what puts "Need help?" immediately beside it rather than under it.
+  padding: 26px 96px 0 0;
+}
+
+.need-help {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.2px;
+  font-weight: 600;
+  color: var(--blue);
+  text-decoration: none;
+
+  &:hover { text-decoration: underline; }
+}
+
+
+.form-inner {
+  max-width: 452px;
+  width: 100%;
+  margin-top: 54px;
+}
+
+.welcome {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-strong);
+  margin-top: 9px;
+}
+
+// ------------------------------------------------------- sign-in card ---
+
+.signin-card {
+  position: relative;
+  margin-top: 26px;
+  background: #fff;
+  border: 1px solid var(--border-card);
+  border-radius: 14px;
+  box-shadow: 6px 10px 0 rgba(22, 33, 26, 0.045);
+  overflow: hidden;
+}
+
+.card-cap {
+  display: block;
+  height: 7px;
+  background: var(--blue);
+}
+
+.signin-body { padding: 26px 36px 24px; }
+
+.signin-title {
+  font-size: 25px;
+  font-weight: 700;
+  color: var(--text-strong);
+  margin: 0;
+}
+
+.signin-sub {
+  font-size: 11.8px;
+  color: var(--text-muted);
+  margin: 8px 0 22px;
+}
+
+.field { margin-bottom: 16px; }
+
+.field-label {
+  display: block;
+  font-size: 9.6px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  color: var(--text-muted);
+  margin-bottom: 7px;
+}
+
+.input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.lead-icon {
+  position: absolute;
+  left: 13px;
+  pointer-events: none;
+}
+
+.input {
+  width: 100%;
+  height: 44px;
+  padding: 0 38px 0 14px;
+  font-size: 13px;
+  color: var(--text-strong);
+  background: #fff;
+  border: 1px solid var(--border-input);
+  border-radius: var(--r-md);
+  outline: none;
+
+  &::placeholder { color: #9aa8a0; }
+
+  &:focus {
+    border-color: var(--blue);
+    box-shadow: 0 0 0 3px rgba(27, 79, 138, 0.12);
+  }
+}
+
+.input.has-lead { padding-left: 38px; }
+
+.tick,
+.eye {
+  position: absolute;
+  right: 12px;
+  display: grid;
+  place-items: center;
+  background: none;
+  border: 0;
+  padding: 0;
+}
+
+.eye { cursor: pointer; }
+
+.hint {
+  display: block;
+  font-size: 10.4px;
+  color: var(--text-muted);
+  margin-top: 6px;
+}
+
+// -------------------------------------------------------------- captcha ---
+
+.captcha-row {
+  display: grid;
+  grid-template-columns: 1fr 128px 44px;
+  gap: 10px;
+  align-items: center;
+}
+
+.captcha-box {
+  position: relative;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  background: repeating-linear-gradient(-38deg, #f4f8f5 0 6px, #eef4f0 6px 12px);
+  border: 1px solid var(--border-input);
+  border-radius: var(--r-md);
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  user-select: none;
+
+  span:nth-child(odd) { transform: rotate(-7deg); }
+  span:nth-child(even) { transform: rotate(6deg) translateY(1px); }
+}
+
+.captcha-strike {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.captcha-refresh {
+  display: grid;
+  place-items: center;
+  height: 44px;
+  background: #fff;
+  border: 1px solid var(--border-input);
+  border-radius: var(--r-md);
+  cursor: pointer;
+
+  &:hover { background: var(--surface-muted); }
+}
+
+.login-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0 14px;
+  padding: 10px 12px;
+  font-size: 11.6px;
+  color: #8a1b1b;
+  background: #fdf1f1;
+  border: 1px solid #f0cccc;
+  border-radius: var(--r-md);
+}
+
+.signin-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  width: 100%;
+  height: 48px;
+  margin-top: 22px;
+  font-size: 13.8px;
+  font-weight: 700;
+  color: #fff;
+  // The administrator card's primary action is blue, not green; the two
+  // sign-ins must not disagree on what the primary button looks like.
+  background: var(--blue);
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.12s ease;
+
+  &:hover:not(:disabled) { background: #163f6f; }
+  &:disabled { opacity: 0.6; cursor: not-allowed; }
+}
+
+.card-divider {
+  height: 1px;
+  background: var(--border-divider);
+  margin: 22px 0 16px;
+}
+
+
+
+// ------------------------------------------------------ new user card ---
+// The supplied artboard, recoloured to the portal's own green-to-blue accent:
+// a heading, one line of copy, and a white call to action across the width.
+
+.new-user {
+  padding: 20px 22px 22px;
+  border-radius: 12px;
+  // The left panel's wash and dot grid, so the box reads as part of the same
+  // surface rather than as a separate coloured panel.
+  background-color: #eef7f1;
+  background-image: radial-gradient(circle at 1.6px 1.6px, rgba(15, 123, 69, 0.11) 1.5px, transparent 1.5px);
+  background-size: 22px 22px;
+  border: 1px solid #d9ebe1;
+}
+
+.new-user-title {
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--text-strong);
+  margin: 0;
+}
+
+.new-user-text {
+  font-size: 12.6px;
+  line-height: 1.5;
+  color: var(--text-body);
+  margin: 10px 0 0;
+}
+
+.new-user-btn {
+  // Sized to its text rather than the card's width, so it reads as a link-out
+  // and does not compete with the Sign in button above.
+  height: 36px;
+  padding: 0 20px;
+  margin-top: 16px;
+  font-size: 11.6px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  // Solid green: a white button would disappear into the pale wash.
+  color: #fff;
+  background: var(--green);
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.12s ease;
+
+  &:hover { background: #0c6839; }
+}
+
+.authorised {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 10.6px;
+  color: var(--text-muted);
+  margin: 16px 0 0;
+}
+
+
+
+// ================================================================ narrow ===
+// Below the split's comfortable width the brand panel stacks out of the way
+// and the card takes the full column.
+
+@media (max-width: 1080px) {
+  .login { grid-template-columns: 1fr; }
+  .brand-panel { display: none; }
+  .form-panel { padding: 0 24px 40px; align-items: center; }
+  .form-top { padding-right: 140px; }
+  .form-inner { margin-top: 32px; }
+}
+
+// On a phone the three-across captcha squeezes the field to about 70 px. The
+// code and its refresh keep the first row; the field takes the full width
+// beneath them, where it can actually be typed into.
+@media (max-width: 480px) {
+  .captcha-row {
+    grid-template-columns: 1fr 44px;
+    gap: 8px 10px;
+  }
+
+  .captcha-box {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .captcha-refresh,
+  .captcha-new {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .captcha-row .input-wrap,
+  .captcha-row > .input {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+}

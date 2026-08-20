@@ -773,11 +773,12 @@ a:hover {
    into a header did not survive Angular tearing that view down, which left the
    portal with no language picker at all after sign-in.
 
-   Top-right, so it reads as part of the header on both the sign-in screen and
-   the portal shell. */
+   Top-right, so it lands beside the "Need help?" link on the sign-in screens
+   and reads as part of the header in the portal shell. The screens reserve the
+   width below in their own right padding. */
 body > .bhashini-plugin-container {
   position: fixed;
-  top: 14px;
+  top: 16px;
   right: 22px;
   z-index: 60;
 }
@@ -787,4 +788,169 @@ body > .bhashini-plugin-container #bhashini-translation {
   inset: auto !important;
   margin: 0 !important;
   transform: none !important;
+}
+
+/* The plugin's control is icon-only; core/bhashini.ts appends the language
+   name and a caret into that same button, and these rules make the three read
+   as one pill. */
+body > .bhashini-plugin-container .bhashini-dropdown-btn {
+  display: flex !important;
+  align-items: center;
+  gap: 7px;
+  width: auto !important;
+  height: 36px !important;
+  padding: 0 12px 0 6px !important;
+  border: 1px solid var(--border-input) !important;
+  border-radius: 18px !important;
+  background: #fff !important;
+  box-shadow: 0 1px 3px rgba(22, 33, 26, 0.08) !important;
+  cursor: pointer;
+}
+
+body > .bhashini-plugin-container .bhashini-dropdown-btn:hover {
+  background: var(--surface-muted) !important;
+  border-color: var(--green-border) !important;
+}
+
+body > .bhashini-plugin-container .bhashini-dropdown-btn-icon {
+  width: 26px !important;
+  height: 26px !important;
+  flex: none;
+}
+
+body > .bhashini-plugin-container .bhashini-lang-name {
+  font-size: 12.4px;
+  font-weight: 600;
+  color: var(--text-strong);
+  white-space: nowrap;
+}
+
+/* A caret drawn in CSS — the plugin ships none. */
+body > .bhashini-plugin-container .bhashini-lang-caret {
+  width: 7px;
+  height: 7px;
+  flex: none;
+  margin-top: -3px;
+  border-right: 1.6px solid var(--text-muted);
+  border-bottom: 1.6px solid var(--text-muted);
+  transform: rotate(45deg);
+}
+
+/* ==================================================== responsive layer ===
+   These rules act on the shared building blocks (.stat-grid, .form-grid,
+   .toolbar, .tbl, .modal, .pager) rather than on any one screen, so a module
+   that uses the vocabulary is responsive without its own breakpoint. Screens
+   with layouts of their own still carry their own media queries.            */
+
+/* --- tablet ------------------------------------------------------------- */
+@media (max-width: 900px) {
+  .stat-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .form-grid,
+  .form-grid-3,
+  .master-form,
+  .master-form-3 {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+  }
+
+  /* Nothing spans two columns once there is only one. */
+  .span-2 {
+    grid-column: auto;
+  }
+
+  .card-head {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .modal-backdrop {
+    padding: 16px;
+    /* Long dialogs must scroll the backdrop, not clip inside the viewport. */
+    align-items: flex-start;
+    overflow-y: auto;
+  }
+
+  .modal,
+  .modal-lg {
+    max-width: 100%;
+  }
+}
+
+/* --- phone -------------------------------------------------------------- */
+@media (max-width: 620px) {
+  .stat-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* A search that keeps its 220 px floor pushes the buttons beside it off the
+     row; on a phone it takes the row and the buttons wrap under it. */
+  .search {
+    min-width: 100%;
+    flex: 1 0 100%;
+  }
+
+  .toolbar {
+    gap: 8px;
+  }
+
+  .toolbar .btn {
+    flex: 1;
+    min-width: 0;
+    justify-content: center;
+  }
+
+  /* Tables stay tables and scroll sideways inside their wrapper — collapsing
+     them into stacked cards would break the column alignment the operators
+     read these screens by. The wrapper is what scrolls, never the page. */
+  .tbl-wrap {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .tbl {
+    min-width: 640px;
+  }
+
+  .pager {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .pager-btns {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .card-pad {
+    padding: 16px 14px;
+  }
+
+  .modal-body {
+    padding: 18px 16px;
+  }
+
+  .modal-foot {
+    flex-wrap: wrap;
+  }
+
+  .modal-foot .btn {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .row-between {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+}
+
+/* The page itself must never scroll sideways, whatever a child does. */
+html,
+body {
+  max-width: 100%;
+  overflow-x: hidden;
 }

@@ -1,7 +1,7 @@
-<div class="shell" [class.is-collapsed]="collapsed()">
+<div class="shell" [class.is-collapsed]="railCollapsed()" [class.is-drawer-open]="drawerOpen()">
   <!-- ----------------------------------------------------------- sidebar -->
-  <aside class="sidebar">
-    <div class="brand" [class.is-collapsed]="collapsed()">
+  <aside class="sidebar" [attr.aria-hidden]="isMobile() && !drawerOpen()">
+    <div class="brand" [class.is-collapsed]="railCollapsed()">
       <!-- The scheme's own mark, lifted from the SVG exports where it sits at
            190x68 in the sidebar of all 95 in-portal screens. -->
       <img
@@ -28,7 +28,7 @@
                 <use [attr.href]="'#icon-' + (item.iconKey || 'dot')"></use>
               </svg>
             </span>
-            @if (!collapsed()) {
+            @if (!railCollapsed()) {
               <span class="nav-label">{{ item.label }}</span>
             }
           </a>
@@ -51,7 +51,7 @@
                 <use [attr.href]="'#icon-' + (item.iconKey || 'dot')"></use>
               </svg>
             </span>
-            @if (!collapsed()) {
+            @if (!railCollapsed()) {
               <span class="nav-label">{{ item.label }}</span>
               <button
                 type="button"
@@ -81,7 +81,7 @@
             }
           </a>
 
-          @if (isGroupOpen(item) && !collapsed()) {
+          @if (isGroupOpen(item) && !railCollapsed()) {
             <div class="subnav">
               @for (child of item.children; track child.menuItemId) {
                 <a
@@ -102,7 +102,7 @@
     <div class="sidebar-foot">
       <div class="who">
         <div class="avatar avatar-sm">{{ user()?.initials }}</div>
-        @if (!collapsed()) {
+        @if (!railCollapsed()) {
           <div class="who-text">
             <div class="who-name">{{ user()?.fullName }}</div>
             <div class="who-role">{{ user()?.designation || user()?.roleName }}</div>
@@ -112,14 +112,24 @@
     </div>
   </aside>
 
+  <!-- Tapping away from the drawer closes it; it is only in the layout on
+       narrow viewports, where the sidebar covers the content. -->
+  @if (isMobile() && drawerOpen()) {
+    <button class="scrim" type="button" aria-label="Close menu" (click)="drawerOpen.set(false)"></button>
+  }
+
   <!-- ------------------------------------------------------------- main -->
   <div class="main">
     <header class="topbar">
       <button
         type="button"
         class="icon-btn"
-        (click)="collapsed.set(!collapsed())"
-        [attr.aria-label]="collapsed() ? 'Expand menu' : 'Collapse menu'"
+        (click)="toggleMenu()"
+        [attr.aria-label]="
+          isMobile()
+            ? (drawerOpen() ? 'Close menu' : 'Open menu')
+            : (collapsed() ? 'Expand menu' : 'Collapse menu')
+        "
       >
         <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
           <path

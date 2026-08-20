@@ -427,3 +427,86 @@
 .topbar {
   padding-right: 74px;
 }
+
+// ============================================================== narrow ===
+// Below 900 px the rail becomes a drawer over the content. The grid drops to
+// a single column so the content keeps the full width whether or not the
+// drawer is showing.
+
+@media (max-width: 900px) {
+  .shell,
+  .shell.is-collapsed {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 45;
+    width: min(280px, 84vw);
+    transform: translateX(-100%);
+    transition: transform 0.2s ease;
+    box-shadow: none;
+  }
+
+  .shell.is-drawer-open .sidebar {
+    transform: none;
+    box-shadow: 0 0 0 100vmax rgba(0, 0, 0, 0.001), 6px 0 24px rgba(22, 33, 26, 0.18);
+  }
+
+  .scrim {
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    border: 0;
+    padding: 0;
+    background: rgba(22, 33, 26, 0.42);
+  }
+
+  .topbar {
+    gap: 10px;
+    padding: 0 14px;
+  }
+
+  // The crumb repeats what the title already says and is the first thing to
+  // go when the bar has to hold a menu button, a title and two controls.
+  .crumb {
+    display: none;
+  }
+
+  .page-title {
+    font-size: 15px;
+    margin: 0;
+  }
+
+  .content {
+    padding: 16px 14px 28px;
+  }
+
+  .user-menu {
+    // Anchored to the viewport instead of the avatar, which is close enough
+    // to the right edge that a 268 px panel would overflow it.
+    position: fixed;
+    top: calc(var(--topbar-h) + 6px);
+    right: 10px;
+    left: 10px;
+    width: auto;
+  }
+}
+
+// Phones: the drawer takes most of the width and the topbar loses its
+// non-essential control.
+@media (max-width: 560px) {
+  .sidebar {
+    width: min(300px, 88vw);
+  }
+
+  .topbar {
+    padding: 0 10px;
+  }
+
+  .content {
+    padding: 14px 10px 24px;
+  }
+}

@@ -62,6 +62,8 @@ public class MclsDbContext(DbContextOptions<MclsDbContext> options)
     public DbSet<EnterpriseActivity> EnterpriseActivities => Set<EnterpriseActivity>();
     public DbSet<EnterprisePlant> EnterprisePlants => Set<EnterprisePlant>();
     public DbSet<Enterprise> Enterprises => Set<Enterprise>();
+    public DbSet<Registration> Registrations => Set<Registration>();
+    public DbSet<AwarenessProgram> AwarenessPrograms => Set<AwarenessProgram>();
     public DbSet<CertificationLevel> CertificationLevels => Set<CertificationLevel>();
     public DbSet<Domain.Entities.Msme.ApplicationStatus> ApplicationStatuses
         => Set<Domain.Entities.Msme.ApplicationStatus>();

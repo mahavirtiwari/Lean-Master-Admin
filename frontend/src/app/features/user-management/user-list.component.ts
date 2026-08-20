@@ -1,5 +1,5 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { Component, computed, effect, inject, input, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 
@@ -96,16 +96,23 @@ export class UserListComponent {
 
     // Re-runs when the sub-menu switches account type, which is what makes the
     // nine sidebar links work against one component.
+    // Switching account type resets the filters and reloads. The body is
+    // untracked so the effect depends on the route input alone: load() reads
+    // the same filter signals this resets, which otherwise makes them
+    // dependencies and fires the effect — and a second identical request —
+    // whenever any filter changes.
     effect(() => {
       const id = this.typeId();
 
-      this.page.set(1);
-      this.search.set('');
-      this.roleId.set('');
-      this.statusTab.set('');
+      untracked(() => {
+        this.page.set(1);
+        this.search.set('');
+        this.roleId.set('');
+        this.statusTab.set('');
 
-      this.api.roles(id).subscribe((roles) => this.roles.set(roles));
-      this.load();
+        this.api.roles(id).subscribe((roles) => this.roles.set(roles));
+        this.load();
+      });
     });
   }
 

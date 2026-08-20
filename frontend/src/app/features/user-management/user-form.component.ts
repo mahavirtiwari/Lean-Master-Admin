@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, input, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
@@ -141,15 +141,19 @@ export class UserFormComponent {
     this.api.states().subscribe((states) => this.states.set(states));
     this.api.lookupValues('AGENCY_CATEGORY').subscribe((v) => this.categories.set(v));
 
+    // The effect depends on the route inputs and nothing else. The work it
+    // triggers is untracked because both branches write signals they also
+    // read — changeType() rewrites `person` from its own current value, which
+    // re-triggered this effect and spun the component in a loop that locked
+    // the tab on /user-management/type/:id/new.
     effect(() => {
       const editId = this.id();
+      const typeId = Number(this.accountTypeId() ?? 1);
 
-      if (editId) {
-        this.loadUser(Number(editId));
-        return;
-      }
-
-      this.changeType(Number(this.accountTypeId() ?? 1));
+      untracked(() => {
+        if (editId) this.loadUser(Number(editId));
+        else this.changeType(typeId);
+      });
     });
   }
 

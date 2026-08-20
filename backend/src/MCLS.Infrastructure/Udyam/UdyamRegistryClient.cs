@@ -164,7 +164,13 @@ public sealed class UdyamRegistryClient(
         return Parse(udyamNumber, xml, logger);
     }
 
-    internal static UdyamRecord? Parse(string udyamNumber, string xml, ILogger logger)
+    /// <summary>
+    /// Turns a registry response into a record. Public because the registration
+    /// wizard re-parses the payload it stored at step 2 on every later step,
+    /// rather than calling the registry again — the applicant should not be
+    /// blocked by the registry going down midway through the form.
+    /// </summary>
+    public static UdyamRecord? Parse(string udyamNumber, string xml, ILogger logger)
     {
         if (string.IsNullOrWhiteSpace(xml)) return null;
 
@@ -183,7 +189,31 @@ public sealed class UdyamRegistryClient(
         var basic = doc.Root?.Element("BasicDetail");
 
         // An unknown number still comes back 200, with no BasicDetail.
-        if (basic is null || string.IsNullOrWhiteSpace(Value(basic, "UdyogAadharNo")))
+        if (basic is null)
+        {
+            logger.LogInformation("Udyam has no record for {Udyam}.", udyamNumber);
+            return null;
+        }
+
+        // A refusal is also a 200, shaped like a record:
+        //   <UdyogAadharNo>NO</UdyogAadharNo><Error>Wrong Detail</Error><ErrorCode>1</ErrorCode>
+        // Checking only that UdyogAadharNo is non-empty accepted that as a hit,
+        // because the literal text is "NO" — so a WRONG MOBILE NUMBER passed
+        // verification and produced an enterprise with no plants or activities.
+        // ErrorCode is the authoritative signal; the sentinel is belt and braces.
+        var errorCode = Value(basic, "ErrorCode");
+        var errorText = Value(basic, "Error");
+        var number = Value(basic, "UdyogAadharNo");
+
+        if (!string.IsNullOrWhiteSpace(errorCode) && errorCode != "0")
+        {
+            logger.LogInformation(
+                "Udyam refused {Udyam}: {Code} {Error}.", udyamNumber, errorCode, errorText);
+            return null;
+        }
+
+        if (string.IsNullOrWhiteSpace(number)
+            || number.Equals("NO", StringComparison.OrdinalIgnoreCase))
         {
             logger.LogInformation("Udyam has no record for {Udyam}.", udyamNumber);
             return null;

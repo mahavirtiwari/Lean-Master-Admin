@@ -1,5 +1,5 @@
 import { DecimalPipe } from '@angular/common';
-import { Component, computed, effect, inject, input, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { ApiService } from '../../core/api.service';
@@ -63,12 +63,17 @@ export class QuestionnaireComponent {
   ];
 
   constructor() {
+    // Re-runs when the sub-menu switches between Silver and Gold. Untracked
+    // for the same reason as the user list: load() reads the page and filter
+    // this sets, so tracking them would reload on every paging click.
     effect(() => {
-      // Re-runs when the sub-menu switches between Silver and Gold.
       const scope = this.levelCode();
-      this.bankFilter.set(scope);
-      this.page.set(1);
-      this.load();
+
+      untracked(() => {
+        this.bankFilter.set(scope);
+        this.page.set(1);
+        this.load();
+      });
     });
   }
 

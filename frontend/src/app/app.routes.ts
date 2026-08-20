@@ -18,6 +18,30 @@ const questionnaireModule = (level: string): string =>
  * otherwise carry the whole portal to the sign-in page.
  */
 export const routes: Routes = [
+  // The applicant registration wizard. Deliberately OUTSIDE the shell route:
+  // it has no sidebar, no admin layout and no authGuard — the applicant has no
+  // account until the last step creates one. It is served on its own domain in
+  // production; the routes stay distinct so the two never share a screen.
+  {
+    path: 'register',
+    loadComponent: () =>
+      import('./features/registration/registration.component').then((m) => m.RegistrationComponent),
+  },
+
+  // The applicant portal lands on its sign-in, with Register offered from
+  // there — someone returning to check an application should not have to step
+  // past the registration wizard to reach it.
+  { path: 'msme', pathMatch: 'full', redirectTo: 'msme/login' },
+
+  // The applicant's own sign-in. Separate from /login, which is the master
+  // administration entry point — different audience, different credential
+  // (LEAN ID vs staff code) and a different landing screen.
+  {
+    path: 'msme/login',
+    loadComponent: () =>
+      import('./features/registration/msme-login.component').then((m) => m.MsmeLoginComponent),
+  },
+
   {
     path: 'login',
     loadComponent: () => import('./features/auth/login.component').then((m) => m.LoginComponent),

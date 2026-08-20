@@ -1,10 +1,13 @@
-import { Component, computed, effect, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { filter, map, startWith } from 'rxjs';
 
 import { AuthService } from '../core/auth.service';
 import { MenuItem } from '../core/models';
+
+/** Matches the breakpoint the stylesheet switches the frame at. */
+const MOBILE = '(max-width: 900px)';
 
 /**
  * The portal frame: collapsible sidebar, topbar with breadcrumb and user chip,
@@ -32,6 +35,20 @@ export class ShellComponent {
   readonly collapsed = signal(false);
   readonly openGroups = signal<Set<string>>(new Set());
   readonly userMenuOpen = signal(false);
+
+  /**
+   * Narrow viewports get a drawer instead of a rail: there is no room for a
+   * 260 px column beside the content, and the 76 px collapsed rail is icons
+   * only, which is unusable as the sole navigation on a phone.
+   */
+  readonly isMobile = signal(matchMedia(MOBILE).matches);
+  readonly drawerOpen = signal(false);
+
+  /**
+   * The rail only collapses on desktop. In the drawer the labels must show —
+   * a drawer of bare icons would be worse than the full menu it replaces.
+   */
+  readonly railCollapsed = computed(() => !this.isMobile() && this.collapsed());
 
   /** Current URL, tracked so the active item and breadcrumb stay in step. */
   private readonly url = toSignal(
@@ -71,6 +88,25 @@ export class ShellComponent {
   });
 
   constructor() {
+    // Kept in a signal rather than read per render, so a rotation or resize
+    // switches the frame without a reload.
+    matchMedia(MOBILE).addEventListener('change', (event) => {
+      this.isMobile.set(event.matches);
+      if (!event.matches) this.drawerOpen.set(false);
+    });
+
+    // A drawer that stayed open over the screen it just navigated to would
+    // hide the result of the tap that opened it.
+    //
+    // The close is untracked on purpose: read as a dependency, the effect
+    // would re-run the moment the drawer opened and shut it again.
+    effect(() => {
+      this.url();
+      untracked(() => {
+        if (this.drawerOpen()) this.drawerOpen.set(false);
+      });
+    });
+
     effect(() => {
       const current = this.url();
       const open = new Set(this.openGroups());
@@ -83,6 +119,12 @@ export class ShellComponent {
 
       if (open.size !== this.openGroups().size) this.openGroups.set(open);
     });
+  }
+
+  /** The topbar button collapses the rail on desktop, opens the drawer on mobile. */
+  toggleMenu(): void {
+    if (this.isMobile()) this.drawerOpen.set(!this.drawerOpen());
+    else this.collapsed.set(!this.collapsed());
   }
 
   isGroupOpen(item: MenuItem): boolean {

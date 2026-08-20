@@ -1697,3 +1697,28 @@ a.head-mark:hover .ministry { text-decoration: underline; }
   font-weight: 600;
   color: #1b4f8a;
 }
+
+// A section heading that carries a second line — the chosen plant on R4. Both
+// lines share the tinted band; the location used to sit on the white below it.
+.section-lbl-stack {
+  display: block;
+  padding: 11px 14px;
+}
+
+.section-lbl-title {
+  display: block;
+  font-size: 9.6px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  color: #47554c;
+}
+
+.section-lbl-sub {
+  display: block;
+  margin-top: 5px;
+  font-size: 10.6px;
+  font-weight: 400;
+  letter-spacing: 0;
+  line-height: 1.5;
+  color: #5d6b62;
+}

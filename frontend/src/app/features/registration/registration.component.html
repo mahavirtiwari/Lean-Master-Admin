@@ -372,10 +372,12 @@
         </div>
 
         @if (chosenPlant(); as unit) {
-          <div class="section-lbl" style="margin-top: 26px">
-            PLEASE SELECT PLANT ACTIVITY FOR THE SELECTED LOCATION
+          <!-- The chosen location belongs inside the heading band, not on the
+               white beneath it: the two lines are one statement. -->
+          <div class="section-lbl section-lbl-stack" style="margin-top: 26px">
+            <span class="section-lbl-title">PLEASE SELECT PLANT ACTIVITY FOR THE SELECTED LOCATION</span>
+            <span class="section-lbl-sub">{{ unit.unitName }} — {{ unit.address }}</span>
           </div>
-          <p class="card-note" style="margin: 6px 0 0">{{ unit.unitName }} — {{ unit.address }}</p>
 
           @if (noEligibleActivity()) {
             <div class="notice notice-bad" style="margin-top: 14px">

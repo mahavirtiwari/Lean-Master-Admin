@@ -159,12 +159,19 @@ public sealed class RegistrationController(
         var udyamNo = request.UdyamRegistrationNo.Trim().ToUpperInvariant();
         var mobile = OnlyDigits(request.Mobile);
 
-        // Already a registered enterprise? Then this is a sign-in, not a
-        // registration, and saying so is safe: they hold the number already.
+        // Is this number already on the scheme? Only for the log line below —
+        // it does not stop the registration, because a second plant is a
+        // second registration.
+        //
+        // First, not Single: a Udyam number may now hold one registration per
+        // plant. Single was safe only while UQ_Enterprise_Udyam existed, and
+        // dropping that constraint (migration 027) left this throwing
+        // "Sequence contains more than one element" on the second plant.
         var existing = await db.Enterprises.AsNoTracking()
             .Where(e => e.UdyamRegistrationNo == udyamNo)
+            .OrderBy(e => e.EnterpriseId)
             .Select(e => new { e.LeanId })
-            .SingleOrDefaultAsync(ct);
+            .FirstOrDefaultAsync(ct);
 
         // An enterprise may hold several plants and register each of them, so a
         // Udyam number that is already on the scheme is not turned away here.
@@ -192,9 +199,14 @@ public sealed class RegistrationController(
         }
 
         // Resume rather than fork: a second attempt on the same number picks up
-        // where the applicant left off.
+        // where the applicant left off. The most recent one, and First rather
+        // than Single — an abandoned draft alongside a live one is ordinary
+        // now that a number may be registered once per plant, and Single would
+        // throw rather than resume.
         var draft = await db.Registrations.AsTracking()
-            .SingleOrDefaultAsync(r => r.UdyamRegistrationNo == udyamNo && r.Status == "Draft", ct);
+            .Where(r => r.UdyamRegistrationNo == udyamNo && r.Status == "Draft")
+            .OrderByDescending(r => r.RegistrationId)
+            .FirstOrDefaultAsync(ct);
 
         if (draft is null)
         {

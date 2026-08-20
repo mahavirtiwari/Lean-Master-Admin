@@ -76,7 +76,7 @@ export class TemplateEditComponent {
         this.template.set(t);
         this.name.set(t.name);
         this.subject.set(t.subject);
-        this.body.set(stripHtml(t.bodyHtml));
+        this.body.set(t.bodyHtml);
         this.replyTo.set(t.replyToAddress ?? '');
         this.copyTo.set(t.copyToAddress ?? '');
         this.isActive.set(t.isActive);
@@ -177,9 +177,11 @@ export class TemplateEditComponent {
   }
 }
 
-/** Templates are stored as HTML; the editor is plain text. */
-function stripHtml(html: string): string {
-  const el = document.createElement('div');
-  el.innerHTML = html;
-  return (el.textContent ?? '').replace(/\n{3,}/g, '\n\n').trim();
-}
+// A template's stored body is shown and saved exactly as it is held. It was
+// flattened to text for display and that text written back on save, so
+// opening a template and pressing Save destroyed its markup — the
+// registration OTP went out as unstyled prose after exactly that.
+//
+// The letterhead is no longer part of the body: MailShell wraps it as the
+// message is queued, so what is edited here is the content, and the frame
+// cannot be lost from this screen.

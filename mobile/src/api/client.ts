@@ -116,12 +116,15 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
  * the awareness programmes, the registration guide — is present offline
  * instead of leaving an empty list that looks like a fault.
  */
-export async function cachedGet<T>(path: string, cacheKey: string): Promise<{
-  data: T | null;
-  stale: boolean;
-}> {
+export async function cachedGet<T>(
+  path: string,
+  cacheKey: string,
+  // The registration endpoints are anonymous; the dashboard is not, and
+  // sending it without the bearer would simply 401.
+  options: { anonymous?: boolean } = { anonymous: true },
+): Promise<{ data: T | null; stale: boolean }> {
   try {
-    const data = await request<T>(path, { anonymous: true });
+    const data = await request<T>(path, { anonymous: options.anonymous ?? true });
     await putCache(cacheKey, data);
     return { data, stale: false };
   } catch (error) {

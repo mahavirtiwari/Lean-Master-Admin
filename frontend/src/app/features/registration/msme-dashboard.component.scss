@@ -1,0 +1,253 @@
+// =============================================================================
+// D1 — the applicant dashboard.
+//
+// Shares the public chrome with the registration wizard (header, footer, card,
+// notice, buttons) by reusing that stylesheet, and adds only what this screen
+// draws: the profile column, the level cards and the incentive rows.
+// =============================================================================
+@use './registration.component.scss';
+
+// 292 : 804 of the 1120 content width, as the artboard measures it.
+.dash-grid {
+  display: grid;
+  grid-template-columns: 292px minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+
+  @media (max-width: 980px) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.dash-body { padding-top: 28px; }
+.dash-loading { font-size: 13px; color: #5d6b62; padding: 40px 0; }
+.dash-empty { font-size: 12px; color: #5d6b62; padding: 12px 0; }
+
+// ------------------------------------------------------------- the header ---
+.who {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-right: 6px;
+}
+
+.who-mark {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #0f7b45;
+  color: #fff;
+  font-size: 12.4px;
+  font-weight: 700;
+  flex: none;
+}
+
+.who-text { display: flex; flex-direction: column; }
+.who-name { font-size: 12.8px; font-weight: 700; color: #16211a; }
+.who-id { font-size: 11.2px; color: #5d6b62; margin-top: 1px; }
+
+// ------------------------------------------------------- profile column ---
+.profile { padding: 22px; }
+
+.profile-head {
+  display: flex;
+  gap: 14px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid #edf2ef;
+}
+
+.profile-mark {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: #0f7b45;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  flex: none;
+}
+
+.profile-name { font-size: 14px; font-weight: 700; color: #16211a; line-height: 1.35; }
+.profile-chips { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
+
+.chip {
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: #edf2ef;
+  font-size: 10.6px;
+  font-weight: 600;
+  color: #5d6b62;
+}
+
+.chip-size { background: #fdf3ec; color: #c2410c; }
+.chip-on { background: #f0f8f3; color: #0f7b45; }
+
+.fact {
+  display: flex;
+  flex-direction: column;
+  padding: 14px 0;
+  border-bottom: 1px solid #f2f6f4;
+
+  &:last-child { border-bottom: 0; }
+}
+
+.fact-key { font-size: 10.4px; font-weight: 700; letter-spacing: 0.4px; color: #5d6b62; }
+.fact-value {
+  margin-top: 5px;
+  font-size: 12.4px;
+  font-weight: 600;
+  color: #16211a;
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.nic-chips { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+
+.nic-chip {
+  padding: 2px 9px;
+  border-radius: 4px;
+  background: #eff4fa;
+  border: 1px solid #c3d8ee;
+  font-size: 10.6px;
+  font-weight: 600;
+  color: #1b4f8a;
+}
+
+// ----------------------------------------------------------- right column ---
+.dash-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+
+.dash-title { margin: 0; font-size: 22px; font-weight: 700; color: #16211a; }
+.dash-sub { margin: 6px 0 0; font-size: 12.6px; color: #5d6b62; }
+.dash-section { margin: 0; font-size: 17px; font-weight: 700; color: #16211a; }
+.dash-count { font-size: 12.2px; color: #5d6b62; }
+
+// Three 257 cards across the 804 column.
+.levels-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 22px;
+
+  @media (max-width: 900px) { grid-template-columns: minmax(0, 1fr); }
+}
+
+.lvl {
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border: 1px solid #dee7e1;
+  border-radius: 8px;
+  padding: 18px;
+
+  &.is-locked { background: #fafcfb; }
+}
+
+.lvl-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.lvl-name { font-size: 14.6px; font-weight: 700; color: #16211a; }
+.lvl.is-locked .lvl-name { color: #5d6b62; }
+
+.lvl-state { font-size: 10.8px; font-weight: 600; color: #5d6b62; }
+.lvl-state.on { color: #0f7b45; }
+
+.lvl-tags { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+
+.tag {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 10.4px;
+  font-weight: 600;
+}
+
+.tag-blue { background: #eff4fa; color: #1b4f8a; }
+.tag-free { background: #f0f8f3; color: #0f7b45; }
+.tag-paid { background: #fdf3ec; color: #a16207; }
+
+.lvl-note {
+  flex: 1;
+  margin: 12px 0 0;
+  font-size: 11.6px;
+  line-height: 1.55;
+  color: #5d6b62;
+}
+
+.lvl-app { margin: 10px 0 0; font-size: 10.8px; font-weight: 600; color: #1b4f8a; }
+
+.lvl-btn {
+  height: 36px;
+  margin-top: 16px;
+  border: 0;
+  border-radius: 6px;
+  background: #1b4f8a;
+  color: #fff;
+  font: inherit;
+  font-size: 12.4px;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:hover:not(.is-off) { background: #163f6f; }
+
+  &.is-off {
+    background: #fff;
+    border: 1px solid #c6d3cb;
+    color: #5d6b62;
+    cursor: default;
+  }
+}
+
+// ------------------------------------------------------------- incentives ---
+.dash-warn {
+  padding: 14px 16px;
+  margin-bottom: 20px;
+  background: #fefce8;
+  border: 1px solid #fde68a;
+  border-radius: 7px;
+  font-size: 12.2px;
+  line-height: 1.55;
+  color: #47554c;
+}
+
+.ben {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  margin-bottom: 12px;
+  background: #fafcfb;
+  border: 1px solid #dee7e1;
+  border-radius: 8px;
+}
+
+.ben-mark {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: #edf2ef;
+  flex: none;
+}
+
+.ben-text { flex: 1; min-width: 0; }
+.ben-name { font-size: 13.2px; font-weight: 700; color: #47554c; }
+.ben-note { margin-top: 4px; font-size: 11.2px; color: #8a9a92; }
+.ben-state { font-size: 10.8px; font-weight: 600; color: #5d6b62; flex: none; }
+
+@media (max-width: 620px) {
+  .ben { flex-wrap: wrap; }
+  .dash-head .btn-primary { width: 100%; }
+}

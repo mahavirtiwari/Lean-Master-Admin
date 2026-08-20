@@ -1,0 +1,201 @@
+<!-- ================================================== public header (D1) == -->
+<header class="pub-head">
+  <img class="head-lean" src="assets/mcls-logo.png"
+       alt="MSME Competitive (LEAN) Scheme — MCLS" />
+  <span class="head-rule"></span>
+  <a href="https://www.msme.gov.in/" target="_blank" rel="noopener noreferrer" title="Ministry of MSME">
+    <img class="head-logo" src="assets/msme-logo.svg"
+         alt="Ministry of Micro, Small &amp; Medium Enterprises" />
+  </a>
+
+  <div class="spacer"></div>
+
+  <button class="head-link" type="button" (click)="help()">Help</button>
+
+  <!-- The enterprise chip the artboard sets at the right of the bar. -->
+  <div class="who">
+    <span class="who-mark">{{ initials() }}</span>
+    <span class="who-text">
+      <span class="who-name">{{ data()?.enterprise?.name || '—' }}</span>
+      <span class="who-id">{{ data()?.enterprise?.leanId || '' }}</span>
+    </span>
+  </div>
+
+  <button class="head-signin" type="button" (click)="signOut()">Sign out</button>
+</header>
+
+<main class="pub-body dash-body">
+  @if (loading()) {
+    <p class="dash-loading">Loading your dashboard…</p>
+  } @else if (error(); as message) {
+    <div class="notice notice-bad">
+      <span class="notice-mark"></span>
+      <span>{{ message }}</span>
+    </div>
+  } @else if (data(); as d) {
+    <div class="dash-grid">
+      <!-- ------------------------------------------- left: the enterprise -->
+      <aside class="card profile">
+        <div class="profile-head">
+          <span class="profile-mark">{{ initials() }}</span>
+          <div>
+            <div class="profile-name">{{ d.enterprise.name }}</div>
+            <div class="profile-chips">
+              @if (d.enterprise.size) {
+                <span class="chip chip-size">{{ d.enterprise.size.toUpperCase() }}</span>
+              }
+              <span class="chip" [class.chip-on]="d.enterprise.isActive">
+                {{ d.enterprise.isActive ? 'Active' : 'Inactive' }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="fact">
+          <span class="fact-key">LEAN ID</span>
+          <span class="fact-value">{{ d.enterprise.leanId }}</span>
+        </div>
+        <div class="fact">
+          <span class="fact-key">UDYAM NUMBER</span>
+          <span class="fact-value">{{ d.enterprise.udyamNumber }}</span>
+        </div>
+        <div class="fact">
+          <span class="fact-key">ENTREPRENEUR</span>
+          <span class="fact-value">{{ d.enterprise.entrepreneur || '—' }}</span>
+        </div>
+        <div class="fact">
+          <span class="fact-key">REGISTERED ON</span>
+          <span class="fact-value">{{ formatDate(d.enterprise.registeredOn) }}</span>
+        </div>
+        <div class="fact">
+          <span class="fact-key">SELECTED UNIT</span>
+          <span class="fact-value">{{ unitLine() }}</span>
+        </div>
+        <div class="fact">
+          <span class="fact-key">ACTIVITY / NIC</span>
+          <span class="fact-value">{{ d.enterprise.activity || '—' }}</span>
+          <span class="nic-chips">
+            @if (d.enterprise.nicTwoDigit) { <span class="nic-chip">{{ d.enterprise.nicTwoDigit }}</span> }
+            @if (d.enterprise.nicFourDigit) { <span class="nic-chip">{{ d.enterprise.nicFourDigit }}</span> }
+            @if (d.enterprise.nicFiveDigit) { <span class="nic-chip">{{ d.enterprise.nicFiveDigit }}</span> }
+          </span>
+        </div>
+      </aside>
+
+      <!-- ------------------------------------------------ right: the work -->
+      <section class="dash-main">
+        <div class="dash-head">
+          <div>
+            <h1 class="dash-title">Dashboard</h1>
+            <p class="dash-sub">
+              @if (nextLevel(); as next) {
+                Your registration is complete. Start with {{ next.name }}.
+              } @else {
+                Your registration is complete.
+              }
+            </p>
+          </div>
+
+          @if (nextLevel(); as next) {
+            <button class="btn-primary" type="button" disabled>Apply for {{ next.name }}</button>
+          }
+        </div>
+
+        <h2 class="dash-section">My Certification</h2>
+
+        <div class="levels-grid">
+          @for (level of d.levels; track level.code) {
+            <article class="lvl" [class.is-locked]="level.state === 'Locked'">
+              <div class="lvl-head">
+                <span class="lvl-name">{{ level.name }}</span>
+                <span class="lvl-state" [class.on]="level.state !== 'Locked'">{{ level.state }}</span>
+              </div>
+
+              <div class="lvl-tags">
+                <span class="tag tag-blue">{{ level.delivery }}</span>
+                <span class="tag" [class.tag-free]="level.cost === 'FREE'"
+                      [class.tag-paid]="level.cost !== 'FREE'">{{ level.cost }}</span>
+              </div>
+
+              <p class="lvl-note">
+                @if (level.requiresBefore) {
+                  Requires the {{ level.requiresBefore }} certificate before it can be applied for.
+                } @else if (level.cost === 'FREE') {
+                  Self-paced courses with an online exam. A certificate is issued per course.
+                } @else {
+                  Handholding across milestones, followed by an independent assessment.
+                }
+              </p>
+
+              @if (level.applicationNo) {
+                <p class="lvl-app">{{ level.applicationNo }} · {{ level.applicationStatus }}</p>
+              }
+
+              <button class="lvl-btn" type="button"
+                      [class.is-off]="level.state === 'Locked'"
+                      [disabled]="level.state === 'Locked'">
+                @if (level.state === 'Locked') {
+                  Complete {{ level.requiresBefore }} first
+                } @else if (level.applicationNo) {
+                  View application
+                } @else {
+                  Apply for {{ level.name }}
+                }
+              </button>
+            </article>
+          }
+        </div>
+
+        <!-- The amber note the artboard sets above the incentive list. -->
+        <div class="dash-warn">
+          Incentives stay locked until an assessed level is certified. The entry level does not
+          activate them.
+        </div>
+
+        <div class="dash-head">
+          <h2 class="dash-section">My Incentives</h2>
+          <span class="dash-count">{{ d.incentives.groups.length }} benefit groups</span>
+        </div>
+
+        @for (group of d.incentives.groups; track group.name) {
+          <div class="ben">
+            <span class="ben-mark"></span>
+            <div class="ben-text">
+              <div class="ben-name">{{ group.name }}</div>
+              <div class="ben-note">{{ group.count }} recorded under this group</div>
+            </div>
+            <span class="ben-state">{{ d.incentives.unlocked ? 'Available' : 'Locked' }}</span>
+          </div>
+        } @empty {
+          <p class="dash-empty">No incentives have been published yet.</p>
+        }
+      </section>
+    </div>
+  }
+</main>
+
+<footer class="pub-foot">
+  <div class="foot-inner">
+    <div class="foot-left">
+      <div class="foot-a">
+        Ministry of Micro, Small and Medium Enterprises, Kartavya Bhawan - 03,
+        Kartavya Path, New Delhi - 110001, India
+      </div>
+      <div class="foot-meta">
+        <span>© {{ year }} MCLS. All Rights Reserved.</span>
+        <span class="foot-dot">·</span>
+        <span>Version {{ appVersion }}</span>
+        <span class="foot-dot">·</span>
+        <span>Updated {{ releasedOn }}</span>
+      </div>
+    </div>
+
+    <div class="spacer"></div>
+
+    <nav class="foot-links" aria-label="Footer">
+      <button class="foot-link" type="button" (click)="help()">Terms of Use</button>
+      <button class="foot-link" type="button" (click)="help()">Privacy Policy</button>
+      <button class="foot-link" type="button" (click)="help()">Help</button>
+    </nav>
+  </div>
+</footer>

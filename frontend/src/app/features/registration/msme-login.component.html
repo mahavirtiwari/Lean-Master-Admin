@@ -168,7 +168,10 @@
           <h2 class="signin-title">Sign in</h2>
           <p class="signin-sub">Use the LEAN ID sent to your registered SPOC email address.</p>
 
-          <form (ngSubmit)="submit()">
+          <!-- Native submit, not ngSubmit: this component binds its fields with
+               [value]/(input) and imports no FormsModule, so ngSubmit was never
+               wired and the browser reloaded the page instead of signing in. -->
+          <form (submit)="$event.preventDefault(); submit()">
             <div class="field">
               <label class="field-label" for="leanId">LEAN ID</label>
 

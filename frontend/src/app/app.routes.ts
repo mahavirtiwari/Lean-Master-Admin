@@ -36,6 +36,18 @@ export const routes: Routes = [
   // The applicant's own sign-in. Separate from /login, which is the master
   // administration entry point — different audience, different credential
   // (LEAN ID vs staff code) and a different landing screen.
+  // Where an applicant lands after signing in. Outside the shell, like the
+  // rest of the applicant screens — msme-login sent people here before the
+  // route existed, so sign-in ended on the admin wildcard and looked broken.
+  {
+    path: 'msme/dashboard',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/registration/msme-dashboard.component').then(
+        (m) => m.MsmeDashboardComponent,
+      ),
+  },
+
   {
     path: 'msme/login',
     loadComponent: () =>

@@ -170,3 +170,49 @@ export const queueSpoc = (
     awarenessProgramId: number | null;
   },
 ) => enqueue('PUT', `${base}/${token}/spoc`, body);
+
+// ------------------------------------------------------------- dashboard ---
+
+export interface MsmeDashboard {
+  enterprise: {
+    leanId: string;
+    name: string;
+    udyamNumber: string;
+    entrepreneur: string | null;
+    size: string | null;
+    registeredOn: string;
+    isActive: boolean;
+    nicTwoDigit: string | null;
+    nicFourDigit: string | null;
+    nicFiveDigit: string | null;
+    activity: string | null;
+    unit: {
+      unitName: string | null;
+      address: string | null;
+      pincode: string | null;
+      state: string | null;
+      district: string | null;
+    } | null;
+  };
+  levels: {
+    code: string;
+    name: string;
+    delivery: string;
+    cost: string;
+    state: 'Open' | 'Locked' | 'In progress' | 'Certified';
+    requiresBefore: string | null;
+    applicationNo: string | null;
+    applicationStatus: string | null;
+  }[];
+  incentives: { unlocked: boolean; groups: { name: string; count: number }[] };
+}
+
+/**
+ * The applicant's own dashboard.
+ *
+ * Cached, so it opens with the last known state when there is no signal — the
+ * levels and the enterprise's details do not change minute to minute, and an
+ * empty screen would read as a fault.
+ */
+export const dashboard = () =>
+  cachedGet<MsmeDashboard>('/api/msme/dashboard', 'msme-dashboard', { anonymous: false });

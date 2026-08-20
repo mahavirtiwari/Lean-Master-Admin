@@ -1,6 +1,8 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
+
+import { dashboard, type MsmeDashboard } from '../api/registration';
 
 import { Card, GhostButton, OfflineBanner } from '../components/ui';
 import { useApp } from '../state/AppContext';
@@ -9,21 +11,29 @@ import type { RootStackParamList } from '../navigation/types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Dashboard'>;
 
-const LEVELS = [
-  { name: 'LEAN Bronze', note: 'Self-declared. No accredited assessment.', colour: colour.bronze },
-  { name: 'LEAN Silver', note: 'Assessed. Unlocks incentives.', colour: colour.silver },
-  { name: 'LEAN Gold', note: 'Assessed. Full incentive catalogue.', colour: colour.gold },
-];
+/** One accent per level, in the order the scheme lists them. */
+const ACCENTS = [colour.bronze, colour.silver, colour.gold];
 
 /**
  * Where an applicant lands after signing in.
  *
- * Reads only from the session, which is held on the device, so it opens with
- * no connection. Applying for a level is a server action and stays on the web
- * portal until that flow exists on both.
+ * The dashboard is cached, so it opens with the last known state when there is
+ * no signal rather than showing an empty screen. Applying for a level is a
+ * server action and stays on the web portal until that flow exists on both.
  */
 export default function DashboardScreen({ navigation }: Props): React.JSX.Element {
   const { online, queued, user, signOut } = useApp();
+
+  const [data, setData] = useState<MsmeDashboard | null>(null);
+  const [stale, setStale] = useState(false);
+
+  useEffect(() => {
+    void (async () => {
+      const result = await dashboard();
+      setData(result.data);
+      setStale(result.stale);
+    })();
+  }, []);
 
   return (
     <View style={styles.flex}>
@@ -35,21 +45,57 @@ export default function DashboardScreen({ navigation }: Props): React.JSX.Elemen
 
         <Card capped>
           <Text style={styles.label}>YOUR LEAN ID</Text>
-          <Text style={styles.id}>{user?.userCode ?? '—'}</Text>
+          <Text style={styles.id}>{data?.enterprise.leanId ?? user?.userCode ?? '—'}</Text>
           <Text style={styles.hint}>Quote this in all correspondence about the scheme.</Text>
+
+          {data ? (
+            <>
+              <Text style={styles.label}>ENTERPRISE</Text>
+              <Text style={styles.value}>{data.enterprise.name}</Text>
+              <Text style={styles.label}>UDYAM NUMBER</Text>
+              <Text style={styles.value}>{data.enterprise.udyamNumber}</Text>
+              <Text style={styles.label}>SELECTED UNIT</Text>
+              <Text style={styles.value}>
+                {[data.enterprise.unit?.unitName, data.enterprise.unit?.address]
+                  .filter(Boolean)
+                  .join(', ') || '—'}
+              </Text>
+              <Text style={styles.label}>ACTIVITY</Text>
+              <Text style={styles.value}>{data.enterprise.activity ?? '—'}</Text>
+            </>
+          ) : null}
+
+          {stale && data ? (
+            <Text style={styles.hint}>Showing the last copy saved on this device.</Text>
+          ) : null}
         </Card>
 
         <Text style={styles.section}>Certification levels</Text>
 
-        {LEVELS.map((level) => (
-          <View key={level.name} style={styles.level}>
-            <View style={[styles.levelCap, { backgroundColor: level.colour }]} />
+        {(data?.levels ?? []).map((level, index) => (
+          <View key={level.code} style={styles.level}>
+            <View style={[styles.levelCap, { backgroundColor: ACCENTS[index] ?? colour.silver }]} />
             <View style={styles.levelBody}>
-              <Text style={styles.levelName}>{level.name}</Text>
-              <Text style={styles.levelNote}>{level.note}</Text>
+              <View style={styles.levelHead}>
+                <Text style={styles.levelName}>{level.name}</Text>
+                <Text style={[styles.levelState, level.state !== 'Locked' ? styles.levelOpen : null]}>
+                  {level.state}
+                </Text>
+              </View>
+              <Text style={styles.levelNote}>
+                {level.requiresBefore
+                  ? `Requires the ${level.requiresBefore} certificate first.`
+                  : `${level.delivery} · ${level.cost}`}
+              </Text>
             </View>
           </View>
         ))}
+
+        {data && !data.incentives.unlocked ? (
+          <Text style={styles.hint}>
+            Incentives stay locked until an assessed level is certified.
+          </Text>
+        ) : null}
 
         <Card>
           <Text style={styles.hint}>
@@ -96,6 +142,16 @@ const styles = StyleSheet.create({
   },
   levelCap: { height: 3 },
   levelBody: { padding: space(4) },
+  levelHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   levelName: { fontSize: type.body, fontWeight: '700', color: colour.text },
+  levelState: { fontSize: type.tiny, fontWeight: '600', color: colour.muted },
+  levelOpen: { color: colour.green },
+  value: {
+    fontSize: type.small,
+    fontWeight: '600',
+    color: colour.text,
+    marginTop: space(1),
+    marginBottom: space(2),
+  },
   levelNote: { fontSize: type.tiny, color: colour.muted, marginTop: space(1.5) },
 });

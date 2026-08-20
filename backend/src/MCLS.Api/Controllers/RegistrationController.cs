@@ -552,10 +552,26 @@ public sealed class RegistrationController(
             : await db.Districts.AsNoTracking()
                 .SingleOrDefaultAsync(d => d.StateId == state.StateId && d.Code == record.DistrictCode, ct);
 
-        var sector = record.NicTwoDigit is null
+        // The sector follows the activity the applicant CHOSE at R4, not the
+        // record's primary one.
+        //
+        // A Udyam record lists several activities and its enterprise-level NIC
+        // is simply the first of them. An enterprise whose first line is, say,
+        // 06 (crude petroleum) but which registered its covered line 12
+        // (tobacco products) passed the eligibility check at R4 and was then
+        // refused here, because this looked up 06 and the scheme does not
+        // cover it. The two must agree, and the chosen one is the one the
+        // questionnaire and the assessment are built on.
+        var chosenActivity = draft.SelectedNicFiveDigit is null
+            ? null
+            : record.Activities.FirstOrDefault(a => a.NicFiveDigit == draft.SelectedNicFiveDigit);
+
+        var nicTwoDigit = chosenActivity?.NicTwoDigit ?? record.NicTwoDigit;
+
+        var sector = nicTwoDigit is null
             ? null
             : await db.Sectors.AsNoTracking()
-                .SingleOrDefaultAsync(s => s.NicCode == record.NicTwoDigit, ct);
+                .SingleOrDefaultAsync(s => s.NicCode == nicTwoDigit, ct);
 
         // StateId and SectorId are NOT NULL on Enterprise, and both are
         // reporting dimensions — the dashboard's map and the sector mix are
@@ -567,7 +583,7 @@ public sealed class RegistrationController(
             logger.LogWarning(
                 "Registration {Registration}: unresolved masters (state {StateCode}={StateOk}, NIC {Nic}={SectorOk}).",
                 draft.RegistrationId, record.StateCode, state is not null,
-                record.NicTwoDigit, sector is not null);
+                nicTwoDigit, sector is not null);
 
             return Problem(
                 title: "We could not match your Udyam details to the scheme's records.",
@@ -649,10 +665,13 @@ public sealed class RegistrationController(
             SocialCategory = record.SocialCategory,
             IsPhysicallyHandicapped = record.IsPhysicallyHandicapped,
             MajorActivity = record.MajorActivity,
-            NicTwoDigit = record.NicTwoDigit,
-            NicFourDigit = record.NicFourDigit,
-            NicFiveDigit = record.NicFiveDigit,
-            NicDescription = record.NicDescription,
+            // The chosen activity, for the same reason as the sector above: it
+            // decides the questionnaire set and it is what the certificate
+            // will name.
+            NicTwoDigit = chosenActivity?.NicTwoDigit ?? record.NicTwoDigit,
+            NicFourDigit = chosenActivity?.NicFourDigit ?? record.NicFourDigit,
+            NicFiveDigit = chosenActivity?.NicFiveDigit ?? record.NicFiveDigit,
+            NicDescription = chosenActivity?.NicFiveDigitName ?? record.NicDescription,
             TotalEmployees = record.TotalEmployees,
             IncorporationDate = record.IncorporationDate,
             CommencementDate = record.CommencementDate,

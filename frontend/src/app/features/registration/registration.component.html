@@ -556,6 +556,13 @@
           <p class="otp-sub">We have sent a 6-digit OTP to</p>
           <span class="otp-mail">{{ spocEmail() }}</span>
 
+          <!-- Junk-folder delivery is the commonest reason an applicant thinks
+               the code never arrived, so it is said before they ask. -->
+          <p class="otp-note">
+            OTP is successfully sent to {{ spocEmail() }}. If not received, please check your
+            junk/spam folder.
+          </p>
+
           <div class="otp-boxes">
             @for (d of otp(); track $index; let i = $index) {
               <input
@@ -590,112 +597,147 @@
 
     <!-- ==================================================== R7: summary == -->
     @case (7) {
-      <div class="step-head">
-        <span class="step-no">6</span>
-        <div>
-          <h2 class="step-title">Summary</h2>
-          <p class="step-sub">Review your details before accepting the LEAN Pledge</p>
+      <!-- One card holds the step, as drawn: head, four tiles, the e-mail
+           panel, then the footnote and the actions on one row. -->
+      <section class="card">
+        <div class="step-head">
+          <span class="step-no">6</span>
+          <div>
+            <h2 class="step-title">Summary</h2>
+            <p class="step-sub">Review your details before accepting the LEAN Pledge</p>
+          </div>
         </div>
-      </div>
 
-      <div class="sum-grid">
-        <section class="sum-card">
-          <div class="sum-head"><span class="sum-title">Enterprise</span></div>
-          <div class="sum-row">
-            <span class="sum-key">Enterprise name</span>
-            <span class="sum-val">{{ draft()?.enterprise?.enterpriseName || '—' }}</span>
+        <div class="sum-grid">
+          <!-- Enterprise carries no Edit: it is Udyam's record, not ours. -->
+          <section class="sum-card">
+            <div class="sum-head"><span class="sum-title">Enterprise</span></div>
+            <div class="sum-row">
+              <span class="sum-key">Enterprise name</span>
+              <span class="sum-val">{{ draft()?.enterprise?.enterpriseName || '—' }}</span>
+            </div>
+            <div class="sum-row">
+              <span class="sum-key">Udyam number</span>
+              <span class="sum-val">{{ draft()?.enterprise?.udyamNumber }}</span>
+            </div>
+            <div class="sum-row">
+              <span class="sum-key">Enterprise type</span>
+              <span class="sum-val">{{ draft()?.enterprise?.enterpriseType || '—' }}</span>
+            </div>
+            <div class="sum-row">
+              <span class="sum-key">Entrepreneur</span>
+              <span class="sum-val">{{ draft()?.enterprise?.ownerName || '—' }}</span>
+            </div>
+          </section>
+
+          <section class="sum-card">
+            <div class="sum-head">
+              <span class="sum-title">Selected Unit</span>
+              <div class="spacer"></div>
+              <button class="sum-edit" type="button" (click)="goTo(4)">Edit</button>
+            </div>
+            <div class="sum-row">
+              <span class="sum-key">Unit</span>
+              <span class="sum-val">{{ chosenPlant()?.unitName || '—' }}</span>
+            </div>
+            <div class="sum-row">
+              <span class="sum-key">District / State</span>
+              <span class="sum-val">
+                {{ chosenPlant()?.district }}{{ chosenPlant()?.state ? ', ' + chosenPlant()?.state : '' }}
+              </span>
+            </div>
+            <div class="sum-row">
+              <span class="sum-key">Pincode</span>
+              <span class="sum-val">{{ chosenPlant()?.pincode || '—' }}</span>
+            </div>
+            <div class="sum-row">
+              <span class="sum-key">Address</span>
+              <span class="sum-val">{{ chosenPlant()?.address || '—' }}</span>
+            </div>
+          </section>
+
+          <section class="sum-card">
+            <div class="sum-head">
+              <span class="sum-title">Selected Activity</span>
+              <div class="spacer"></div>
+              <button class="sum-edit" type="button" (click)="goTo(4)">Edit</button>
+            </div>
+            <div class="sum-row">
+              <span class="sum-key">Activity</span>
+              <span class="sum-val">{{ chosenActivity()?.nicFiveDigitName || '—' }}</span>
+            </div>
+            <div class="sum-row">
+              <span class="sum-key">NIC 2-digit</span>
+              <span class="sum-val">{{ chosenActivity()?.nicTwoDigit || '—' }}</span>
+            </div>
+            <div class="sum-row">
+              <span class="sum-key">NIC 4-digit</span>
+              <span class="sum-val">{{ chosenActivity()?.nicFourDigit || '—' }}</span>
+            </div>
+            <div class="sum-row">
+              <span class="sum-key">NIC 5-digit</span>
+              <span class="sum-val">{{ chosenActivity()?.nicFiveDigit || '—' }}</span>
+            </div>
+          </section>
+
+          <section class="sum-card">
+            <div class="sum-head">
+              <span class="sum-title">SPOC &amp; Awareness</span>
+              <div class="spacer"></div>
+              <button class="sum-edit" type="button" (click)="goTo(5)">Edit</button>
+            </div>
+            <div class="sum-row">
+              <span class="sum-key">SPOC name</span>
+              <span class="sum-val">{{ spocName() }}</span>
+            </div>
+            <div class="sum-row">
+              <span class="sum-key">Designation</span>
+              <span class="sum-val">{{ spocDesignation() }}</span>
+            </div>
+            <div class="sum-row">
+              <span class="sum-key">Mobile</span>
+              <span class="sum-val">{{ spocMobile() }}</span>
+            </div>
+            <div class="sum-row">
+              <span class="sum-key">Awareness program</span>
+              <span class="sum-val">
+                {{ attendedAwareness() ? (chosenProgram()?.name || 'Yes') : 'Not attended' }}
+              </span>
+            </div>
+          </section>
+        </div>
+
+        <!-- x=184 y=686 w=1072 h=84 on #F0F8F3 with a #D9EBE1 edge. -->
+        <section class="panel panel-green sum-mail">
+          <span class="sum-mail-icon" aria-hidden="true">
+            <svg width="17" height="17" viewBox="0 0 16 16">
+              <rect x="2.4" y="3.8" width="11.2" height="8.4" rx="1.2"
+                    fill="none" stroke="#0F7B45" stroke-width="1.5" />
+              <path d="m2.8 4.6 5.2 4 5.2-4" fill="none" stroke="#0F7B45"
+                    stroke-width="1.5" stroke-linejoin="round" />
+            </svg>
+          </span>
+
+          <div class="sum-mail-text">
+            <div class="sum-mail-label">Provided Email ID</div>
+            <div class="sum-mail-value">{{ spocEmail() }}</div>
+            <div class="sum-mail-note">
+              Your LEAN ID, password and the LEAN Pledge PDF will be sent to this address.
+            </div>
           </div>
-          <div class="sum-row">
-            <span class="sum-key">Udyam number</span>
-            <span class="sum-val">{{ draft()?.enterprise?.udyamNumber }}</span>
-          </div>
-          <div class="sum-row">
-            <span class="sum-key">Enterprise type</span>
-            <span class="sum-val">{{ draft()?.enterprise?.enterpriseType || '—' }}</span>
-          </div>
-          <div class="sum-row">
-            <span class="sum-key">Entrepreneur</span>
-            <span class="sum-val">{{ draft()?.enterprise?.ownerName || '—' }}</span>
-          </div>
+
+          <button class="sum-edit" type="button" (click)="goTo(5)">Edit</button>
         </section>
 
-        <section class="sum-card">
-          <div class="sum-head">
-            <span class="sum-title">Selected Unit</span>
-            <div class="spacer"></div>
-            <button class="link-btn" type="button" (click)="goTo(4)">Edit</button>
-          </div>
-          <div class="sum-row">
-            <span class="sum-key">Unit</span>
-            <span class="sum-val">{{ chosenPlant()?.unitName || '—' }}</span>
-          </div>
-          <div class="sum-row">
-            <span class="sum-key">District / State</span>
-            <span class="sum-val">
-              {{ chosenPlant()?.district }}{{ chosenPlant()?.state ? ', ' + chosenPlant()?.state : '' }}
-            </span>
-          </div>
-          <div class="sum-row">
-            <span class="sum-key">Pincode</span>
-            <span class="sum-val">{{ chosenPlant()?.pincode || '—' }}</span>
-          </div>
-          <div class="sum-row">
-            <span class="sum-key">Address</span>
-            <span class="sum-val">{{ chosenPlant()?.address || '—' }}</span>
-          </div>
-        </section>
-
-        <section class="sum-card">
-          <div class="sum-head">
-            <span class="sum-title">Selected Activity</span>
-            <div class="spacer"></div>
-            <button class="link-btn" type="button" (click)="goTo(4)">Edit</button>
-          </div>
-          <div class="sum-row">
-            <span class="sum-key">Activity</span>
-            <span class="sum-val">{{ chosenActivity()?.nicFiveDigitName || '—' }}</span>
-          </div>
-          <div class="sum-row">
-            <span class="sum-key">NIC 2 / 4 / 5</span>
-            <span class="sum-val">
-              {{ chosenActivity()?.nicTwoDigit }} / {{ chosenActivity()?.nicFourDigit }} /
-              {{ chosenActivity()?.nicFiveDigit }}
-            </span>
-          </div>
-        </section>
-
-        <section class="sum-card">
-          <div class="sum-head">
-            <span class="sum-title">SPOC &amp; Awareness</span>
-            <div class="spacer"></div>
-            <button class="link-btn" type="button" (click)="goTo(5)">Edit</button>
-          </div>
-          <div class="sum-row">
-            <span class="sum-key">SPOC name</span>
-            <span class="sum-val">{{ spocName() }}</span>
-          </div>
-          <div class="sum-row">
-            <span class="sum-key">Designation</span>
-            <span class="sum-val">{{ spocDesignation() }}</span>
-          </div>
-          <div class="sum-row">
-            <span class="sum-key">Email</span>
-            <span class="sum-val">{{ spocEmail() }}</span>
-          </div>
-          <div class="sum-row">
-            <span class="sum-key">Awareness program</span>
-            <span class="sum-val">
-              {{ attendedAwareness() ? (chosenProgram()?.name || 'Yes') : 'Not attended' }}
-            </span>
-          </div>
-        </section>
-      </div>
-
-      <div class="actions">
-        <div class="spacer"></div>
-        <button class="btn-ghost" type="button" (click)="back()">Back</button>
-        <button class="btn-primary" type="button" (click)="toPledge()">Continue to Pledge</button>
-      </div>
+        <div class="actions">
+          <p class="sum-foot">
+            Check every detail — the pledge PDF is generated from this information.
+          </p>
+          <div class="spacer"></div>
+          <button class="btn-ghost" type="button" (click)="back()">Back</button>
+          <button class="btn-primary" type="button" (click)="toPledge()">Proceed to Pledge</button>
+        </div>
+      </section>
     }
 
     <!-- ================================================= R8: LEAN pledge == -->

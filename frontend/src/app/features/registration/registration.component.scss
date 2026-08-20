@@ -618,8 +618,23 @@
   }
 
   .pick-body { flex: 1; min-width: 0; }
-  .pick-name { font-size: 13px; font-weight: 700; color: #16211a; }
-  .pick-addr { margin-top: 5px; font-size: 11.2px; color: #5d6b62; }
+  // Both are spans, so they need to be blocks to take a line each — the
+  // address was running on after the unit name, and its margin-top did
+  // nothing while it sat inline.
+  .pick-name {
+    display: block;
+    font-size: 13px;
+    font-weight: 700;
+    color: #16211a;
+  }
+
+  .pick-addr {
+    display: block;
+    margin-top: 5px;
+    font-size: 11.2px;
+    line-height: 1.5;
+    color: #5d6b62;
+  }
   // The 73x22 chip on the trailing edge.
   .pick-tag {
     flex: none;

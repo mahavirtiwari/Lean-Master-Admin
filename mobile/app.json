@@ -1,0 +1,49 @@
+{
+  "expo": {
+    "name": "MSME LEAN Scheme",
+    "slug": "mcls-lean",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "scheme": "mclslean",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "in.gov.msme.lean"
+    },
+    "android": {
+      "package": "in.gov.msme.lean",
+      "adaptiveIcon": {
+        "backgroundColor": "#0F7B45",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.INTERNET",
+        "android.permission.ACCESS_NETWORK_STATE"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#F4F7F5",
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 180
+        }
+      ],
+      "expo-sqlite",
+      "expo-secure-store",
+      "expo-status-bar"
+    ],
+    "extra": {
+      "//apiBaseUrl": "The API host the device can reach. 10.0.2.2 is the Android emulator's alias for the host machine; on a physical phone use the machine's LAN address (http://192.168.x.x:5199) or the deployed origin. EXPO_PUBLIC_API_BASE_URL overrides this at build time.",
+      "apiBaseUrl": "http://10.0.2.2:5199"
+    }
+  }
+}

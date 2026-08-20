@@ -54,70 +54,97 @@
           One registration covers all three certification levels. Apply for a level later from
           your dashboard.
         </p>
+        <!-- The 60 x 4 green bar the artboard sets under the sub-heading. -->
+        <span class="hero-rule"></span>
       </div>
 
+      <!-- 627.2 : 468.8 of the 1120 content width, as drawn. -->
       <div class="landing">
-        <section class="card">
-          <h2 class="card-title">New Registration</h2>
-          <p class="card-line">Start a fresh application using your Udyam Registration Number.</p>
-          <p class="card-line">Takes about 10 minutes. Available on web and the mobile app.</p>
+        <section class="r1-card r1-new">
+          <span class="r1-cap"></span>
 
-          <div class="actions">
-            <button class="btn-primary" type="button" (click)="start()">
-              Start New Registration
-            </button>
-          </div>
+          <div class="r1-body">
+            <span class="r1-icon" aria-hidden="true">
+              <svg width="22" height="22" viewBox="0 0 20 20">
+                <path
+                  d="M5 2.6h6.6L15.4 6.4V17.4H5Z"
+                  fill="none" stroke="#0F7B45" stroke-width="1.5" stroke-linejoin="round"
+                />
+                <path d="M11.4 2.6v4h4" fill="none" stroke="#0F7B45" stroke-width="1.5" stroke-linejoin="round" />
+                <path d="M7.6 10.2h5M7.6 13.2h3.2" fill="none" stroke="#0F7B45" stroke-width="1.5" stroke-linecap="round" />
+              </svg>
+            </span>
 
-          <p class="card-note">Registration is common for LEAN Bronze, Silver and Gold.</p>
+            <h2 class="r1-title">New Registration</h2>
+            <p class="r1-line">Start a fresh application using your Udyam Registration Number.</p>
+            <p class="r1-line">Takes about 10 minutes. Available on web and the mobile app.</p>
 
-          <div class="manual">
-            <button class="manual-link" type="button" (click)="manualVideo()">
-              <span class="manual-icon">▶</span> Watch the registration video
-            </button>
-            <button class="manual-link" type="button" (click)="manualDocument()">
-              <span class="manual-icon">▤</span> Download the registration manual
-            </button>
-          </div>
+            <button class="r1-start" type="button" (click)="start()">Start New Registration</button>
 
-          <div class="divider"></div>
-          <div class="already">ALREADY REGISTERED?</div>
-          <div class="actions">
-            <button class="btn-ghost" type="button" (click)="signIn()">Sign in</button>
+            <p class="r1-note">Registration is common for LEAN Bronze, Silver and Gold.</p>
           </div>
         </section>
 
-        <section class="card">
-          <h3 class="need-title">What you'll need</h3>
+        <section class="r1-card r1-need">
+          <div class="r1-body">
+            <h3 class="need-title">What you'll need</h3>
 
-          <div class="need">
-            <span class="need-dot"></span>
-            <div>
-              <div class="need-name">Udyam Registration Number</div>
-              <div class="need-hint">Format UDYAM-XX-00-XXXXXXX</div>
-            </div>
-          </div>
-          <div class="need">
-            <span class="need-dot"></span>
-            <div>
-              <div class="need-name">Udyam-registered mobile number</div>
-              <div class="need-hint">Validated against Udyam records</div>
-            </div>
-          </div>
-          <div class="need">
-            <span class="need-dot"></span>
-            <div>
-              <div class="need-name">SPOC email address</div>
-              <div class="need-hint">Receives the OTP, LEAN ID and password</div>
-            </div>
-          </div>
-          <div class="need">
-            <span class="need-dot"></span>
-            <div>
-              <div class="need-name">Plant / unit address &amp; NIC code</div>
-              <div class="need-hint">2-digit, 4-digit and 5-digit classification</div>
-            </div>
+            @for (item of needs; track item.name) {
+              <div class="need">
+                <span class="need-icon" aria-hidden="true">
+                  <svg width="15" height="15" viewBox="0 0 16 16">
+                    <path
+                      [attr.d]="item.icon"
+                      fill="none" stroke="#1B4F8A" stroke-width="1.4"
+                      stroke-linecap="round" stroke-linejoin="round"
+                    />
+                    @if (item.icon2) {
+                      <path
+                        [attr.d]="item.icon2"
+                        fill="none" stroke="#1B4F8A" stroke-width="1.4"
+                        stroke-linecap="round" stroke-linejoin="round"
+                      />
+                    }
+                  </svg>
+                </span>
+
+                <div>
+                  <div class="need-name">{{ item.name }}</div>
+                  <div class="need-hint">{{ item.hint }}</div>
+                </div>
+              </div>
+            }
           </div>
         </section>
+      </div>
+
+      <!-- The full-width tinted strip the artboard sets at y=638. -->
+      <section class="already-strip">
+        <div class="already-text">
+          <div class="already-label">ALREADY REGISTERED?</div>
+          <p class="already-line">
+            Sign in with your LEAN ID to apply for a certification level or track your application.
+          </p>
+        </div>
+
+        <button class="already-btn" type="button" (click)="signIn()">Sign in</button>
+      </section>
+
+      <!-- Three level cards, each capped in its own colour. -->
+      <div class="levels">
+        @for (level of levels; track level.name) {
+          <section class="level">
+            <span class="level-cap" [style.background]="level.colour"></span>
+
+            <div class="level-body">
+              <div class="level-head">
+                <span class="level-dot" [style.background]="level.colour"></span>
+                <span class="level-name">{{ level.name }}</span>
+              </div>
+              <div class="level-note">{{ level.note }}</div>
+            </div>
+          </section>
+        }
       </div>
     }
 

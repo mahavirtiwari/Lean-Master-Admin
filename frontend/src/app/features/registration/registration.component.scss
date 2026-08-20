@@ -188,57 +188,228 @@
   .spacer { flex: 1; }
 }
 
-// R1 hero
+// ============================================================ R1 landing ===
+// Geometry lifted from R1-registration-landing.svg on a 1440 board with 160 px
+// side margins, so every figure below is the artboard's own.
+
 .hero {
   margin-bottom: 30px;
 
   .hero-title { margin: 0; font-size: 30px; font-weight: 700; color: #16211a; }
   .hero-sub { margin: 10px 0 0; font-size: 13px; color: #5d6b62; }
+
+  // x=160 y=298 w=60 h=4 rx=2
+  .hero-rule {
+    display: block;
+    width: 60px;
+    height: 4px;
+    border-radius: 2px;
+    background: #0f7b45;
+    margin-top: 20px;
+  }
 }
 
+// 627.2 : 468.8 with a 24 px gutter — the two cards of the 1120 content width.
 .landing {
   display: grid;
-  grid-template-columns: 1.2fr 1fr;
-  gap: 26px;
+  grid-template-columns: 627.2fr 468.8fr;
+  gap: 24px;
+  align-items: stretch;
 
   @media (max-width: 940px) { grid-template-columns: minmax(0, 1fr); }
 }
 
-// ------------------------------------------------------------------ cards ---
-.card {
+.r1-card {
+  position: relative;
   background: #fff;
   border: 1px solid #dee7e1;
-  border-radius: 10px;
-  padding: 24px;
-  margin-bottom: 20px;
+  border-radius: 8px;
+  overflow: hidden;
 }
 
-.card-title { margin: 0 0 4px; font-size: 20px; font-weight: 700; color: #16211a; }
-.card-line { margin: 0 0 6px; font-size: 12px; color: #5d6b62; }
-.card-note { margin-top: 14px; font-size: 10.6px; color: #5d6b62; }
+// The 3 px green edge sits on the New Registration card only.
+.r1-cap {
+  display: block;
+  height: 3px;
+  background: #0f7b45;
+}
 
-.need-title { margin: 0 0 16px; font-size: 15px; font-weight: 700; color: #16211a; }
+.r1-body { padding: 27px 28px 28px; }
 
+// 44 x 44, rx 10, on the palest green in the deck.
+.r1-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: #f0faf4;
+}
+
+.r1-title {
+  margin: 28px 0 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: #16211a;
+}
+
+.r1-line {
+  margin: 10px 0 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: #5d6b62;
+}
+
+// x=188 y=520 w=228.78 h=46 rx=6 — and blue, not green.
+.r1-start {
+  min-width: 229px;
+  height: 46px;
+  margin-top: 24px;
+  padding: 0 22px;
+  border: 0;
+  border-radius: 6px;
+  background: #1b4f8a;
+  color: #fff;
+  font-family: inherit;
+  font-size: 13.4px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.12s ease;
+
+  &:hover { background: #163f6f; }
+}
+
+.r1-note {
+  margin: 20px 0 0;
+  font-size: 10.6px;
+  color: #5d6b62;
+}
+
+.need-title {
+  margin: 0 0 14px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #16211a;
+}
+
+// Rows 50 px apart, each led by a 28 px circle on #EFF4FA.
 .need {
   display: flex;
-  gap: 12px;
+  align-items: flex-start;
+  gap: 10px;
   padding: 11px 0;
 
-  .need-dot {
+  .need-icon {
+    display: grid;
+    place-items: center;
     flex: none;
-    width: 7px;
-    height: 7px;
-    margin-top: 6px;
+    width: 28px;
+    height: 28px;
     border-radius: 50%;
-    background: #0f7b45;
+    background: #eff4fa;
   }
 
   .need-name { font-size: 11.8px; font-weight: 700; color: #16211a; }
   .need-hint { margin-top: 3px; font-size: 10.2px; color: #5d6b62; }
 }
 
-.divider { height: 1px; background: #edf2ef; margin: 22px 0 16px; }
-.already { font-size: 9.6px; font-weight: 700; letter-spacing: 0.4px; color: #5d6b62; }
+// ------------------------------------------------------- already strip ---
+// x=160 y=638 w=1120 h=88 rx=10 on #F0F8F3 with a #D9EBE1 edge.
+
+.already-strip {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  min-height: 88px;
+  margin-top: 20px;
+  padding: 18px 26px;
+  background: #f0f8f3;
+  border: 1px solid #d9ebe1;
+  border-radius: 10px;
+
+  .already-text { flex: 1; min-width: 0; }
+
+  .already-label {
+    font-size: 9.6px;
+    font-weight: 700;
+    letter-spacing: 0.6px;
+    color: #5d6b62;
+  }
+
+  .already-line {
+    margin: 8px 0 0;
+    font-size: 12px;
+    color: #47554c;
+  }
+
+  // 150 x 40, rx 6, white on a #C6D3CB hairline.
+  .already-btn {
+    flex: none;
+    width: 150px;
+    height: 40px;
+    border: 1px solid #c6d3cb;
+    border-radius: 6px;
+    background: #fff;
+    font-family: inherit;
+    font-size: 12.8px;
+    font-weight: 600;
+    color: #16211a;
+    cursor: pointer;
+
+    &:hover { background: #f7faf8; }
+  }
+}
+
+// ---------------------------------------------------------- level cards ---
+// Three of 362.67 across the 1120, each 74 tall with a 3 px coloured cap.
+
+.levels {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 18px;
+
+  @media (max-width: 940px) { grid-template-columns: minmax(0, 1fr); }
+}
+
+.level {
+  background: #fff;
+  border: 1px solid #dee7e1;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.level-cap {
+  display: block;
+  height: 3px;
+}
+
+.level-body { padding: 15px 20px 16px; }
+
+.level-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.level-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  flex: none;
+}
+
+.level-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #16211a;
+}
+
+.level-note {
+  margin-top: 6px;
+  font-size: 10.4px;
+  color: #5d6b62;
+}
 
 // ------------------------------------------------------------------ notice ---
 .notice {
@@ -673,7 +844,10 @@
 // tearing that view down. The header therefore reserves room at its right
 // edge rather than trying to hold the button itself — the same approach the
 // admin top bar takes.
-.pub-head { padding-right: 96px; }
+// The Bhashini picker is fixed to this corner by a global rule and now
+// carries a language name, so the header reserves its full width or the
+// button lands on top of "Sign in".
+.pub-head { padding-right: 152px; }
 
 // The Ministry wordmark is a link; it should not look like body text turned blue.
 a.head-mark { text-decoration: none; }
@@ -925,6 +1099,21 @@ a.head-mark:hover .ministry { text-decoration: underline; }
     gap: 18px;
     flex-wrap: wrap;
   }
+}
+
+@media (max-width: 620px) {
+  // The strip's text and its 150 px button do not share a row at this width.
+  .already-strip {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+
+    .already-btn { width: 100%; }
+  }
+
+  .r1-body { padding: 22px 18px 24px; }
+
+  .r1-start { width: 100%; min-width: 0; }
 }
 
 @media (max-width: 560px) {

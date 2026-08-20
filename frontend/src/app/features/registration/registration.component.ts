@@ -43,6 +43,48 @@ export class RegistrationComponent {
   private readonly api = inject(RegistrationService);
   private readonly router = inject(Router);
 
+  /**
+   * The "What you'll need" list on R1. Icons are drawn rather than shipped so
+   * they inherit the artboard's blue at whatever size the card renders.
+   */
+  readonly needs = [
+    {
+      name: 'Udyam Registration Number',
+      hint: 'Format UDYAM-XX-00-XXXXXXX',
+      // document
+      icon: 'M4.2 2.4h5L12 5.2v8.4H4.2z',
+      icon2: 'M9.2 2.4v3h3M6.2 8.6h3.6M6.2 11h2.4',
+    },
+    {
+      name: 'Udyam-registered mobile number',
+      hint: 'Validated against Udyam records',
+      // handset
+      icon: 'M5.4 1.8h5.2v12.4H5.4z',
+      icon2: 'M7.2 12.4h1.6',
+    },
+    {
+      name: 'SPOC email address',
+      hint: 'Receives the OTP, LEAN ID and password',
+      // envelope
+      icon: 'M2.4 3.8h11.2v8.4H2.4z',
+      icon2: 'm2.8 4.6 5.2 4 5.2-4',
+    },
+    {
+      name: 'Plant / unit address & NIC code',
+      hint: '2-digit, 4-digit and 5-digit classification',
+      // map pin
+      icon: 'M8 14.2S3.2 9.8 3.2 6.6a4.8 4.8 0 0 1 9.6 0c0 3.2-4.8 7.6-4.8 7.6Z',
+      icon2: 'M8 8.2a1.8 1.8 0 1 0 0-3.6 1.8 1.8 0 0 0 0 3.6Z',
+    },
+  ];
+
+  /** The three certification levels, capped in the colours the artboard uses. */
+  readonly levels = [
+    { name: 'LEAN Bronze', note: 'Entry level — foundation LEAN tools', colour: '#C2410C' },
+    { name: 'LEAN Silver', note: 'Intermediate — unlocks incentives', colour: '#5D6B62' },
+    { name: 'LEAN Gold', note: 'Advanced — full incentive catalogue', colour: '#A16207' },
+  ];
+
   readonly steps = STEPS;
 
   /** 1-based, matching the rail. */

@@ -636,6 +636,27 @@
   .pick-tag-bad { border-color: #fecaca; color: #b91c1c; }
 }
 
+// Label above, value beneath — they ran together as one line once these two
+// rules were lost, reading "NIC 2-DIGIT06 — Extraction of crude petroleum".
+.nic-lbl {
+  display: block;
+  font-size: 8.8px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  color: #5d6b62;
+}
+
+// The sector name is the useful half, so it wraps rather than being clipped.
+.nic-val {
+  display: block;
+  margin-top: 4px;
+  font-size: 10.4px;
+  font-weight: 600;
+  line-height: 1.45;
+  color: #16211a;
+  word-break: break-word;
+}
+
 .nic-row {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -647,7 +668,7 @@
   > span {
     display: block;
     min-height: 40px;
-    padding: 7px 12px;
+    padding: 8px 12px;
     background: #fff;
     border: 1px solid #dee7e1;
     border-radius: 6px;
@@ -1629,4 +1650,35 @@ a.head-mark:hover .ministry { text-decoration: underline; }
 @media (max-width: 620px) {
   .dlg { padding: 20px 18px 16px; }
   .dlg-foot .btn-primary { width: 100%; }
+}
+
+// A summary row whose value is too long to sit beside its label — the unit
+// address, which was being clipped mid-word.
+.sum-row.stack {
+  display: block;
+
+  .sum-key { display: block; }
+
+  .sum-val {
+    display: block;
+    margin-top: 4px;
+    text-align: left;
+    white-space: normal;
+    overflow: visible;
+    line-height: 1.5;
+  }
+}
+
+// The major activity Udyam records against the line, above the NIC boxes.
+.pick-major {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 6px;
+  padding: 2px 9px;
+  border-radius: 5px;
+  background: #eff4fa;
+  border: 1px solid #c3d8ee;
+  font-size: 9.6px;
+  font-weight: 600;
+  color: #1b4f8a;
 }

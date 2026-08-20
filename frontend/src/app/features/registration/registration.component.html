@@ -400,6 +400,10 @@
               <span class="pick-body">
                 <span class="pick-name">{{ a.nicFiveDigitName || a.activity }}</span>
 
+                @if (a.activity) {
+                  <span class="pick-major">Major activity: {{ a.activity }}</span>
+                }
+
                 <span class="nic-row">
                   <span>
                     <span class="nic-lbl">NIC 2-DIGIT</span>
@@ -687,7 +691,9 @@
               <span class="sum-key">Pincode</span>
               <span class="sum-val">{{ chosenPlant()?.pincode || '—' }}</span>
             </div>
-            <div class="sum-row">
+            <!-- Stacked: the unit address does not fit beside its label and
+                 was being clipped mid-word. -->
+            <div class="sum-row stack">
               <span class="sum-key">Address</span>
               <span class="sum-val">{{ chosenPlant()?.address || '—' }}</span>
             </div>
@@ -703,17 +709,23 @@
               <span class="sum-key">Activity</span>
               <span class="sum-val">{{ chosenActivity()?.nicFiveDigitName || '—' }}</span>
             </div>
-            <div class="sum-row">
+            <div class="sum-row stack">
               <span class="sum-key">NIC 2-digit</span>
-              <span class="sum-val">{{ chosenActivity()?.nicTwoDigit || '—' }}</span>
+              <span class="sum-val">
+                {{ chosenActivity()?.nicTwoDigit }}{{ chosenActivity()?.nicTwoDigitName ? ' — ' + chosenActivity()?.nicTwoDigitName : '' }}
+              </span>
             </div>
-            <div class="sum-row">
+            <div class="sum-row stack">
               <span class="sum-key">NIC 4-digit</span>
-              <span class="sum-val">{{ chosenActivity()?.nicFourDigit || '—' }}</span>
+              <span class="sum-val">
+                {{ chosenActivity()?.nicFourDigit }}{{ chosenActivity()?.nicFourDigitName ? ' — ' + chosenActivity()?.nicFourDigitName : '' }}
+              </span>
             </div>
-            <div class="sum-row">
+            <div class="sum-row stack">
               <span class="sum-key">NIC 5-digit</span>
-              <span class="sum-val">{{ chosenActivity()?.nicFiveDigit || '—' }}</span>
+              <span class="sum-val">
+                {{ chosenActivity()?.nicFiveDigit }}{{ chosenActivity()?.nicFiveDigitName ? ' — ' + chosenActivity()?.nicFiveDigitName : '' }}
+              </span>
             </div>
           </section>
 

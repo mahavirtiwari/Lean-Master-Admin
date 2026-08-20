@@ -67,10 +67,15 @@ public sealed class RegistrationController(
     {
         const byte msmeEnterprise = 10;
 
+        // Only the registration guide, not everything published to applicants:
+        // R1 is about getting registered, and the training and subsidy manuals
+        // belong on the dashboard once they are in. Matched on the title so an
+        // administrator controls it by what they name the upload.
         var rows = await db.Documents.AsNoTracking()
             .Where(d => d.IsActive && !d.IsDeleted
                         && d.CurrentVersionId != null
-                        && d.Audiences.Any(a => a.AccountTypeId == msmeEnterprise))
+                        && d.Audiences.Any(a => a.AccountTypeId == msmeEnterprise)
+                        && EF.Functions.Like(d.Title, "%registration%"))
             .OrderBy(d => d.Title)
             .Select(d => new
             {

@@ -1,5 +1,6 @@
 import {
   Component,
+  DestroyRef,
   ElementRef,
   computed,
   effect,
@@ -166,20 +167,33 @@ export class RegistrationComponent {
   readonly resendIn = signal(0);
 
   // ---- R8 / R9 ----------------------------------------------------------
-  readonly pledgeAccepted = signal(false);
 
   /**
-   * Whether the pledge has been read to the end.
+   * Whether the whole pledge has gone past the reader.
    *
-   * The pledge is an undertaking about regulatory compliance, so the button
-   * that makes it stays shut until the whole text has been in front of the
-   * person making it. Scrolling is the only evidence a browser can offer that
-   * it was, which is weak, but it is the difference between a wall of text
-   * somebody scrolled past and one they never saw at all.
+   * The pledge is an undertaking about regulatory compliance, and it is taken
+   * rather than ticked: the text carries itself through its frame, and the
+   * button that makes it opens only once the end has been reached. Reading
+   * ahead by hand counts too — the point is that the whole text was shown, not
+   * that anybody was made to wait.
    */
   readonly pledgeRead = signal(false);
 
   private readonly pledgeBox = viewChild<ElementRef<HTMLElement>>('pledgeBox');
+
+  /**
+   * How long the pledge takes to pass through its frame, whatever its height.
+   *
+   * Tied to the whole text rather than to a fixed speed, so the wait is the
+   * same on a phone — where the same words are three times taller — as on a
+   * desktop.
+   */
+  private static readonly CrawlMs = 20_000;
+
+  private crawl = 0;
+
+  /** The frame the running crawl belongs to, so a re-run does not restart it. */
+  private crawlFor: HTMLElement | null = null;
   /**
    * Field-level validity for R5. The submit path already rejected a bad mobile
    * or e-mail, but only after the round trip and only as one banner — these
@@ -272,16 +286,29 @@ export class RegistrationComponent {
   );
 
   constructor() {
-    // A pledge short enough not to scroll — a tall window, a large screen —
-    // has been read as soon as it is shown. Without this the button would
-    // never open, because a scroll event that cannot happen never fires.
+    // The pledge moves whenever its step is on screen — including on the way
+    // back from a later step, which is a different frame from the one the
+    // first crawl was given. Leaving the step stops it: a stray animation
+    // frame on a detached element is a leak.
     effect(() => {
-      const box = this.pledgeBox()?.nativeElement;
+      const box = this.pledgeBox()?.nativeElement ?? null;
+      const onPledgeStep = this.step() === 8;
 
-      if (box && box.scrollHeight <= box.clientHeight + 4) {
-        untracked(() => this.pledgeRead.set(true));
-      }
+      untracked(() => {
+        if (!onPledgeStep || !box) {
+          cancelAnimationFrame(this.crawl);
+          this.crawlFor = null;
+          return;
+        }
+
+        if (this.crawlFor === box) return;
+
+        this.crawlFor = box;
+        this.startCrawl(box);
+      });
     });
+
+    inject(DestroyRef).onDestroy(() => cancelAnimationFrame(this.crawl));
 
     this.api.applicantDocuments().subscribe({
       next: (docs) => this.guides.set(docs),
@@ -610,6 +637,67 @@ export class RegistrationComponent {
     this.step.set(8);
   }
 
+  /**
+   * Carries the pledge through its frame.
+   *
+   * A pledge short enough not to scroll — a tall window, a large screen — has
+   * been read as soon as it is shown: there is nothing to carry, and waiting
+   * for a scroll that cannot happen would leave the button shut for good.
+   */
+  private startCrawl(box: HTMLElement): void {
+    cancelAnimationFrame(this.crawl);
+
+    const range = box.scrollHeight - box.clientHeight;
+
+    if (range <= 4) {
+      this.pledgeRead.set(true);
+      return;
+    }
+
+    // Somebody who has asked for less motion gets none. The pledge sits still
+    // and is read by scrolling, which opens the button just the same.
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    const perMs = range / RegistrationComponent.CrawlMs;
+
+    // The position is kept here rather than read back off the element. A frame
+    // advances it by a third of a pixel, and scrollTop rounds what it is given
+    // to whole device pixels — so writing the fraction back and reading it
+    // again would discard the movement every frame, and the pledge would sit
+    // at zero for ever.
+    let position = box.scrollTop;
+    let written = position;
+    let previous = 0;
+
+    const step = (now: number): void => {
+      // The frame is gone once the step changes; stop rather than scroll a
+      // node that is no longer on the page.
+      if (!box.isConnected) return;
+
+      // Animation frames stop while the tab is in the background. Without a
+      // ceiling, coming back after a minute away would advance the pledge to
+      // the end in one jump and open the button on text nobody saw.
+      const elapsed = previous ? Math.min(now - previous, 250) : 0;
+      previous = now;
+
+      // A reader scrolling by hand takes over from here.
+      if (Math.abs(box.scrollTop - written) > 1) position = box.scrollTop;
+
+      position += perMs * elapsed;
+      box.scrollTop = position;
+      written = box.scrollTop;
+
+      if (position + box.clientHeight >= box.scrollHeight - 4) {
+        this.pledgeRead.set(true);
+        return;
+      }
+
+      this.crawl = requestAnimationFrame(step);
+    };
+
+    this.crawl = requestAnimationFrame(step);
+  }
+
   /** Watches the pledge frame for the reader reaching the bottom. */
   onPledgeScroll(event: Event): void {
     const box = event.target as HTMLElement;
@@ -623,11 +711,7 @@ export class RegistrationComponent {
 
   complete(): void {
     if (!this.pledgeRead()) {
-      return this.fail('Please read the pledge to the end before pledging.');
-    }
-
-    if (!this.pledgeAccepted()) {
-      return this.fail('The LEAN Pledge must be accepted to complete registration.');
+      return this.fail('Please let the pledge finish before pledging.');
     }
 
     this.busy.set(true);

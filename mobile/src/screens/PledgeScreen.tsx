@@ -1,10 +1,9 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   type LayoutChangeEvent,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -20,6 +19,10 @@ import { colour, radius, space, type } from '../theme/theme';
 import type { RootStackParamList } from '../navigation/types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Pledge'>;
+
+/** How long the whole pledge takes to pass through its frame. */
+const CRAWL_MS = 20_000;
+const TICK_MS = 50;
 
 const PLEDGE = [
   'I/We understand that the MSME Competitive (Lean) Scheme is voluntary and recognize the ' +
@@ -38,27 +41,61 @@ export default function PledgeScreen({ navigation }: Props): React.JSX.Element {
 
   const stored = draft.payload.draft as RegistrationDraft | undefined;
 
-  const [accepted, setAccepted] = useState(false);
-
-  // The pledge has to be read to the end before it can be made. See the web
-  // wizard's R8, which gates the same button the same way.
+  // The pledge is taken, not ticked: it carries itself through its frame, and
+  // I/We Pledge opens only once the whole text has gone by. Scrolling ahead by
+  // hand counts too. Same rule as the web wizard's R8.
   const [read, setRead] = useState(false);
   const [frameHeight, setFrameHeight] = useState(0);
+  const [contentHeight, setContentHeight] = useState(0);
+
+  const frame = useRef<ScrollView>(null);
+  const position = useRef(0);
 
   function onPledgeScroll(event: NativeSyntheticEvent<NativeScrollEvent>): void {
     const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
 
+    // A reader scrolling by hand takes the crawl over from here.
+    position.current = contentOffset.y;
+
     if (layoutMeasurement.height + contentOffset.y >= contentSize.height - 8) setRead(true);
   }
+
+  // Carries the pledge down at a pace that shows all of it in CRAWL_MS,
+  // whatever its height — the same wait on a small screen as on a large one.
+  useEffect(() => {
+    const range = contentHeight - frameHeight;
+
+    // Nothing to carry: a pledge that fits its frame has been read as soon as
+    // it is shown, and waiting for a scroll that cannot happen would leave the
+    // button shut for good.
+    if (frameHeight <= 0 || contentHeight <= 0) return undefined;
+
+    if (range <= 4) {
+      setRead(true);
+      return undefined;
+    }
+
+    const perTick = (range / CRAWL_MS) * TICK_MS;
+
+    const timer = setInterval(() => {
+      position.current += perTick;
+      frame.current?.scrollTo({ y: position.current, animated: false });
+
+      if (position.current + frameHeight >= contentHeight - 4) {
+        setRead(true);
+        clearInterval(timer);
+      }
+    }, TICK_MS);
+
+    return () => clearInterval(timer);
+  }, [contentHeight, frameHeight]);
 
   function onPledgeFrame(event: LayoutChangeEvent): void {
     setFrameHeight(event.nativeEvent.layout.height);
   }
 
-  // A pledge that fits inside its frame cannot be scrolled, so it counts as
-  // read as soon as it is on screen — otherwise the button would never open.
   function onPledgeContent(_width: number, height: number): void {
-    if (frameHeight > 0 && height <= frameHeight + 4) setRead(true);
+    setContentHeight(height);
   }
   const [busy, setBusy] = useState(false);
   const [dialog, setDialog] = useState<{ title: string; text: string } | null>(null);
@@ -67,12 +104,8 @@ export default function PledgeScreen({ navigation }: Props): React.JSX.Element {
     if (!read) {
       return setDialog({
         title: 'Please read the pledge',
-        text: 'Scroll to the end of the pledge before pledging.',
+        text: 'Let the pledge finish, or scroll to its end, before pledging.',
       });
-    }
-
-    if (!accepted) {
-      return setDialog({ title: 'Please check', text: 'Accept the LEAN Pledge to complete your registration.' });
     }
 
     const token = draft.sessionToken;
@@ -159,6 +192,7 @@ export default function PledgeScreen({ navigation }: Props): React.JSX.Element {
           />
 
           <ScrollView
+            ref={frame}
             style={styles.pledge}
             contentContainerStyle={styles.pledgeInner}
             nestedScrollEnabled
@@ -174,18 +208,11 @@ export default function PledgeScreen({ navigation }: Props): React.JSX.Element {
             ))}
           </ScrollView>
 
-          {read ? null : (
-            <Text style={styles.pledgeHint}>Scroll to the end of the pledge to continue.</Text>
-          )}
-
-          <Pressable style={styles.check} onPress={() => setAccepted((v) => !v)}>
-            <View style={[styles.box, accepted ? styles.boxOn : null]}>
-              {accepted ? <Text style={styles.tick}>✓</Text> : null}
-            </View>
-            <Text style={styles.checkText}>
-              On behalf of the enterprise, I accept the LEAN Pledge and confirm the details provided.
-            </Text>
-          </Pressable>
+          <Text style={styles.pledgeHint}>
+            {read
+              ? 'You have read the full pledge. Select I/We Pledge to complete your registration.'
+              : 'I/We Pledge opens once the whole pledge has been shown. You can scroll ahead.'}
+          </Text>
 
           <View style={styles.actions}>
             <GhostButton label="Back" onPress={() => navigation.goBack()} style={styles.half} />
@@ -193,7 +220,7 @@ export default function PledgeScreen({ navigation }: Props): React.JSX.Element {
               label="I/We Pledge"
               onPress={submit}
               busy={busy}
-              disabled={busy || !read || !accepted}
+              disabled={busy || !read}
               style={styles.half}
             />
           </View>
@@ -232,30 +259,6 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     marginTop: space(3),
   },
-
-  check: {
-    flexDirection: 'row',
-    gap: space(3),
-    alignItems: 'center',
-    marginBottom: space(5),
-    padding: space(4),
-    backgroundColor: colour.greenTint,
-    borderWidth: 1,
-    borderColor: colour.greenLine,
-    borderRadius: radius.md,
-  },
-  box: {
-    width: 22,
-    height: 22,
-    borderRadius: 4,
-    borderWidth: 1.5,
-    borderColor: colour.input,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  boxOn: { backgroundColor: colour.blue, borderColor: colour.blue },
-  tick: { color: colour.surface, fontSize: type.small, fontWeight: '700' },
-  checkText: { flex: 1, fontSize: type.small, color: colour.body, lineHeight: 20 },
 
   actions: { flexDirection: 'row', gap: space(3) },
 });

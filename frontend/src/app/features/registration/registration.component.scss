@@ -920,7 +920,21 @@
 
 
 // ----------------------------------------------------------------- success ---
-.done-wrap { text-align: center; padding: 20px 0 6px; }
+.done-wrap {
+  position: relative;
+  text-align: center;
+  padding: 20px 0 6px;
+
+  // The 3px green rule the artboard runs along the top edge of the card.
+  &::before {
+    content: '';
+    position: absolute;
+    inset: -32px -34px auto;
+    height: 3px;
+    background: #0f7b45;
+    border-radius: 8px 8px 0 0;
+  }
+}
 
 .done-mark {
   width: 62px;
@@ -941,12 +955,32 @@
 .cred {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 26px;
-  margin-top: 28px;
+  gap: 20px;
+  margin-top: 30px;
   text-align: left;
 
   @media (max-width: 700px) { grid-template-columns: minmax(0, 1fr); }
 }
+
+// 526 x 104, rx 10, on the artboard's panel white.
+.cred-box {
+  position: relative;
+  padding: 20px 22px;
+  background: #fafcfb;
+  border: 1px solid #dee7e1;
+  border-radius: 10px;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0 0 auto;
+    height: 3px;
+  }
+}
+
+.cred-id::before { background: #1b4f8a; }
+.cred-pw::before { background: #0f7b45; }
 
 .cred-val {
   display: flex;
@@ -958,18 +992,18 @@
   color: #16211a;
 }
 
-.sent-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 18px;
-  margin-top: 14px;
+// Sits under the hairline the artboard draws at the foot of the card.
+.done-next {
+  margin: 26px 0 0;
+  padding-top: 24px;
+  border-top: 1px solid #dee7e1;
   text-align: left;
-
-  @media (max-width: 900px) { grid-template-columns: minmax(0, 1fr); }
-
-  .sent-name { font-size: 12.4px; font-weight: 700; color: #16211a; }
-  .sent-hint { margin-top: 4px; font-size: 11px; color: #5d6b62; }
+  font-size: 12px;
+  line-height: 1.75;
+  color: #47554c;
 }
+
+.done-actions { margin-top: 18px; }
 
 // ----------------------------------------------------------------- actions ---
 .actions {
@@ -1754,7 +1788,14 @@ a.head-mark:hover .ministry { text-decoration: underline; }
 
 // R7's confirmation sits above the actions, with room to breathe.
 .sum-confirm {
+  align-items: center;
+  margin-top: 22px;
   margin-bottom: 6px;
-  padding-top: 20px;
-  border-top: 1px solid #edf2ef;
+  padding: 16px 20px;
+  background: #f0faf4;
+  border: 1px solid #b7e4c9;
+  border-radius: 9px;
+
+  input { margin-top: 0; width: 18px; height: 18px; accent-color: #1b4f8a; }
+  span { font-size: 12.6px; font-weight: 600; color: #16211a; }
 }

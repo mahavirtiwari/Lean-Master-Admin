@@ -806,8 +806,9 @@
             <p class="step-sub">Read the pledge and accept it to complete your registration</p>
           </div>
         </div>
-        <!-- The pledge scrolls in its own frame, and the undertaking below it
-             only opens once it has been read to the end. -->
+        <!-- The pledge carries itself past the reader, the way it is taken
+             aloud, and the button that makes it opens only once the whole text
+             has gone by. Scrolling by hand takes over from the crawl. -->
         <div #pledgeBox class="pledge" (scroll)="onPledgeScroll($event)">
           @for (para of pledgeBody; track para) {
             <p>{{ para }}</p>
@@ -816,23 +817,19 @@
           <div class="pledge-date">Date: {{ today }}</div>
         </div>
 
-        @if (!pledgeRead()) {
-          <p class="pledge-hint">Scroll to the end of the pledge to continue.</p>
-        }
-
-        <label class="check pledge-check">
-          <input type="checkbox" [checked]="pledgeAccepted()"
-                 (change)="pledgeAccepted.set($any($event.target).checked)" />
-          <span>
-            <strong>I have read and accept the LEAN Pledge on behalf of the enterprise</strong>
-          </span>
-        </label>
+        <p class="pledge-hint">
+          @if (pledgeRead()) {
+            You have read the full pledge. Select I/We Pledge to complete your registration.
+          } @else {
+            I/We Pledge opens once the whole pledge has been shown. You can scroll ahead.
+          }
+        </p>
 
         <div class="actions">
           <div class="spacer"></div>
           <button class="btn-ghost" type="button" (click)="back()">Back</button>
           <button class="btn-primary" type="button"
-                  [disabled]="busy() || !pledgeRead() || !pledgeAccepted()" (click)="complete()">
+                  [disabled]="busy() || !pledgeRead()" (click)="complete()">
             {{ busy() ? 'Submitting…' : 'I/We Pledge' }}
           </button>
         </div>
@@ -849,8 +846,10 @@
             Your LEAN ID and password have been sent to the verified SPOC email address.
           </p>
 
+          <!-- The two credentials the artboard panels, each under its own
+               accent: the sign-in id in blue, the password in green. -->
           <div class="cred">
-            <div>
+            <div class="cred-box cred-id">
               <span class="lbl">YOUR LEAN ID</span>
               <div class="cred-val">
                 {{ result()?.leanId }}
@@ -858,48 +857,23 @@
               </div>
               <span class="hint">System-generated · use this to sign in</span>
             </div>
-            <div>
+            <div class="cred-box cred-pw">
               <span class="lbl">SYSTEM PASSWORD</span>
               <div class="cred-val">••••••••••••</div>
               <span class="hint">Sent to {{ result()?.spocEmail }} · change is optional</span>
             </div>
           </div>
 
-          <div style="margin-top: 30px; text-align: left">
-            <span class="lbl">SENT TO YOUR EMAIL</span>
-            <div class="sent-grid">
-              <div>
-                <div class="sent-name">Unique LEAN ID</div>
-                <div class="sent-hint">{{ result()?.leanId }}</div>
-              </div>
-              <div>
-                <div class="sent-name">System-generated password</div>
-                <div class="sent-hint">Change is optional, from profile settings</div>
-              </div>
-            </div>
-          </div>
-
-          <!-- The certificate is not e-mailed: it is drawn from the record when
-               it is asked for, so it is offered here rather than promised in a
-               message that would carry a copy frozen at this moment. -->
-          <div style="margin-top: 22px; text-align: left">
-            <span class="lbl">LEAN PLEDGE CERTIFICATE</span>
-            <p class="card-note" style="text-align: left; margin-top: 8px">
-              Download your certificate below. It is produced from your registration each time you
-              ask for it, so a copy is always available from your dashboard as well.
-            </p>
-          </div>
-
-          <p class="card-note" style="text-align: left; margin-top: 26px">
+          <p class="done-next">
             Next: sign in and apply for LEAN Bronze, Silver or Gold from your dashboard.<br />
             No email yet? Check your Spam or Junk folder before contacting the helpline.
           </p>
 
-          <div class="actions">
+          <div class="actions done-actions">
             <div class="spacer"></div>
             <button class="btn-ghost" type="button" [disabled]="downloading()" (click)="downloadPledge()">
-            {{ downloading() ? 'Preparing…' : 'Download Pledge' }}
-          </button>
+              {{ downloading() ? 'Preparing…' : 'Download Pledge' }}
+            </button>
             <button class="btn-primary" type="button" (click)="signIn()">Sign in to Dashboard</button>
           </div>
         </div>

@@ -137,9 +137,12 @@ const styles = StyleSheet.create({
   },
 
   idBox: {
-    backgroundColor: colour.greenTint,
+    backgroundColor: colour.surfaceQuiet,
     borderWidth: 1,
-    borderColor: colour.greenLine,
+    borderColor: colour.line,
+    // The blue the artboard runs along the top of the LEAN ID panel.
+    borderTopWidth: 3,
+    borderTopColor: colour.blue,
     borderRadius: radius.md,
     padding: space(4),
     alignItems: 'center',

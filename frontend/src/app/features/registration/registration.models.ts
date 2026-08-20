@@ -82,3 +82,15 @@ export interface RegistrationResult {
   spocEmail: string;
   message: string;
 }
+
+/** A guide offered on R1, maintained in the admin module's Documents screen. */
+export interface ApplicantDocument {
+  documentId: number;
+  title: string;
+  description: string | null;
+  versionId: number;
+  fileName: string;
+  /** "video" when the stored file is a video, "document" otherwise. */
+  kind: 'video' | 'document';
+  url: string;
+}

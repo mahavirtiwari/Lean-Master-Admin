@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import {
+  ApplicantDocument,
   AwarenessProgram,
   OtpSent,
   RegistrationDraft,
@@ -26,6 +27,11 @@ export class RegistrationService {
 
   awarenessPrograms(): Observable<AwarenessProgram[]> {
     return this.http.get<AwarenessProgram[]>(`${this.base}/awareness-programs`);
+  }
+
+  /** The guides shown on R1, from Documents' MSME Enterprise audience. */
+  applicantDocuments(): Observable<ApplicantDocument[]> {
+    return this.http.get<ApplicantDocument[]>(`${this.base}/applicant-documents`);
   }
 
   verifyUdyam(body: {

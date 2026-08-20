@@ -44,7 +44,8 @@ BEGIN
           <div style="font:400 11px Segoe UI,Arial,sans-serif;color:#5D6B62;padding-top:4px;">
             Ministry of Micro, Small &amp; Medium Enterprises, Government of India</div>
         </td></tr>
-        <tr><td style="padding:26px 34px;font:400 13px/22px Segoe UI,Arial,sans-serif;color:#16211A;">';
+        <tr><td bgcolor="#F0F8F3"
+                style="padding:26px 34px;background:#F0F8F3;font:400 13px/22px Segoe UI,Arial,sans-serif;color:#16211A;">';
 END
 GO
 

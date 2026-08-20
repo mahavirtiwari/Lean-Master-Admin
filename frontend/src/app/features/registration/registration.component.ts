@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 
 import { RegistrationService } from './registration.service';
 import {
+  ApplicantDocument,
   AwarenessProgram,
   RegistrationActivity,
   RegistrationDraft,
@@ -57,6 +58,13 @@ export class RegistrationComponent {
   digitsOnly(value: string, max: number): string {
     return value.replace(/\D+/g, '').slice(0, max);
   }
+
+  /**
+   * The guides offered on R1. Empty until the admin module publishes a
+   * document to the MSME Enterprise audience, in which case the block simply
+   * does not render — better than a link to a manual that does not exist.
+   */
+  readonly guides = signal<ApplicantDocument[]>([]);
 
   readonly needs = [
     {
@@ -228,6 +236,12 @@ export class RegistrationComponent {
   );
 
   constructor() {
+    this.api.applicantDocuments().subscribe({
+      next: (docs) => this.guides.set(docs),
+      // A missing guide must not stop somebody registering.
+      error: () => this.guides.set([]),
+    });
+
     this.api.awarenessPrograms().subscribe((p) => this.programs.set(p));
   }
 

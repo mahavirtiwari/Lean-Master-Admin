@@ -43,6 +43,7 @@ namespace MCLS.Api.Controllers;
 [AllowAnonymous]
 public sealed class RegistrationController(
     MclsDbContext db,
+    IFileStorage files,
     IUdyamRegistry udyam,
     ISequenceService sequences,
     IDateTimeProvider clock,
@@ -54,6 +55,72 @@ public sealed class RegistrationController(
     private const int MaxOtpAttempts = 5;
 
     // ------------------------------------------------------------ reference ---
+
+    /// <summary>
+    /// The guides an applicant is offered on R1 — whatever Documents holds for
+    /// the MSME Enterprise audience. Maintained in the admin module's upload
+    /// screen rather than hard-coded here, so the manual can be replaced
+    /// without a deployment.
+    /// </summary>
+    [HttpGet("applicant-documents")]
+    public async Task<IActionResult> GetApplicantDocuments(CancellationToken ct)
+    {
+        const byte msmeEnterprise = 10;
+
+        var rows = await db.Documents.AsNoTracking()
+            .Where(d => d.IsActive && !d.IsDeleted
+                        && d.CurrentVersionId != null
+                        && d.Audiences.Any(a => a.AccountTypeId == msmeEnterprise))
+            .OrderBy(d => d.Title)
+            .Select(d => new
+            {
+                d.DocumentId,
+                d.Title,
+                d.Description,
+                VersionId = d.CurrentVersionId!.Value,
+                ContentType = d.CurrentVersion!.ContentType,
+                FileName = d.CurrentVersion.OriginalFileName,
+            })
+            .ToListAsync(ct);
+
+        // Split by media type so R1 can label one "manual" and one "video"
+        // without the wording depending on how the file was named.
+        return Ok(rows.Select(r => new
+        {
+            r.DocumentId,
+            r.Title,
+            r.Description,
+            r.VersionId,
+            r.FileName,
+            Kind = r.ContentType.StartsWith("video/", StringComparison.OrdinalIgnoreCase)
+                ? "video"
+                : "document",
+            Url = $"/api/registration/applicant-documents/{r.DocumentId}/{r.VersionId}",
+        }));
+    }
+
+    /// <summary>Streams one of those documents. Anonymous, like the rest of R1.</summary>
+    [HttpGet("applicant-documents/{id:int}/{versionId:int}")]
+    public async Task<IActionResult> DownloadApplicantDocument(int id, int versionId, CancellationToken ct)
+    {
+        const byte msmeEnterprise = 10;
+
+        // Re-checked here, not just in the listing: the id is in the URL and a
+        // caller could put any number in it.
+        var allowed = await db.Documents.AsNoTracking()
+            .AnyAsync(d => d.DocumentId == id && d.IsActive && !d.IsDeleted
+                           && d.Audiences.Any(a => a.AccountTypeId == msmeEnterprise), ct);
+
+        if (!allowed) return NotFound();
+
+        var version = await db.DocumentVersions.AsNoTracking()
+            .SingleOrDefaultAsync(v => v.DocumentVersionId == versionId && v.DocumentId == id, ct);
+
+        if (version is null) return NotFound();
+
+        var stream = await files.OpenReadAsync(version.RelativePath, version.StoredFileName, ct);
+        return File(stream, version.ContentType, version.OriginalFileName);
+    }
 
     /// <summary>The programmes behind R5's "Select program".</summary>
     [HttpGet("awareness-programs")]

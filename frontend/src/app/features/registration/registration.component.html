@@ -440,16 +440,25 @@
             <!-- Ten digits, enforced as it is typed: the field took any length
                  and only failed on submit. -->
             <input id="smob" class="inp" inputmode="numeric" maxlength="10"
+                   [class.is-bad]="mobileError()"
                    placeholder="+91 98765 43210"
                    [value]="spocMobile()"
                    (input)="spocMobile.set(digitsOnly($any($event.target).value, 10))" />
+            @if (mobileError(); as err) {
+              <span class="field-bad">{{ err }}</span>
+            }
           </div>
           <div class="field">
             <label class="lbl" for="smail">EMAIL ADDRESS<span class="req">*</span></label>
             <input id="smail" class="inp" type="email" maxlength="180"
+                   [class.is-bad]="emailError()"
                    placeholder="spoc@sharmaauto.in"
                    [value]="spocEmail()" (input)="spocEmail.set($any($event.target).value)" />
-            <span class="hint-blue">OTP will be sent to this address for verification</span>
+            @if (emailError(); as err) {
+              <span class="field-bad">{{ err }}</span>
+            } @else {
+              <span class="hint-blue">OTP will be sent to this address for verification</span>
+            }
           </div>
         </div>
 
@@ -483,24 +492,56 @@
 
           @if (attendedAwareness() === true) {
             <div class="aware-right">
-              <div class="field">
-                <label class="lbl" for="prog">SELECT PROGRAM</label>
-                <select id="prog" class="inp" [value]="awarenessProgramId()"
-                        (change)="awarenessProgramId.set($any($event.target).value)">
-                  <option value="">Select the programme attended</option>
-                  @for (prog of programs(); track prog.awarenessProgramId) {
-                    <option [value]="prog.awarenessProgramId">
-                      {{ prog.name }}{{ prog.heldOn ? ' — ' + prog.heldOn : '' }}
-                    </option>
-                  }
-                </select>
+              <!-- A combobox rather than a <select>: the list is fetched from
+                   the programmes API and is searched by programme ID or venue,
+                   which a native select cannot do. -->
+              <div class="field combo" [class.is-open]="programOpen()">
+                <label class="lbl" for="progSearch">SELECT PROGRAM</label>
+
+                <button class="inp combo-toggle" type="button"
+                        [attr.aria-expanded]="programOpen()"
+                        (click)="programOpen.set(!programOpen())">
+                  <span [class.combo-placeholder]="!selectedProgram()">
+                    {{ selectedProgram() ? programLabel(selectedProgram()!) : 'Select the programme attended' }}
+                  </span>
+                  <span class="combo-caret"></span>
+                </button>
+
+                @if (programOpen()) {
+                  <div class="combo-panel">
+                    <input
+                      id="progSearch"
+                      class="combo-search"
+                      type="search"
+                      autocomplete="off"
+                      placeholder="Search by programme ID or venue"
+                      [value]="programQuery()"
+                      (input)="programQuery.set($any($event.target).value)"
+                    />
+
+                    <div class="combo-list">
+                      @for (prog of filteredPrograms(); track prog.awarenessProgramId) {
+                        <button
+                          class="combo-item"
+                          type="button"
+                          [class.on]="awarenessProgramId() === '' + prog.awarenessProgramId"
+                          (click)="chooseProgram(prog.awarenessProgramId)"
+                        >
+                          <span class="combo-code">{{ prog.programCode || 'AP-' + prog.awarenessProgramId }}</span>
+                          <span class="combo-venue">{{ prog.venue || '—' }}</span>
+                        </button>
+                      } @empty {
+                        <div class="combo-empty">No programme matches that search.</div>
+                      }
+                    </div>
+                  </div>
+                }
+
                 <span class="hint">Shown only when &ldquo;Yes&rdquo; is selected</span>
               </div>
             </div>
           }
         </section>
-
-        <p class="card-note">An OTP is sent to the SPOC email address to verify it.</p>
 
         <div class="actions">
           <div class="spacer"></div>

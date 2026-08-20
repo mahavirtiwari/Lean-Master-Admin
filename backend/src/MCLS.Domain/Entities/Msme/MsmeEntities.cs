@@ -360,6 +360,13 @@ public class Registration
 public class AwarenessProgram
 {
     public int AwarenessProgramId { get; set; }
+
+    /// <summary>
+    /// The readable code an applicant sees on their attendance record, e.g.
+    /// LAP-27-202508-001. The surrogate key above means nothing to them.
+    /// </summary>
+    public string? ProgramCode { get; set; }
+
     public string Name { get; set; } = string.Empty;
     public DateOnly? HeldOn { get; set; }
     public string? Venue { get; set; }

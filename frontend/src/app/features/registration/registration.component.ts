@@ -136,6 +136,63 @@ export class RegistrationComponent {
 
   // ---- R8 / R9 ----------------------------------------------------------
   readonly pledgeAccepted = signal(false);
+  /**
+   * Field-level validity for R5. The submit path already rejected a bad mobile
+   * or e-mail, but only after the round trip and only as one banner — these
+   * mark the offending field as it is typed.
+   *
+   * Empty is not "invalid" here: a field the applicant has not reached yet
+   * should not be shouting at them. Required-ness is enforced on submit.
+   */
+  readonly mobileError = computed(() => {
+    const value = this.spocMobile();
+    if (!value) return null;
+    if (value.length < 10) return 'Enter all 10 digits.';
+    // India's mobile numbering plan: ten digits opening 6-9.
+    return /^[6-9]\d{9}$/.test(value) ? null : 'A mobile number starts with 6, 7, 8 or 9.';
+  });
+
+  readonly emailError = computed(() => {
+    const value = this.spocEmail().trim();
+    if (!value) return null;
+    return /^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(value) ? null : 'Enter a valid e-mail address.';
+  });
+
+  // ----------------------------------------------------- programme picker ---
+  // The list comes from the API; it is filtered here rather than server-side
+  // because it is small and the applicant is matching against a code they are
+  // reading off a certificate.
+  readonly programQuery = signal('');
+  readonly programOpen = signal(false);
+
+  readonly filteredPrograms = computed(() => {
+    const q = this.programQuery().trim().toLowerCase();
+    const all = this.programs();
+    if (!q) return all;
+
+    return all.filter((p) =>
+      [p.programCode, p.venue, p.name, p.heldOn]
+        .some((field) => (field ?? '').toLowerCase().includes(q)),
+    );
+  });
+
+  /** What the closed control shows once a programme is chosen. */
+  readonly selectedProgram = computed(() =>
+    this.programs().find((p) => String(p.awarenessProgramId) === this.awarenessProgramId()) ?? null,
+  );
+
+  /** "LAP-27-202508-001 — MCCIA, Pune" — the ID and the venue address. */
+  programLabel(p: { programCode: string | null; awarenessProgramId: number; venue: string | null }): string {
+    const id = p.programCode || `AP-${p.awarenessProgramId}`;
+    return p.venue ? `${id} — ${p.venue}` : id;
+  }
+
+  chooseProgram(id: number): void {
+    this.awarenessProgramId.set(String(id));
+    this.programOpen.set(false);
+    this.programQuery.set('');
+  }
+
   readonly result = signal<{ leanId: string; enterpriseName: string; spocEmail: string } | null>(null);
 
   readonly year = new Date().getFullYear();

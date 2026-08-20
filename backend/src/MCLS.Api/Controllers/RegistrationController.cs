@@ -59,6 +59,9 @@ public sealed class RegistrationController(
             .Select(p => new
             {
                 p.AwarenessProgramId,
+                // The readable code the applicant sees on their attendance
+                // record; the surrogate key means nothing to them.
+                p.ProgramCode,
                 p.Name,
                 p.HeldOn,
                 p.Venue,

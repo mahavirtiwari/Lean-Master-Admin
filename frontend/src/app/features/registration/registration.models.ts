@@ -4,6 +4,8 @@
 
 export interface AwarenessProgram {
   awarenessProgramId: number;
+  /** Readable programme ID, e.g. LAP-27-202508-001. */
+  programCode: string | null;
   name: string;
   heldOn: string | null;
   venue: string | null;

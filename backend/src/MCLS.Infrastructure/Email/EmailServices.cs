@@ -130,23 +130,23 @@ public static class MailShell
 {
     private const string Open = """
         <div style="margin:0;padding:0;background:#F4F7F5;">
-          <table width="100%" bgcolor="#0F7B45" cellpadding="0" cellspacing="0" border="0">
+          <table width="100%" bgcolor="#F0F8F3" cellpadding="0" cellspacing="0" border="0">
             <tr><td align="center" style="padding:28px 12px;">
               <table width="600" bgcolor="#ffffff" cellpadding="0" cellspacing="0" border="0"
-                     style="max-width:600px;border-radius:8px;overflow:hidden;">
+                     style="max-width:600px;border-radius:8px;overflow:hidden;border:1px solid #DEE7E1;">
                 <tr><td align="center" style="padding:22px;border-bottom:3px solid #0F7B45;">
                   <div style="font:700 19px Segoe UI,Arial,sans-serif;color:#16211A;">MSME Competitive (LEAN) Scheme</div>
                   <div style="font:400 11px Segoe UI,Arial,sans-serif;color:#5D6B62;padding-top:4px;">
                     Ministry of Micro, Small &amp; Medium Enterprises, Government of India</div>
                 </td></tr>
-                <tr><td bgcolor="#F0F8F3"
-                        style="padding:26px 34px;background:#F0F8F3;font:400 13px/22px Segoe UI,Arial,sans-serif;color:#16211A;">
+                <tr><td bgcolor="#FFFFFF"
+                        style="padding:26px 34px;background:#FFFFFF;font:400 13px/22px Segoe UI,Arial,sans-serif;color:#16211A;">
         """;
 
     private const string Close = """
                 </td></tr>
               </table>
-              <div style="padding-top:22px;font:400 11px Segoe UI,Arial,sans-serif;color:#ffffff;">
+              <div style="padding-top:22px;font:400 11px Segoe UI,Arial,sans-serif;color:#5D6B62;">
                 &copy; 2026 MSME Competitive (LEAN) Scheme</div>
             </td></tr>
           </table>

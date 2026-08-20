@@ -1,9 +1,16 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import React from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import React, { useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import type { RegistrationActivity, RegistrationDraft, RegistrationPlant } from '../api/registration';
-import { Card, GhostButton, OfflineBanner, PrimaryButton, StepHead } from '../components/ui';
+import {
+  AlertDialog,
+  Card,
+  GhostButton,
+  OfflineBanner,
+  PrimaryButton,
+  StepHead,
+} from '../components/ui';
 import { useApp } from '../state/AppContext';
 import { colour, radius, space, type } from '../theme/theme';
 import type { RootStackParamList } from '../navigation/types';
@@ -13,6 +20,11 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Summary'>;
 /** R7. Built entirely from the local draft, so it opens with no connection. */
 export default function SummaryScreen({ navigation }: Props): React.JSX.Element {
   const { online, queued, draft } = useApp();
+
+  // The pledge PDF is generated from exactly what this screen shows, so the
+  // applicant states that it is right rather than being advised to check it.
+  const [confirmed, setConfirmed] = useState(false);
+  const [dialog, setDialog] = useState<{ title: string; text: string } | null>(null);
 
   const stored = draft.payload.draft as RegistrationDraft | undefined;
   const plant = draft.payload.chosenPlant as RegistrationPlant | undefined;
@@ -68,20 +80,42 @@ export default function SummaryScreen({ navigation }: Props): React.JSX.Element 
             </Text>
           </View>
 
-          <Text style={styles.foot}>
-            Check every detail — the pledge PDF is generated from this information.
-          </Text>
+          <Pressable style={styles.confirm} onPress={() => setConfirmed((v) => !v)}>
+            <View style={[styles.box, confirmed ? styles.boxOn : null]}>
+              {confirmed ? <Text style={styles.tick}>✓</Text> : null}
+            </View>
+            <Text style={styles.confirmText}>
+              I confirm the above and agree to proceed with the information provided.
+            </Text>
+          </Pressable>
 
           <View style={styles.actions}>
             <GhostButton label="Back" onPress={() => navigation.goBack()} style={styles.flex} />
             <PrimaryButton
               label="Proceed to Pledge"
-              onPress={() => navigation.navigate('Pledge')}
+              onPress={() => {
+                if (!confirmed) {
+                  setDialog({
+                    title: 'Please confirm',
+                    text: 'Confirm that the details above are correct before proceeding to the pledge.',
+                  });
+                  return;
+                }
+
+                navigation.navigate('Pledge');
+              }}
               style={styles.flex}
             />
           </View>
         </Card>
       </ScrollView>
+
+      <AlertDialog
+        visible={dialog !== null}
+        title={dialog?.title ?? ''}
+        text={dialog?.text ?? ''}
+        onClose={() => setDialog(null)}
+      />
     </View>
   );
 }
@@ -139,6 +173,27 @@ const styles = StyleSheet.create({
   mailValue: { fontSize: type.body, fontWeight: '700', color: colour.text, marginTop: space(1) },
   mailNote: { fontSize: type.tiny, color: colour.body, marginTop: space(1.5), lineHeight: 17 },
 
-  foot: { fontSize: type.tiny, color: colour.muted, marginTop: space(4), marginBottom: space(3) },
+  confirm: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: space(3),
+    marginTop: space(5),
+    paddingTop: space(4),
+    borderTopWidth: 1,
+    borderTopColor: colour.line,
+    marginBottom: space(4),
+  },
+  box: {
+    width: 22,
+    height: 22,
+    borderRadius: 4,
+    borderWidth: 1.5,
+    borderColor: colour.input,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  boxOn: { backgroundColor: colour.green, borderColor: colour.green },
+  tick: { color: colour.surface, fontSize: type.small, fontWeight: '700' },
+  confirmText: { flex: 1, fontSize: type.small, color: colour.body, lineHeight: 20 },
   actions: { flexDirection: 'row', gap: space(3) },
 });

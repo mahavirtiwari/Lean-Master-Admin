@@ -780,10 +780,15 @@
           <button class="sum-edit" type="button" (click)="goTo(5)">Edit</button>
         </section>
 
+        <!-- Confirmed before the pledge, not merely advised: the pledge PDF is
+             generated from exactly what is above. -->
+        <label class="check sum-confirm">
+          <input type="checkbox" [checked]="summaryConfirmed()"
+                 (change)="summaryConfirmed.set($any($event.target).checked)" />
+          <span>I confirm the above and agree to proceed with the information provided.</span>
+        </label>
+
         <div class="actions">
-          <p class="sum-foot">
-            Check every detail — the pledge PDF is generated from this information.
-          </p>
           <div class="spacer"></div>
           <button class="btn-ghost" type="button" (click)="back()">Back</button>
           <button class="btn-primary" type="button" (click)="toPledge()">Proceed to Pledge</button>

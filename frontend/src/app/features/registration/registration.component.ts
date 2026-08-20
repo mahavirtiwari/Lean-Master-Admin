@@ -123,6 +123,13 @@ export class RegistrationComponent {
    */
   readonly dialog = signal<{ title: string; text: string } | null>(null);
 
+  /**
+   * R7's confirmation. The pledge PDF is generated from exactly what the
+   * summary shows, so the applicant states that it is right rather than being
+   * advised to check it.
+   */
+  readonly summaryConfirmed = signal(false);
+
   // ---- R2 ---------------------------------------------------------------
   readonly udyamNo = signal('');
   readonly udyamMobile = signal('');
@@ -535,6 +542,14 @@ export class RegistrationComponent {
   // ---------------------------------------------------- R7 -> R8 -> R9 ---
 
   toPledge(): void {
+    if (!this.summaryConfirmed()) {
+      this.fail(
+        'Confirm that the details above are correct before proceeding to the pledge.',
+        'Please confirm',
+      );
+      return;
+    }
+
     this.ok(null);
     this.step.set(8);
   }

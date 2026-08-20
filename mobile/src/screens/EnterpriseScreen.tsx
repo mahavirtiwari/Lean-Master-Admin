@@ -60,14 +60,14 @@ export default function EnterpriseScreen({ navigation }: Props): React.JSX.Eleme
           ) : null}
 
           <View style={styles.actions}>
-            <GhostButton label="Back" onPress={() => navigation.goBack()} style={styles.flex} />
+            <GhostButton label="Back" onPress={() => navigation.goBack()} style={styles.half} />
             <PrimaryButton
               label="Continue"
               onPress={() => {
                 void saveDraft({ step: 4 });
                 navigation.navigate('UnitActivity');
               }}
-              style={styles.flex}
+              style={styles.half}
             />
           </View>
         </Card>
@@ -78,6 +78,7 @@ export default function EnterpriseScreen({ navigation }: Props): React.JSX.Eleme
 
 const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: colour.page },
+  half: { flex: 1 },
   page: { padding: space(4), paddingBottom: space(10) },
 
   // Label above, value beneath: a Udyam address does not fit beside its label

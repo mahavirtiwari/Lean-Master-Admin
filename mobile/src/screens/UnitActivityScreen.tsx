@@ -210,8 +210,8 @@ export default function UnitActivityScreen({ navigation }: Props): React.JSX.Ele
           )}
 
           <View style={styles.actions}>
-            <GhostButton label="Back" onPress={() => navigation.goBack()} style={styles.flex} />
-            <PrimaryButton label="Continue" onPress={next} busy={busy} style={styles.flex} />
+            <GhostButton label="Back" onPress={() => navigation.goBack()} style={styles.half} />
+            <PrimaryButton label="Continue" onPress={next} busy={busy} style={styles.half} />
           </View>
         </Card>
       </ScrollView>
@@ -228,6 +228,7 @@ export default function UnitActivityScreen({ navigation }: Props): React.JSX.Ele
 
 const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: colour.page },
+  half: { flex: 1 },
   page: { padding: space(4), paddingBottom: space(10) },
 
   name: { fontSize: type.small, fontWeight: '700', color: colour.text, lineHeight: 20 },

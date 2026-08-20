@@ -148,8 +148,8 @@ export default function OtpScreen({ navigation }: Props): React.JSX.Element {
           </View>
 
           <View style={styles.actions}>
-            <GhostButton label="Back" onPress={() => navigation.goBack()} style={styles.flex} />
-            <PrimaryButton label="Verify & Continue" onPress={verify} busy={busy} style={styles.flex} />
+            <GhostButton label="Back" onPress={() => navigation.goBack()} style={styles.half} />
+            <PrimaryButton label="Verify & Continue" onPress={verify} busy={busy} style={styles.half} />
           </View>
         </Card>
       </ScrollView>
@@ -166,6 +166,7 @@ export default function OtpScreen({ navigation }: Props): React.JSX.Element {
 
 const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: colour.page },
+  half: { flex: 1 },
   page: { padding: space(4), paddingBottom: space(10) },
 
   note: { fontSize: type.small, color: colour.body, lineHeight: 20, marginBottom: space(5) },

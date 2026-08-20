@@ -90,7 +90,7 @@ export default function SummaryScreen({ navigation }: Props): React.JSX.Element 
           </Pressable>
 
           <View style={styles.actions}>
-            <GhostButton label="Back" onPress={() => navigation.goBack()} style={styles.flex} />
+            <GhostButton label="Back" onPress={() => navigation.goBack()} style={styles.half} />
             <PrimaryButton
               label="Proceed to Pledge"
               onPress={() => {
@@ -104,7 +104,7 @@ export default function SummaryScreen({ navigation }: Props): React.JSX.Element 
 
                 navigation.navigate('Pledge');
               }}
-              style={styles.flex}
+              style={styles.half}
             />
           </View>
         </Card>
@@ -143,6 +143,7 @@ function Row({ label, value }: { label: string; value?: string | null }): React.
 
 const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: colour.page },
+  half: { flex: 1 },
   page: { padding: space(4), paddingBottom: space(10) },
 
   section: {

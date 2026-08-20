@@ -230,8 +230,8 @@ export default function SpocScreen({ navigation }: Props): React.JSX.Element {
           </View>
 
           <View style={styles.actions}>
-            <GhostButton label="Back" onPress={() => navigation.goBack()} style={styles.flex} />
-            <PrimaryButton label="Send OTP to Email" onPress={next} busy={busy} style={styles.flex} />
+            <GhostButton label="Back" onPress={() => navigation.goBack()} style={styles.half} />
+            <PrimaryButton label="Send OTP to Email" onPress={next} busy={busy} style={styles.half} />
           </View>
         </Card>
       </ScrollView>
@@ -248,6 +248,7 @@ export default function SpocScreen({ navigation }: Props): React.JSX.Element {
 
 const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: colour.page },
+  half: { flex: 1 },
   page: { padding: space(4), paddingBottom: space(10) },
 
   panel: {

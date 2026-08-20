@@ -24,6 +24,11 @@ export interface ApplicantDocument {
 export interface RegistrationPlant {
   index: number;
   unitIdNo: string | null;
+  /**
+   * The registry's own plant id, and the only thing that tells two units of one
+   * enterprise apart — UnitIdNo is repeated across them.
+   */
+  plantIdNo: string | null;
   unitName: string | null;
   address: string | null;
   pincode: string | null;
@@ -110,7 +115,7 @@ export const verifyUdyam = (body: {
 export const loadDraft = (token: string) =>
   request<RegistrationDraft>(`${base}/${token}`, { anonymous: true });
 
-export const saveUnit = (token: string, body: { unitIdNo: string; nicFiveDigit: string }) =>
+export const saveUnit = (token: string, body: { plantIdNo: string | null; unitIdNo: string; nicFiveDigit: string }) =>
   request<void>(`${base}/${token}/unit`, { method: 'PUT', anonymous: true, body });
 
 export const saveSpoc = (
@@ -134,7 +139,9 @@ export const sendOtp = (token: string) =>
 export const verifyOtp = (token: string, otp: string) =>
   request<void>(`${base}/${token}/otp/verify`, { method: 'POST', anonymous: true, body: { otp } });
 
-export const complete = (token: string, body: { acceptedPledge: boolean; acceptedBy: string }) =>
+// The server's field is acceptPledge, and it takes nothing else — the name on
+// the pledge comes from the SPOC details already saved against the draft.
+export const complete = (token: string, body: { acceptPledge: boolean }) =>
   request<RegistrationResult>(`${base}/${token}/complete`, {
     method: 'POST',
     anonymous: true,
@@ -149,7 +156,7 @@ export const complete = (token: string, body: { acceptedPledge: boolean; accepte
  * request lands when the connection does. Anything whose answer the next screen
  * depends on is never queued; see the note above.
  */
-export const queueUnit = (token: string, body: { unitIdNo: string; nicFiveDigit: string }) =>
+export const queueUnit = (token: string, body: { plantIdNo: string | null; unitIdNo: string; nicFiveDigit: string }) =>
   enqueue('PUT', `${base}/${token}/unit`, body);
 
 export const queueSpoc = (

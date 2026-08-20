@@ -24,7 +24,6 @@ export default function PledgeScreen({ navigation }: Props): React.JSX.Element {
   const { online, queued, draft, saveDraft, resetDraft, sync } = useApp();
 
   const stored = draft.payload.draft as RegistrationDraft | undefined;
-  const spoc = draft.payload.spoc as { fullName?: string } | undefined;
 
   const [accepted, setAccepted] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -40,7 +39,7 @@ export default function PledgeScreen({ navigation }: Props): React.JSX.Element {
       return setDialog({ title: 'Start again', text: 'This draft has no session. Please start the registration again.' });
     }
 
-    const body = { acceptedPledge: true, acceptedBy: spoc?.fullName ?? '' };
+    const body = { acceptPledge: true };
 
     // Offline the submission is queued rather than refused. The LEAN ID is
     // issued by the server, so it cannot be shown yet — the completion screen

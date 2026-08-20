@@ -77,6 +77,10 @@ export default function UnitActivityScreen({ navigation }: Props): React.JSX.Ele
     }
 
     const body = {
+      // The plant id, not the unit id: the registry repeats UnitIdNo across an
+      // enterprise's units, so sending that alone resolves to whichever comes
+      // first — which is how a free plant got refused as already registered.
+      plantIdNo: plant.plantIdNo,
       unitIdNo: plant.unitIdNo ?? '',
       nicFiveDigit: activity.nicFiveDigit ?? '',
     };

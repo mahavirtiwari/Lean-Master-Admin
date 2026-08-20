@@ -208,11 +208,11 @@ export default function PledgeScreen({ navigation }: Props): React.JSX.Element {
             ))}
           </ScrollView>
 
-          <Text style={styles.pledgeHint}>
-            {read
-              ? 'You have read the full pledge. Select I/We Pledge to complete your registration.'
-              : 'I/We Pledge opens once the whole pledge has been shown. You can scroll ahead.'}
-          </Text>
+          {read ? null : (
+            <Text style={styles.pledgeHint}>
+              I/We Pledge opens once the whole pledge has been shown. You can scroll ahead.
+            </Text>
+          )}
 
           <View style={styles.actions}>
             <GhostButton label="Back" onPress={() => navigation.goBack()} style={styles.half} />

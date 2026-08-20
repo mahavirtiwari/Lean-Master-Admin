@@ -817,13 +817,13 @@
           <div class="pledge-date">Date: {{ today }}</div>
         </div>
 
-        <p class="pledge-hint">
-          @if (pledgeRead()) {
-            You have read the full pledge. Select I/We Pledge to complete your registration.
-          } @else {
+        <!-- Only while the button is shut: once the pledge has been shown, the
+             button opening says so by itself. -->
+        @if (!pledgeRead()) {
+          <p class="pledge-hint">
             I/We Pledge opens once the whole pledge has been shown. You can scroll ahead.
-          }
-        </p>
+          </p>
+        }
 
         <div class="actions">
           <div class="spacer"></div>

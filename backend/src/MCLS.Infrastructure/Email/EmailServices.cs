@@ -130,6 +130,47 @@ public sealed class EmailDispatchService(
 {
     private readonly SmtpOptions _options = options.Value;
 
+    /// <summary>
+    /// The Settings screen (audit.SystemSetting, category "E-mail") is where an
+    /// administrator maintains the mail account, so it wins over appsettings.
+    /// Anything left blank there falls back to configuration, which is what a
+    /// fresh install runs on before anyone opens the screen.
+    /// </summary>
+    private static SmtpOptions Merge(SmtpOptions fallback, Dictionary<string, string?> saved)
+    {
+        string? Text(string key) =>
+            saved.TryGetValue(key, out var v) && !string.IsNullOrWhiteSpace(v) ? v.Trim() : null;
+
+        int Number(string key, int fallbackValue) =>
+            int.TryParse(Text(key), out var n) ? n : fallbackValue;
+
+        bool Flag(string key, bool fallbackValue) =>
+            bool.TryParse(Text(key), out var b) ? b : fallbackValue;
+
+        return new SmtpOptions
+        {
+            Host = Text("Email.SmtpHost") ?? fallback.Host,
+            Port = Number("Email.SmtpPort", fallback.Port),
+            UseStartTls = Flag("Email.SmtpUseTls", fallback.UseStartTls),
+            UserName = Text("Email.SmtpUserName") ?? fallback.UserName,
+            Password = Text("Email.SmtpPassword") ?? fallback.Password,
+            FromAddress = Text("Email.FromAddress") ?? fallback.FromAddress,
+            FromName = Text("Email.FromName") ?? fallback.FromName,
+            BatchSize = Number("Email.BatchSize", fallback.BatchSize),
+            MaxRetries = Number("Email.MaxRetries", fallback.MaxRetries),
+            PollSeconds = fallback.PollSeconds,
+            PickupDirectoryOnly = fallback.PickupDirectoryOnly,
+        };
+    }
+
+    private static readonly string[] SettingKeys =
+    [
+        "Email.SmtpHost", "Email.SmtpPort", "Email.SmtpUseTls",
+        "Email.SmtpUserName", "Email.SmtpPassword",
+        "Email.FromAddress", "Email.FromName",
+        "Email.BatchSize", "Email.MaxRetries",
+    ];
+
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         logger.LogInformation("E-mail dispatch service started; polling every {Seconds}s.", _options.PollSeconds);
@@ -159,11 +200,20 @@ public sealed class EmailDispatchService(
         using var scope = scopeFactory.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<MclsDbContext>();
 
+        // Re-read each cycle: an administrator changing the mail account must
+        // take effect without restarting the API.
+        var saved = await db.SystemSettings
+            .AsNoTracking()
+            .Where(x => SettingKeys.Contains(x.Key))
+            .ToDictionaryAsync(x => x.Key, x => x.Value, ct);
+
+        var settings = Merge(_options, saved);
+
         // Claim first, send second.
         var claimed = await db.EmailMessages
-            .Where(m => m.Status == "Queued" && m.AttemptCount < _options.MaxRetries)
+            .Where(m => m.Status == "Queued" && m.AttemptCount < settings.MaxRetries)
             .OrderBy(m => m.QueuedOnUtc)
-            .Take(_options.BatchSize)
+            .Take(settings.BatchSize)
             .Select(m => m.EmailMessageId)
             .ToListAsync(ct);
 
@@ -180,7 +230,7 @@ public sealed class EmailDispatchService(
             .Where(m => claimed.Contains(m.EmailMessageId) && m.Status == "Sending")
             .ToListAsync(ct);
 
-        using var client = CreateClient();
+        using var client = CreateClient(settings);
 
         foreach (var message in messages)
         {
@@ -191,11 +241,11 @@ public sealed class EmailDispatchService(
 
             try
             {
-                if (!_options.PickupDirectoryOnly)
+                if (!settings.PickupDirectoryOnly)
                 {
                     using var mail = new MailMessage
                     {
-                        From = new MailAddress(_options.FromAddress, _options.FromName),
+                        From = new MailAddress(settings.FromAddress, settings.FromName),
                         Subject = message.Subject,
                         Body = message.BodyHtml,
                         IsBodyHtml = true,
@@ -213,12 +263,12 @@ public sealed class EmailDispatchService(
             {
                 // Back to Queued while retries remain, so a transient outage
                 // resolves itself on the next cycle.
-                message.Status = message.AttemptCount >= _options.MaxRetries ? "Failed" : "Queued";
+                message.Status = message.AttemptCount >= settings.MaxRetries ? "Failed" : "Queued";
                 message.ErrorMessage = ex.Message.Length > 1000 ? ex.Message[..1000] : ex.Message;
 
                 logger.LogWarning(ex,
                     "Failed to send message {MessageId} to {Recipient} (attempt {Attempt} of {Max}).",
-                    message.EmailMessageId, message.ToAddress, message.AttemptCount, _options.MaxRetries);
+                    message.EmailMessageId, message.ToAddress, message.AttemptCount, settings.MaxRetries);
             }
         }
 
@@ -250,18 +300,18 @@ public sealed class EmailDispatchService(
         }
     }
 
-    private SmtpClient CreateClient()
+    private static SmtpClient CreateClient(SmtpOptions settings)
     {
-        var client = new SmtpClient(_options.Host, _options.Port)
+        var client = new SmtpClient(settings.Host, settings.Port)
         {
-            EnableSsl = _options.UseStartTls,
+            EnableSsl = settings.UseStartTls,
             DeliveryMethod = SmtpDeliveryMethod.Network,
             Timeout = 30_000,
         };
 
-        if (!string.IsNullOrWhiteSpace(_options.UserName))
+        if (!string.IsNullOrWhiteSpace(settings.UserName))
         {
-            client.Credentials = new NetworkCredential(_options.UserName, _options.Password);
+            client.Credentials = new NetworkCredential(settings.UserName, settings.Password);
         }
         else
         {

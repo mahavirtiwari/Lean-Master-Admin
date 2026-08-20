@@ -53,7 +53,10 @@ builder.Services
         options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
         options.Lockout.AllowedForNewUsers = true;
 
-        options.User.RequireUniqueEmail = true;
+        // The system-generated UserCode identifies an account, not the
+        // address: a SPOC may register up to three plants from one mailbox,
+        // and a shared office address is ordinary.
+        options.User.RequireUniqueEmail = false;
 
         // Sign-in is blocked until the address is confirmed, which is how a
         // newly created account is activated.

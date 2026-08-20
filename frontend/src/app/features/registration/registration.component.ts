@@ -116,6 +116,13 @@ export class RegistrationComponent {
   readonly message = signal<string | null>(null);
   readonly failed = signal(false);
 
+  /**
+   * Validation failures are shown as a dialog rather than as a line above the
+   * form: on the longer steps the notice sat off-screen, so a rejected submit
+   * looked like nothing had happened.
+   */
+  readonly dialog = signal<{ title: string; text: string } | null>(null);
+
   // ---- R2 ---------------------------------------------------------------
   readonly udyamNo = signal('');
   readonly udyamMobile = signal('');
@@ -253,6 +260,7 @@ export class RegistrationComponent {
     if (step < this.step() && step >= 2 && this.draft()) {
       this.step.set(step);
       this.message.set(null);
+      this.dialog.set(null);
     }
   }
 
@@ -260,12 +268,18 @@ export class RegistrationComponent {
     if (this.step() > 1) {
       this.step.set(this.step() - 1);
       this.message.set(null);
+      this.dialog.set(null);
     }
   }
 
-  private fail(text: string): void {
+  private fail(text: string, title = 'Please check'): void {
     this.failed.set(true);
     this.message.set(text);
+    this.dialog.set({ title, text });
+  }
+
+  closeDialog(): void {
+    this.dialog.set(null);
   }
 
   private ok(text: string | null): void {
@@ -337,10 +351,10 @@ export class RegistrationComponent {
     // The server rejects it too; this is so the applicant is told at the tap
     // rather than after filling in the SPOC details.
     if (plant?.isRegistered) {
-      this.failed.set(true);
-      this.message.set(
+      this.fail(
         `${plant.unitName ?? 'That plant'} is already registered under ${plant.registeredLeanId}. ` +
           'Choose another plant, or sign in with that LEAN ID.',
+        'Plant already registered',
       );
       return;
     }

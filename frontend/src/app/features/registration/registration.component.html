@@ -38,11 +38,15 @@
 </nav>
 
 <main class="pub-body">
+  <!-- Progress and confirmations stay in the flow; anything the applicant has
+       to act on is raised as a dialog below. -->
   @if (message(); as note) {
-    <div class="notice" [class.notice-bad]="failed()" [class.notice-ok]="!failed()">
-      <span class="notice-mark"></span>
-      <span>{{ note }}</span>
-    </div>
+    @if (!failed()) {
+      <div class="notice notice-ok">
+        <span class="notice-mark"></span>
+        <span>{{ note }}</span>
+      </div>
+    }
   }
 
   @switch (step()) {
@@ -932,3 +936,27 @@
     </nav>
   </div>
 </footer>
+
+<!-- ==================================================== validation dialog == -->
+@if (dialog(); as d) {
+  <div class="dlg-backdrop" (click)="closeDialog()">
+    <div class="dlg" role="alertdialog" aria-modal="true" aria-labelledby="dlgTitle"
+         (click)="$event.stopPropagation()">
+      <div class="dlg-head">
+        <span class="dlg-mark" aria-hidden="true">
+          <svg width="20" height="20" viewBox="0 0 20 20">
+            <circle cx="10" cy="10" r="8.4" fill="none" stroke="#B91C1C" stroke-width="1.6" />
+            <path d="M10 5.8v5M10 13.6v.2" stroke="#B91C1C" stroke-width="1.8" stroke-linecap="round" />
+          </svg>
+        </span>
+        <h2 class="dlg-title" id="dlgTitle">{{ d.title }}</h2>
+      </div>
+
+      <p class="dlg-text">{{ d.text }}</p>
+
+      <div class="dlg-foot">
+        <button class="btn-primary" type="button" (click)="closeDialog()">OK</button>
+      </div>
+    </div>
+  </div>
+}

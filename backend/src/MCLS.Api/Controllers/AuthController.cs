@@ -42,15 +42,15 @@ public sealed class AuthController(
         const string GenericFailure = "The user ID or password is incorrect.";
 
         // The sign-in screen asks for a User ID (MCLS-MIN-000001), not an
-        // e-mail. Both are accepted: the design's field is the User ID, but
-        // existing accounts and the bootstrap admin are addressed by e-mail,
-        // and refusing that would lock out the very first sign-in.
+        // the User ID the account was issued: MCLS-MIN-000001 for a portal
+        // user, LEAN-UP-2026-00011 for an applicant.
         var identifier = request.UserId.Trim();
 
-        var user = identifier.Contains('@', StringComparison.Ordinal)
-            ? await userManager.FindByEmailAsync(identifier)
-            : await db.Users.AsTracking()
-                .SingleOrDefaultAsync(u => u.UserCode == identifier && !u.IsDeleted, ct);
+        // The User ID is the system-generated code and nothing else. E-mail is
+        // no longer unique — several accounts may share an address — so it
+        // cannot identify anybody.
+        var user = await db.Users.AsTracking()
+            .SingleOrDefaultAsync(u => u.UserCode == identifier && !u.IsDeleted, ct);
 
         if (user is null || user.IsDeleted)
         {
@@ -195,13 +195,17 @@ public sealed class AuthController(
         [FromServices] IConfiguration configuration,
         CancellationToken ct)
     {
-        var user = await userManager.FindByEmailAsync(request.Email);
+        // Keyed on the User ID rather than the address: an address may now be
+        // shared by several accounts, and a reset link must belong to one.
+        var user = await db.Users.AsTracking()
+            .SingleOrDefaultAsync(u => u.UserCode == request.UserId.Trim() && !u.IsDeleted, ct);
 
-        if (user is not null && !user.IsDeleted && user.StatusId == (byte)UserStatusId.Active)
+        if (user is not null && !user.IsDeleted && user.StatusId == (byte)UserStatusId.Active
+            && !string.IsNullOrWhiteSpace(user.Email))
         {
             var token = await userManager.GeneratePasswordResetTokenAsync(user);
             var portalUrl = configuration["Portal:BaseUrl"]?.TrimEnd('/') ?? string.Empty;
-            var resetUrl = $"{portalUrl}/reset-password?email={Uri.EscapeDataString(user.Email!)}" +
+            var resetUrl = $"{portalUrl}/reset-password?userId={Uri.EscapeDataString(user.UserCode)}" +
                            $"&token={Uri.EscapeDataString(token)}";
 
             await email.QueueTemplatedAsync("USER_PASSWORD_RESET", user.Email!, user.Id,
@@ -226,9 +230,10 @@ public sealed class AuthController(
     public async Task<IActionResult> ResetPassword(
         [FromBody] ResetPasswordRequest request, CancellationToken ct)
     {
-        var user = await userManager.FindByEmailAsync(request.Email);
+        var user = await db.Users.AsTracking()
+            .SingleOrDefaultAsync(u => u.UserCode == request.UserId.Trim() && !u.IsDeleted, ct);
 
-        // Same generic answer whether the address or the token was wrong.
+        // Same generic answer whether the User ID or the token was wrong.
         const string Generic = "The reset link is invalid or has expired. Request a new one.";
 
         if (user is null || user.IsDeleted)
@@ -403,12 +408,13 @@ public sealed class ChangePasswordRequest
 
 public sealed class ForgotPasswordRequest
 {
-    [Required, EmailAddress] public string Email { get; set; } = string.Empty;
+    /// <summary>The system-generated User ID, e.g. MCLS-MIN-000001.</summary>
+    [Required, StringLength(40)] public string UserId { get; set; } = string.Empty;
 }
 
 public sealed class ResetPasswordRequest
 {
-    [Required, EmailAddress] public string Email { get; set; } = string.Empty;
+    [Required, StringLength(40)] public string UserId { get; set; } = string.Empty;
     [Required] public string Token { get; set; } = string.Empty;
     [Required, MinLength(12)] public string NewPassword { get; set; } = string.Empty;
 }

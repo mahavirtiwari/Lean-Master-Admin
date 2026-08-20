@@ -1564,3 +1564,69 @@ a.head-mark:hover .ministry { text-decoration: underline; }
   font-weight: 600;
   color: #b91c1c;
 }
+
+// ==================================================== validation dialog ===
+// Raised for anything the applicant has to act on. The inline notice is kept
+// for progress and confirmations only — on the longer steps it sat off-screen,
+// so a rejected submit looked like nothing had happened.
+
+.dlg-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgb(22 33 26 / 46%);
+}
+
+.dlg {
+  width: 100%;
+  max-width: 440px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 18px 44px rgb(22 33 26 / 26%);
+  padding: 24px 26px 20px;
+}
+
+.dlg-head {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+
+.dlg-mark {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #fdf1f1;
+}
+
+.dlg-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #16211a;
+}
+
+.dlg-text {
+  margin: 14px 0 0;
+  font-size: 12.6px;
+  line-height: 1.6;
+  color: #47554c;
+}
+
+.dlg-foot {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 22px;
+}
+
+@media (max-width: 620px) {
+  .dlg { padding: 20px 18px 16px; }
+  .dlg-foot .btn-primary { width: 100%; }
+}

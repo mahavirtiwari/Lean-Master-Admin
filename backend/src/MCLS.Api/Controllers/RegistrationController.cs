@@ -352,6 +352,23 @@ public sealed class RegistrationController(
         // Note this is a cap, not a bar: an address that already has a portal
         // account is fine, because the plants it registers are attached to
         // that same account rather than to a second one.
+        // An address belonging to a portal account — Ministry, IA, consultant,
+        // assessor — is not an applicant's to use. Only applicant accounts
+        // (account type 10) may share an address with a registration, and that
+        // is how a SPOC registers a second plant.
+        var staffAccount = await db.Users.AsNoTracking()
+            .AnyAsync(u => u.Email == email && u.AccountTypeId != 10 && !u.IsDeleted, ct);
+
+        if (staffAccount)
+        {
+            return Conflict(new
+            {
+                code = "SPOC_EMAIL_IS_PORTAL_USER",
+                message = $"{request.Email.Trim()} belongs to a portal user account and cannot be " +
+                          "used as an applicant's SPOC address. Use the enterprise's own address.",
+            });
+        }
+
         var used = await SpocEmailUseCountAsync(email, ct);
 
         if (used >= MaxRegistrationsPerSpocEmail)
@@ -750,33 +767,6 @@ public sealed class RegistrationController(
             if (roleId is null)
             {
                 logger.LogError("The ENTERPRISE_USER role is missing; no account issued for {LeanId}.", leanId);
-                return;
-            }
-
-            // A SPOC who registers a second or third plant keeps one login:
-            // Identity holds e-mail unique, and two accounts for one person
-            // would leave password reset ambiguous. The new enterprise is
-            // attached to the account they already have.
-            var existing = await db.Users.AsTracking()
-                .FirstOrDefaultAsync(u => u.Email == draft.SpocEmail, ct);
-
-            if (existing is not null)
-            {
-                enterprise.PrimaryUserId = existing.Id;
-                await db.SaveChangesAsync(ct);
-
-                await email.QueueTemplatedAsync("APPLICANT_ADDITIONAL_PLANT", draft.SpocEmail!, existing.Id,
-                    new Dictionary<string, string>
-                    {
-                        ["unit_name"] = enterprise.Name,
-                        ["lean_id"] = leanId,
-                        ["user_code"] = existing.UserCode,
-                        ["login_url"] = $"{Request.Headers.Origin}/msme/login",
-                        ["support_email"] = "consultancy.zed@qcin.org",
-                    }, ct);
-
-                logger.LogInformation(
-                    "{LeanId} attached to the existing account {UserCode}.", leanId, existing.UserCode);
                 return;
             }
 

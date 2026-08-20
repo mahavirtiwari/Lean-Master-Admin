@@ -150,17 +150,16 @@
 
     <!-- ========================================= R2: Udyam verification == -->
     @case (2) {
-      <div class="step-head">
-        <span class="step-no">2</span>
-        <div>
-          <h2 class="step-title">Udyam Verification</h2>
-          <p class="step-sub">
-            Enter the Udyam Registration Number and the mobile number registered against it
-          </p>
-        </div>
-      </div>
-
       <section class="card">
+        <div class="step-head">
+          <span class="step-no">2</span>
+          <div>
+            <h2 class="step-title">Udyam Verification</h2>
+            <p class="step-sub">
+              Enter the Udyam Registration Number and the mobile number registered against it
+            </p>
+          </div>
+        </div>
         <div class="notice">
           <span class="notice-mark"></span>
           <span>
@@ -188,9 +187,10 @@
               id="umobile"
               class="inp"
               inputmode="numeric"
+              maxlength="10"
               placeholder="+91 98765 43210"
               [value]="udyamMobile()"
-              (input)="udyamMobile.set($any($event.target).value)"
+              (input)="udyamMobile.set(digitsOnly($any($event.target).value, 10))"
             />
             <span class="hint">Must match the mobile recorded on the Udyam certificate</span>
           </div>
@@ -217,18 +217,17 @@
 
     <!-- ========================================== R3: enterprise details == -->
     @case (3) {
-      <div class="step-head">
-        <span class="step-no">3</span>
-        <div>
-          <h2 class="step-title">Enterprise Details</h2>
-          <p class="step-sub">
-            Validated from the MSME database, Ministry of MSME — these fields are read-only
-          </p>
-        </div>
-      </div>
-
       @if (draft()?.enterprise; as e) {
         <section class="card">
+          <div class="step-head">
+            <span class="step-no">3</span>
+            <div>
+              <h2 class="step-title">Enterprise Details</h2>
+              <p class="step-sub">
+                Validated from the MSME database, Ministry of MSME — these fields are read-only
+              </p>
+            </div>
+          </div>
           <div class="grid-2">
             <div class="field">
               <span class="lbl">ENTERPRISE NAME</span>
@@ -303,15 +302,14 @@
 
     <!-- ======================================== R4: plant and activity == -->
     @case (4) {
-      <div class="step-head">
-        <span class="step-no">4</span>
-        <div>
-          <h2 class="step-title">Plant Location &amp; Activity</h2>
-          <p class="step-sub">Select one plant location and the activity carried out there</p>
-        </div>
-      </div>
-
       <section class="card">
+        <div class="step-head">
+          <span class="step-no">4</span>
+          <div>
+            <h2 class="step-title">Plant Location &amp; Activity</h2>
+            <p class="step-sub">Select one plant location and the activity carried out there</p>
+          </div>
+        </div>
         <span class="lbl">PLEASE SELECT ANY ONE PLANT LOCATION</span>
 
         <div style="margin-top: 14px">
@@ -410,75 +408,97 @@
 
     <!-- ======================================= R5: SPOC and awareness == -->
     @case (5) {
-      <div class="step-head">
-        <span class="step-no">5</span>
-        <div>
-          <h2 class="step-title">SPOC Contact Details &amp; Awareness Program</h2>
-          <p class="step-sub">
-            The single point of contact receives the OTP, LEAN ID and system password
-          </p>
-        </div>
-      </div>
-
+      <!-- One card, as drawn: head, two field rows, the tinted awareness
+           panel, then the actions. -->
       <section class="card">
+        <div class="step-head">
+          <span class="step-no">5</span>
+          <div>
+            <h2 class="step-title">SPOC Contact Details &amp; Awareness Program</h2>
+            <p class="step-sub">
+              The single point of contact receives the OTP, LEAN ID and system password
+            </p>
+          </div>
+        </div>
+
         <div class="grid-2">
           <div class="field">
             <label class="lbl" for="sname">FULL NAME<span class="req">*</span></label>
-            <input id="sname" class="inp" placeholder="e.g. Rakesh Sharma"
+            <input id="sname" class="inp" maxlength="120" placeholder="e.g. Rakesh Sharma"
                    [value]="spocName()" (input)="spocName.set($any($event.target).value)" />
           </div>
           <div class="field">
             <label class="lbl" for="sdesig">DESIGNATION<span class="req">*</span></label>
-            <input id="sdesig" class="inp" placeholder="e.g. Plant Head"
+            <input id="sdesig" class="inp" maxlength="80" placeholder="e.g. Plant Head"
                    [value]="spocDesignation()" (input)="spocDesignation.set($any($event.target).value)" />
           </div>
         </div>
 
-        <div class="grid-2" style="margin-top: 18px">
+        <div class="grid-2" style="margin-top: 20px">
           <div class="field">
             <label class="lbl" for="smob">MOBILE NUMBER<span class="req">*</span></label>
-            <input id="smob" class="inp" inputmode="numeric" placeholder="+91 98765 43210"
-                   [value]="spocMobile()" (input)="spocMobile.set($any($event.target).value)" />
+            <!-- Ten digits, enforced as it is typed: the field took any length
+                 and only failed on submit. -->
+            <input id="smob" class="inp" inputmode="numeric" maxlength="10"
+                   placeholder="+91 98765 43210"
+                   [value]="spocMobile()"
+                   (input)="spocMobile.set(digitsOnly($any($event.target).value, 10))" />
           </div>
           <div class="field">
             <label class="lbl" for="smail">EMAIL ADDRESS<span class="req">*</span></label>
-            <input id="smail" class="inp" type="email" placeholder="spoc@sharmaauto.in"
+            <input id="smail" class="inp" type="email" maxlength="180"
+                   placeholder="spoc@sharmaauto.in"
                    [value]="spocEmail()" (input)="spocEmail.set($any($event.target).value)" />
             <span class="hint-blue">OTP will be sent to this address for verification</span>
           </div>
         </div>
-      </section>
 
-      <section class="card">
-        <h3 class="card-title" style="font-size: 13.4px">Awareness Program Participation</h3>
-        <p class="card-line">Have you participated in any LEAN Awareness Program?</p>
+        <!-- x=184 y=492 w=1072 h=140 on #F0F8F3 with a #D9EBE1 edge. -->
+        <section class="panel panel-green awareness">
+          <div class="aware-left">
+            <div class="aware-head">
+              <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
+                <path
+                  d="M2.4 3.2h4.2A1.4 1.4 0 0 1 8 4.6v8.6a1.1 1.1 0 0 0-1.1-1.1H2.4V3.2ZM13.6 3.2H9.4A1.4 1.4 0 0 0 8 4.6v8.6a1.1 1.1 0 0 1 1.1-1.1h4.5V3.2Z"
+                  fill="none" stroke="#0F7B45" stroke-width="1.7"
+                  stroke-linecap="round" stroke-linejoin="round"
+                />
+              </svg>
+              <h3 class="aware-title">Awareness Program Participation</h3>
+            </div>
 
-        <div class="yesno">
-          <button class="radio" type="button" [class.on]="attendedAwareness() === true"
-                  (click)="attendedAwareness.set(true)">
-            <span class="dot"></span> Yes
-          </button>
-          <button class="radio" type="button" [class.on]="attendedAwareness() === false"
-                  (click)="attendedAwareness.set(false); awarenessProgramId.set('')">
-            <span class="dot"></span> No
-          </button>
-        </div>
+            <p class="aware-sub">Have you participated in any LEAN Awareness Program?</p>
 
-        @if (attendedAwareness() === true) {
-          <div class="field" style="margin-top: 18px; max-width: 560px">
-            <label class="lbl" for="prog">SELECT PROGRAM</label>
-            <select id="prog" class="inp" [value]="awarenessProgramId()"
-                    (change)="awarenessProgramId.set($any($event.target).value)">
-              <option value="">Select the programme attended</option>
-              @for (p of programs(); track p.awarenessProgramId) {
-                <option [value]="p.awarenessProgramId">
-                  {{ p.name }}{{ p.heldOn ? ' — ' + p.heldOn : '' }}
-                </option>
-              }
-            </select>
-            <span class="hint">Shown only when "Yes" is selected</span>
+            <div class="yesno">
+              <button class="radio" type="button" [class.on]="attendedAwareness() === true"
+                      (click)="attendedAwareness.set(true)">
+                <span class="dot"></span> Yes
+              </button>
+              <button class="radio" type="button" [class.on]="attendedAwareness() === false"
+                      (click)="attendedAwareness.set(false); awarenessProgramId.set('')">
+                <span class="dot"></span> No
+              </button>
+            </div>
           </div>
-        }
+
+          @if (attendedAwareness() === true) {
+            <div class="aware-right">
+              <div class="field">
+                <label class="lbl" for="prog">SELECT PROGRAM</label>
+                <select id="prog" class="inp" [value]="awarenessProgramId()"
+                        (change)="awarenessProgramId.set($any($event.target).value)">
+                  <option value="">Select the programme attended</option>
+                  @for (prog of programs(); track prog.awarenessProgramId) {
+                    <option [value]="prog.awarenessProgramId">
+                      {{ prog.name }}{{ prog.heldOn ? ' — ' + prog.heldOn : '' }}
+                    </option>
+                  }
+                </select>
+                <span class="hint">Shown only when &ldquo;Yes&rdquo; is selected</span>
+              </div>
+            </div>
+          }
+        </section>
 
         <p class="card-note">An OTP is sent to the SPOC email address to verify it.</p>
 
@@ -486,13 +506,12 @@
           <div class="spacer"></div>
           <button class="btn-ghost" type="button" (click)="back()">Back</button>
           <button class="btn-primary" type="button" [disabled]="busy()" (click)="saveSpoc()">
-            {{ busy() ? 'Sending…' : 'Send OTP & Continue' }}
+            {{ busy() ? 'Sending…' : 'Send OTP to Email' }}
           </button>
         </div>
       </section>
     }
 
-    <!-- ================================================= R6: e-mail OTP == -->
     @case (6) {
       <section class="card">
         <div class="otp-wrap">
@@ -644,19 +663,18 @@
 
     <!-- ================================================= R8: LEAN pledge == -->
     @case (8) {
-      <div class="step-head">
-        <span class="step-no">7</span>
-        <div>
-          <h2 class="step-title">LEAN Pledge</h2>
-          <p class="step-sub">
-            Read the pledge, download a copy for your records, and accept to continue
-          </p>
-        </div>
-        <div class="spacer"></div>
-        <button class="btn-ghost" type="button" (click)="downloadPledge()">Download Pledge</button>
-      </div>
-
       <section class="card">
+        <div class="step-head">
+          <span class="step-no">7</span>
+          <div>
+            <h2 class="step-title">LEAN Pledge</h2>
+            <p class="step-sub">
+              Read the pledge, download a copy for your records, and accept to continue
+            </p>
+          </div>
+          <div class="spacer"></div>
+          <button class="btn-ghost" type="button" (click)="downloadPledge()">Download Pledge</button>
+        </div>
         <div class="pledge">
           <div class="pledge-head">LEAN PLEDGE</div>
           <div class="pledge-who">

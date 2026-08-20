@@ -47,6 +47,17 @@ export class RegistrationComponent {
    * The "What you'll need" list on R1. Icons are drawn rather than shipped so
    * they inherit the artboard's blue at whatever size the card renders.
    */
+  /**
+   * Keeps a numeric field numeric and capped as it is typed.
+   *
+   * maxlength alone does not stop a paste of non-digits, and the fields were
+   * accepting any length — an 18-digit mobile number reached the server and
+   * only failed there.
+   */
+  digitsOnly(value: string, max: number): string {
+    return value.replace(/\D+/g, '').slice(0, max);
+  }
+
   readonly needs = [
     {
       name: 'Udyam Registration Number',

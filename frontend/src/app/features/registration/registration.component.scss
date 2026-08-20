@@ -411,6 +411,61 @@
   color: #5d6b62;
 }
 
+
+// ------------------------------------------------------------------ card ---
+// x=160 y=220 w=1120, rx 8 on #DEE7E1 — one card holds the whole step.
+.card {
+  background: #fff;
+  border: 1px solid #dee7e1;
+  border-radius: 8px;
+  padding: 24px;
+  margin-bottom: 20px;
+}
+
+// The tinted inner panels the deck uses inside that card.
+.panel {
+  border-radius: 8px;
+  padding: 20px 22px;
+}
+
+// Awareness (R5) and the declaration (R7).
+.panel-green {
+  background: #f0f8f3;
+  border: 1px solid #d9ebe1;
+}
+
+// Notes and read-back strips (R2).
+.panel-blue {
+  background: #eff4fa;
+  border: 1px solid #c3d8ee;
+}
+
+// Summary tiles (R7).
+.panel-quiet {
+  background: #fafcfb;
+  border: 1px solid #dee7e1;
+}
+
+// The small chips the deck sets beside headings.
+.chip-blue {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 9px;
+  border-radius: 5px;
+  background: #eff4fa;
+  border: 1px solid #c3d8ee;
+  font-size: 9.6px;
+  font-weight: 600;
+  color: #1b4f8a;
+}
+
+.card-title { margin: 0 0 4px; font-size: 20px; font-weight: 700; color: #16211a; }
+.card-line { margin: 0 0 6px; font-size: 12px; color: #5d6b62; }
+.card-note { margin-top: 18px; font-size: 10.6px; color: #5d6b62; }
+.divider { height: 1px; background: #edf2ef; margin: 22px 0 16px; }
+.already { font-size: 9.6px; font-weight: 700; letter-spacing: 0.4px; color: #5d6b62; }
+
 // ------------------------------------------------------------------ notice ---
 .notice {
   display: flex;
@@ -469,29 +524,43 @@
 .hint { font-size: 9.8px; color: #5d6b62; }
 .hint-blue { font-size: 9.8px; font-weight: 600; color: #1b4f8a; }
 
+// 526 x 42, rx 6, #C6D3CB — the artboard's field on every internal screen.
 .inp {
-  height: 44px;
-  padding: 0 14px;
+  height: 42px;
+  padding: 0 13px;
   background: #fff;
   border: 1px solid #c6d3cb;
-  border-radius: 7px;
+  border-radius: 6px;
   font: inherit;
-  font-size: 13px;
+  font-size: 12.6px;
   color: #16211a;
   width: 100%;
 
   &::placeholder { color: #93a29a; }
-  &:focus { outline: none; border-color: #0f7b45; box-shadow: 0 0 0 3px rgb(15 123 69 / 12%); }
-  &:disabled { background: #f7faf8; color: #5d6b62; }
+  &:focus { outline: none; border-color: #1b4f8a; box-shadow: 0 0 0 3px rgb(27 79 138 / 12%); }
+  &:disabled { background: #edf2ef; border-color: #dee7e1; color: #5d6b62; }
 }
 
-// Read-only Udyam values on R3 read as facts, not as fields to fill.
+// R3 shows Udyam's own values: 38 tall on #EDF2EF, not a field to fill in.
+.inp.is-fixed {
+  height: 38px;
+  background: #edf2ef;
+  border-color: #dee7e1;
+}
+
+// R3's Udyam values are drawn as filled, inert fields — 38 tall on #EDF2EF
+// with a #DEE7E1 edge — not as underlined text.
 .ro-value {
+  display: flex;
+  align-items: center;
+  min-height: 38px;
+  padding: 8px 13px;
+  background: #edf2ef;
+  border: 1px solid #dee7e1;
+  border-radius: 6px;
   font-size: 12.4px;
   font-weight: 600;
   color: #16211a;
-  padding: 9px 0;
-  border-bottom: 1px solid #edf2ef;
   word-break: break-word;
 }
 
@@ -515,7 +584,8 @@
   padding: 18px 20px;
   margin-bottom: 14px;
   background: #fff;
-  border: 1.5px solid #dee7e1;
+  // The deck's unpicked card carries the #C6D3CB hairline, not the card grey.
+  border: 1.5px solid #c6d3cb;
   border-radius: 9px;
   cursor: pointer;
   text-align: left;
@@ -610,20 +680,23 @@
 .otp-sub { margin: 10px 0 4px; font-size: 12px; color: #5d6b62; }
 .otp-mail { font-size: 12.6px; font-weight: 700; color: #1b4f8a; }
 
-.otp-boxes { display: flex; justify-content: center; gap: 14px; margin: 30px 0 16px; }
+.otp-boxes { display: flex; justify-content: center; gap: 12px; margin: 30px 0 16px; }
 
+// 58 x 60, rx 8. A box holding a digit takes the blue edge the deck draws;
+// an empty one keeps the hairline.
 .otp-box {
-  width: 54px;
-  height: 62px;
+  width: 58px;
+  height: 60px;
   text-align: center;
   font-size: 26px;
   font-weight: 700;
   color: #16211a;
   border: 1.5px solid #c6d3cb;
-  border-radius: 9px;
+  border-radius: 8px;
   background: #fff;
 
-  &:focus { outline: none; border-color: #0f7b45; box-shadow: 0 0 0 3px rgb(15 123 69 / 12%); }
+  &:not(:placeholder-shown) { border-color: #1b4f8a; }
+  &:focus { outline: none; border-color: #1b4f8a; box-shadow: 0 0 0 3px rgb(27 79 138 / 12%); }
 }
 
 .otp-resend { font-size: 11.4px; color: #5d6b62; }
@@ -754,26 +827,30 @@
   .spacer { flex: 1; }
 }
 
+// 42 tall, rx 6. Every internal screen's forward action is BLUE — green is
+// the scheme's chrome (rail, step marks), blue is what you press.
 .btn-primary,
 .btn-ghost {
-  height: 46px;
-  padding: 0 26px;
-  border-radius: 8px;
-  font-size: 13.4px;
+  height: 42px;
+  padding: 0 22px;
+  border-radius: 6px;
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
 }
 
 .btn-primary {
-  background: #0f7b45;
-  border: 1px solid #0f7b45;
+  background: #1b4f8a;
+  border: 1px solid #1b4f8a;
   color: #fff;
 
-  &:hover:not(:disabled) { background: #0c6539; }
+  &:hover:not(:disabled) { background: #163f6f; }
 }
 
+// Back / Cancel: 100 wide, white on the deck's hairline.
 .btn-ghost {
+  min-width: 100px;
   background: #fff;
   border: 1px solid #c6d3cb;
   color: #16211a;
@@ -1123,4 +1200,65 @@ a.head-mark:hover .ministry { text-decoration: underline; }
   .head-link { font-size: 10.8px; }
 
   .card { border-radius: 10px; }
+}
+
+// ------------------------------------------------------ R5 awareness panel ---
+// The deck sets the radios at the panel's left and the programme select
+// beside them, not stacked underneath.
+
+.awareness {
+  display: grid;
+  grid-template-columns: 186px minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+  margin-top: 22px;
+
+  .aware-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .aware-title {
+    margin: 0;
+    font-size: 13.4px;
+    font-weight: 700;
+    color: #16211a;
+  }
+
+  .aware-sub {
+    margin: 8px 0 0;
+    font-size: 11.2px;
+    line-height: 1.5;
+    color: #5d6b62;
+  }
+
+  .aware-right { padding-top: 4px; }
+
+  @media (max-width: 900px) {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+  }
+}
+
+// The panel is wide, so its sub-line and radios share the left column.
+.awareness .aware-left { grid-column: 1 / -1; }
+.awareness .aware-right { grid-column: 1 / -1; }
+
+// ------------------------------------------------------------- actions row ---
+// Right-aligned to the card edge, Back then the primary action.
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 26px;
+
+  .spacer { flex: 1; }
+
+  @media (max-width: 620px) {
+    flex-wrap: wrap;
+
+    .btn-ghost,
+    .btn-primary { flex: 1; }
+  }
 }

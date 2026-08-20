@@ -424,8 +424,11 @@
 // The Bhashini language picker is fixed to the top-right of the viewport (see
 // styles.scss). The bar's own controls are pushed clear so the picker never
 // sits on top of the account avatar.
+//
+// 74 px was enough while the picker was icon-only; it now carries the language
+// name as well, so the reserve is its full width plus a gap.
 .topbar {
-  padding-right: 74px;
+  padding-right: 150px;
 }
 
 // ============================================================== narrow ===
@@ -466,7 +469,7 @@
 
   .topbar {
     gap: 10px;
-    padding: 0 14px;
+    padding: 0 146px 0 14px;   // same reserve, tighter left inset
   }
 
   // The crumb repeats what the title already says and is the first thing to
@@ -503,7 +506,7 @@
   }
 
   .topbar {
-    padding: 0 10px;
+    padding: 0 142px 0 10px;
   }
 
   .content {

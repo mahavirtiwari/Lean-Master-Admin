@@ -46,7 +46,10 @@ export class RegistrationService {
     return this.http.get<RegistrationDraft>(`${this.base}/${token}`);
   }
 
-  saveUnit(token: string, body: { unitIdNo: string; nicFiveDigit: string }): Observable<void> {
+  saveUnit(
+    token: string,
+    body: { plantIdNo: string | null; unitIdNo: string; nicFiveDigit: string },
+  ): Observable<void> {
     return this.http.put<void>(`${this.base}/${token}/unit`, body);
   }
 

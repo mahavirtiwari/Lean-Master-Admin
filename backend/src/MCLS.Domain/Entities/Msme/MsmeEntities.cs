@@ -332,6 +332,14 @@ public class Registration
     public string? UdyamPayload { get; set; }
 
     public string? SelectedUnitIdNo { get; set; }
+
+    /// <summary>
+    /// The registry's id for the chosen plant.
+    ///
+    /// UnitIdNo cannot identify one: the registry repeats it across the units
+    /// of a single enterprise, so three plants may share it.
+    /// </summary>
+    public string? SelectedPlantIdNo { get; set; }
     public string? SelectedNicFiveDigit { get; set; }
 
     public string? SpocName { get; set; }

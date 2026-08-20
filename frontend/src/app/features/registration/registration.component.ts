@@ -391,6 +391,7 @@ export class RegistrationComponent {
 
     this.api
       .saveUnit(this.token, {
+        plantIdNo: plant.plantIdNo,
         unitIdNo: plant.unitIdNo ?? '',
         nicFiveDigit: activity.nicFiveDigit ?? '',
       })

@@ -277,7 +277,13 @@ public sealed class RegistrationController(
         // activity the registry never reported.
         if (record is not null)
         {
-            var chosen = record.Plants.FirstOrDefault(p => p.UnitIdNo == request.UnitIdNo);
+            // Matched on PlantIdNo, because UnitIdNo does not identify a plant:
+            // the registry repeats it across the units of one enterprise, so
+            // this used to resolve to the first of three and report the wrong
+            // one as already registered.
+            var chosen = !string.IsNullOrWhiteSpace(request.PlantIdNo)
+                ? record.Plants.FirstOrDefault(p => p.PlantIdNo == request.PlantIdNo)
+                : record.Plants.FirstOrDefault(p => p.UnitIdNo == request.UnitIdNo);
 
             if (chosen is null)
             {
@@ -327,6 +333,7 @@ public sealed class RegistrationController(
         }
 
         draft.SelectedUnitIdNo = request.UnitIdNo;
+        draft.SelectedPlantIdNo = request.PlantIdNo;
         draft.SelectedNicFiveDigit = request.NicFiveDigit;
         draft.CurrentStep = Math.Max(draft.CurrentStep, (byte)5);
 
@@ -731,8 +738,13 @@ public sealed class RegistrationController(
 
         await db.SaveChangesAsync(ct);
 
+        // By plant id where the registry gave one; UnitIdNo is ambiguous and
+        // would pick whichever unit happens to come first.
         var selectedPlant = await db.EnterprisePlants
-            .Where(p => p.EnterpriseId == enterprise.EnterpriseId && p.UnitIdNo == draft.SelectedUnitIdNo)
+            .Where(p => p.EnterpriseId == enterprise.EnterpriseId
+                        && (draft.SelectedPlantIdNo != null
+                            ? p.PlantIdNo == draft.SelectedPlantIdNo
+                            : p.UnitIdNo == draft.SelectedUnitIdNo))
             .Select(p => new { p.EnterprisePlantId, p.PlantIdNo })
             .FirstOrDefaultAsync(ct);
 
@@ -971,8 +983,8 @@ public sealed class RegistrationController(
             var owner = await RegisteredPlantOwnerAsync(p.PlantIdNo, p.UnitIdNo, ct);
 
             plants.Add(new RegistrationPlantDto(
-                i, p.UnitIdNo, p.UnitName, p.Address, p.Pincode, p.StateName, p.DistrictName,
-                owner is not null, owner));
+                i, p.UnitIdNo, p.PlantIdNo, p.UnitName, p.Address, p.Pincode,
+                p.StateName, p.DistrictName, owner is not null, owner));
         }
 
         return plants;
@@ -1062,6 +1074,9 @@ public sealed class RegistrationController(
 public sealed record RegistrationPlantDto(
     int Index,
     string? UnitIdNo,
+    // The registry's own identifier, and the only thing that tells two units of
+    // the same enterprise apart — UnitIdNo is repeated across them.
+    string? PlantIdNo,
     string? UnitName,
     string? Address,
     string? Pincode,
@@ -1102,6 +1117,10 @@ public sealed class VerifyUdyamRequest
 
 public sealed class SaveUnitRequest
 {
+    /// <summary>The registry's plant id — what actually identifies the unit.</summary>
+    [StringLength(40)]
+    public string? PlantIdNo { get; init; }
+
     [Required, StringLength(60)]
     public string UnitIdNo { get; init; } = string.Empty;
 

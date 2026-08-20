@@ -37,6 +37,8 @@ export interface RegistrationPlant {
    *  index — not the id — is what the screen selects by. */
   index: number;
   unitIdNo: string | null;
+  /** The registry's plant id. UnitIdNo repeats across an enterprise's units. */
+  plantIdNo: string | null;
   unitName: string | null;
   address: string | null;
   pincode: string | null;

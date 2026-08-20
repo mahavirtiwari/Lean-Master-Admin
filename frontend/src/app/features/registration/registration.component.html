@@ -310,7 +310,7 @@
             <p class="step-sub">Select one plant location and the activity carried out there</p>
           </div>
         </div>
-        <span class="lbl">PLEASE SELECT ANY ONE PLANT LOCATION</span>
+        <div class="section-lbl">PLEASE SELECT ANY ONE PLANT LOCATION</div>
 
         <div style="margin-top: 14px">
           @for (p of plants(); track p.index) {
@@ -335,9 +335,9 @@
         </div>
 
         @if (chosenPlant(); as unit) {
-          <span class="lbl" style="display: block; margin-top: 24px">
+          <div class="section-lbl" style="margin-top: 26px">
             PLEASE SELECT PLANT ACTIVITY FOR THE SELECTED LOCATION
-          </span>
+          </div>
           <p class="card-note" style="margin: 6px 0 0">{{ unit.unitName }} — {{ unit.address }}</p>
 
           @if (noEligibleActivity()) {

@@ -606,9 +606,9 @@
     flex: none;
     width: 16px;
     height: 16px;
-    margin-top: 3px;
+    margin-top: 2px;
     border-radius: 50%;
-    border: 1px solid #c6d3cb;
+    border: 1.5px solid #c6d3cb;
     background: #fff;
   }
 
@@ -641,13 +641,20 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 16px;
   margin-top: 14px;
-  padding-top: 14px;
-  border-top: 1px solid #edf2ef;
+
+  // Each classification sits in its own box rather than as loose text under a
+  // rule — 330.67 x 38 at rx 6 on the deck.
+  > span {
+    display: block;
+    min-height: 40px;
+    padding: 7px 12px;
+    background: #fff;
+    border: 1px solid #dee7e1;
+    border-radius: 6px;
+    min-width: 0;
+  }
 
   @media (max-width: 800px) { grid-template-columns: minmax(0, 1fr); }
-
-  .nic-lbl { font-size: 8.8px; font-weight: 700; letter-spacing: 0.3px; color: #5d6b62; }
-  .nic-val { margin-top: 5px; font-size: 10.4px; font-weight: 600; color: #16211a; }
 }
 
 // ---------------------------------------------------------------- yes / no ---
@@ -1260,5 +1267,57 @@ a.head-mark:hover .ministry { text-decoration: underline; }
 
     .btn-ghost,
     .btn-primary { flex: 1; }
+  }
+}
+
+// The picked card's radio: a blue ring with a blue centre, as drawn (r 8 with
+// an r 4.4 core).
+.pick.on .pick-radio {
+  border-color: #1b4f8a;
+  box-shadow: inset 0 0 0 2.1px #fff, inset 0 0 0 8px #1b4f8a;
+}
+
+// ------------------------------------------------------- section headings ---
+// The deck leaves these as bare labels; they carry a tint here so the two
+// halves of R4 read as separate sections at a glance.
+.section-lbl {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 14px;
+  background: #f0f8f3;
+  border: 1px solid #d9ebe1;
+  border-left: 3px solid #0f7b45;
+  border-radius: 6px;
+  font-size: 9.6px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  color: #47554c;
+}
+
+// On a phone the radio, the body and the "Selected" tag do not share a row —
+// the body was left about 150 px, which squeezed the three NIC boxes. The tag
+// keeps the top line beside the radio; the content takes the width below it.
+@media (max-width: 620px) {
+  .pick {
+    flex-wrap: wrap;
+    row-gap: 10px;
+
+    .pick-radio { order: 1; }
+
+    .pick-tag {
+      order: 2;
+      margin-left: auto;
+    }
+
+    .pick-body {
+      order: 3;
+      flex: 1 0 100%;
+    }
+  }
+
+  .section-lbl {
+    align-items: flex-start;
+    line-height: 1.5;
   }
 }

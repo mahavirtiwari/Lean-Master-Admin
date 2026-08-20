@@ -279,6 +279,29 @@ export class RegistrationComponent {
     }
   }
 
+  /**
+   * A message fit to show an applicant.
+   *
+   * ProblemDetails.Detail carries the exception dump outside production, and
+   * the completion handler read it first — so an unhandled database error put
+   * a full EF stack trace, file paths and all, into the applicant's dialog.
+   * Detail is only used when it reads like a sentence written for a person.
+   */
+  private humanError(error: unknown, fallback: string): string {
+    const body = (error ?? {}) as { message?: unknown; detail?: unknown };
+
+    const message = typeof body.message === 'string' ? body.message.trim() : '';
+    if (message) return message;
+
+    const detail = typeof body.detail === 'string' ? body.detail.trim() : '';
+    const isDump =
+      detail.includes('\n') ||
+      detail.includes('Exception') ||
+      / at [A-Z]/.test(detail);
+
+    return detail && !isDump && detail.length <= 400 ? detail : fallback;
+  }
+
   private fail(text: string, title = 'Please check'): void {
     this.failed.set(true);
     this.message.set(text);
@@ -570,7 +593,7 @@ export class RegistrationComponent {
       },
       error: (r: { error?: { message?: string; detail?: string } }) => {
         this.busy.set(false);
-        this.fail(r.error?.detail ?? r.error?.message ?? 'Could not complete the registration.');
+        this.fail(this.humanError(r.error, 'Could not complete the registration.'));
       },
     });
   }

@@ -21,6 +21,18 @@ export class OfflineError extends Error {
   }
 }
 
+function readsLikeProse(text: string): boolean {
+  const trimmed = text.trim();
+
+  return (
+    trimmed.length > 0 &&
+    trimmed.length <= 400 &&
+    !trimmed.includes('\n') &&
+    !trimmed.includes('Exception') &&
+    !/ at [A-Z]/.test(trimmed)
+  );
+}
+
 let bearer: string | null = null;
 
 export function setBearer(token: string | null): void {
@@ -64,9 +76,17 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
       let code: string | undefined;
 
       try {
-        const parsed = JSON.parse(text) as { message?: string; code?: string };
-        if (parsed.message) message = parsed.message;
+        const parsed = JSON.parse(text) as { message?: string; detail?: string; code?: string };
         code = parsed.code;
+
+        if (parsed.message) {
+          message = parsed.message;
+        } else if (parsed.detail && readsLikeProse(parsed.detail)) {
+          // ProblemDetails.Detail carries the exception dump outside
+          // production, so it is only shown when it reads like a sentence
+          // written for a person — never a stack trace.
+          message = parsed.detail;
+        }
       } catch {
         // A non-JSON error body is the server's own page; keep the default.
       }

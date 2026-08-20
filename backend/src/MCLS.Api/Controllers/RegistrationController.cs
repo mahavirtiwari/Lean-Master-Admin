@@ -731,9 +731,16 @@ public sealed class RegistrationController(
 
         await db.SaveChangesAsync(ct);
 
-        enterprise.SelectedPlantId = await db.EnterprisePlants
+        var selectedPlant = await db.EnterprisePlants
             .Where(p => p.EnterpriseId == enterprise.EnterpriseId && p.UnitIdNo == draft.SelectedUnitIdNo)
-            .Select(p => (int?)p.EnterprisePlantId).FirstOrDefaultAsync(ct);
+            .Select(p => new { p.EnterprisePlantId, p.PlantIdNo })
+            .FirstOrDefaultAsync(ct);
+
+        enterprise.SelectedPlantId = selectedPlant?.EnterprisePlantId;
+
+        // Recorded on the enterprise so the "one registration per plant" rule
+        // is a unique index rather than a query over every unit it owns.
+        enterprise.RegisteredPlantIdNo = selectedPlant?.PlantIdNo;
 
         enterprise.SelectedActivityId = await db.EnterpriseActivities
             .Where(a => a.EnterpriseId == enterprise.EnterpriseId && a.NicFiveDigit == draft.SelectedNicFiveDigit)
@@ -901,11 +908,29 @@ public sealed class RegistrationController(
             return null;
         }
 
-        return await db.EnterprisePlants.AsNoTracking()
-            .Where(p => !string.IsNullOrEmpty(plantIdNo)
-                ? p.PlantIdNo == plantIdNo
-                : p.UnitIdNo == unitIdNo && p.PlantIdNo == null)
-            .Select(p => p.Enterprise.LeanId)
+        // Enterprise.RegisteredPlantIdNo, not the plant table: an enterprise
+        // holds a row for every unit on its Udyam record, and all but one of
+        // them are simply units it owns rather than the plant it registered.
+        if (!string.IsNullOrWhiteSpace(plantIdNo))
+        {
+            return await db.Enterprises.AsNoTracking()
+                .Where(e => e.RegisteredPlantIdNo == plantIdNo)
+                .Select(e => e.LeanId)
+                .FirstOrDefaultAsync(ct);
+        }
+
+        // Older records carry no plant id, so fall back to the selected plant's
+        // unit id — matched through SelectedPlantId so the other units on the
+        // same record are not caught by it.
+        return await db.Enterprises.AsNoTracking()
+            .Where(e => e.SelectedPlantId != null)
+            .Join(
+                db.EnterprisePlants.AsNoTracking(),
+                e => e.SelectedPlantId,
+                p => p.EnterprisePlantId,
+                (e, p) => new { e.LeanId, p.UnitIdNo, p.PlantIdNo })
+            .Where(x => x.PlantIdNo == null && x.UnitIdNo == unitIdNo)
+            .Select(x => x.LeanId)
             .FirstOrDefaultAsync(ct);
     }
 

@@ -20,6 +20,15 @@ public class Enterprise : IAuditable, IConcurrencyAware
     /// <summary>The plant chosen at registration; decides where assessment happens.</summary>
     public int? SelectedPlantId { get; set; }
 
+    /// <summary>
+    /// The registry's id for that plant, held here so "one registration per
+    /// plant" can be a unique index.
+    ///
+    /// The enterprise keeps a row for every unit on its Udyam record, so the
+    /// plant table cannot answer which one was registered — only this can.
+    /// </summary>
+    public string? RegisteredPlantIdNo { get; set; }
+
     /// <summary>The NIC activity chosen at registration; decides the questionnaire set.</summary>
     public int? SelectedActivityId { get; set; }
     public string UdyamRegistrationNo { get; set; } = string.Empty;

@@ -340,8 +340,9 @@ public sealed class UsersController(
             CreatedOnUtc = clock.UtcNow,
         };
 
-        // A temporary password that satisfies the policy. It is never shown to
-        // the creator: the holder sets their own via the reset link.
+        // A generated password that satisfies the policy. It is mailed to the
+        // holder and never shown to the creator, and MustChangePassword above
+        // forces it to be replaced at first sign-in.
         var temporary = GenerateTemporaryPassword();
         var result = await userManager.CreateAsync(user, temporary);
 
@@ -363,7 +364,8 @@ public sealed class UsersController(
                 ["user_code"] = user.UserCode,
                 ["role_name"] = (await db.Roles.Where(r => r.Id == user.RoleId)
                                     .Select(r => r.Name).SingleAsync(ct)) ?? string.Empty,
-                ["portal_url"] = Request.Headers.Origin.ToString(),
+                ["password"] = temporary,
+                ["portal_url"] = $"{Request.Headers.Origin}/login",
             }, ct);
 
         return CreatedAtAction(nameof(GetUser), new { id = user.Id }, new

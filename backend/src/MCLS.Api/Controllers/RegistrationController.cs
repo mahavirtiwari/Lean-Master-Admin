@@ -3,10 +3,13 @@ using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
 using MCLS.Application.Common.Interfaces;
+using MCLS.Domain.Entities.Identity;
 using MCLS.Domain.Entities.Msme;
+using MCLS.Domain.Enums;
 using MCLS.Infrastructure.Persistence;
 using MCLS.Infrastructure.Udyam;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
@@ -43,6 +46,8 @@ public sealed class RegistrationController(
     IUdyamRegistry udyam,
     ISequenceService sequences,
     IDateTimeProvider clock,
+    IEmailQueue email,
+    UserManager<ApplicationUser> userManager,
     ILogger<RegistrationController> logger) : ControllerBase
 {
     private const int OtpValidMinutes = 10;
@@ -310,17 +315,16 @@ public sealed class RegistrationController(
         draft.OtpSentOnUtc = clock.UtcNow;
         draft.OtpAttempts = 0;
 
-        db.EmailMessages.Add(new Domain.Entities.Comm.EmailMessage
-        {
-            ToAddress = draft.SpocEmail!,
-            Subject = "Your LEAN Scheme registration OTP",
-            BodyHtml = $"<p>Your one-time password is <b>{otp}</b>. " +
-                       $"It is valid for {OtpValidMinutes} minutes.</p>",
-            Status = "Queued",
-            QueuedOnUtc = clock.UtcNow,
-        });
-
         await db.SaveChangesAsync(ct);
+
+        // Through the template, so the wording is maintained from
+        // Emailer > Transactional rather than compiled into this method.
+        await email.QueueTemplatedAsync("REG_OTP", draft.SpocEmail!, null,
+            new Dictionary<string, string>
+            {
+                ["otp"] = otp,
+                ["valid_minutes"] = OtpValidMinutes.ToString(CultureInfo.InvariantCulture),
+            }, ct);
 
         logger.LogInformation("Registration OTP queued for {Registration}.", draft.RegistrationId);
 
@@ -610,9 +614,13 @@ public sealed class RegistrationController(
             await tx.CommitAsync(ct);
         });
 
-        // The account itself is issued by the accounts pipeline, not here: it
-        // needs a password hash, an activation mail and a status history row,
-        // and duplicating that would let the two drift apart.
+        // The account is issued after the transaction commits: UserManager runs
+        // its own SaveChanges, which cannot join the execution strategy's
+        // transaction. A failure here leaves the enterprise registered and is
+        // logged — recoverable by re-issuing the account — where rolling the
+        // whole registration back over a mail problem would not be.
+        await IssueApplicantAccountAsync(enterprise, draft, leanId, ct);
+
         return Ok(new
         {
             leanId,
@@ -622,6 +630,118 @@ public sealed class RegistrationController(
             message = "Registration complete. The LEAN ID and password have been sent to the " +
                       "verified SPOC e-mail address.",
         });
+    }
+
+    /// <summary>
+    /// Creates the enterprise's own sign-in account and mails the LEAN ID and
+    /// password to the verified SPOC address.
+    ///
+    /// The LEAN ID is the user code, so the applicant signs in with the same
+    /// identifier they quote in correspondence. The password is generated, not
+    /// chosen: nothing in the wizard collects one, and MustChangePassword
+    /// forces it to be replaced at first sign-in.
+    /// </summary>
+    private async Task IssueApplicantAccountAsync(
+        Enterprise enterprise, Registration draft, string leanId, CancellationToken ct)
+    {
+        try
+        {
+            var roleId = await db.Roles
+                .Where(r => r.Code == "ENTERPRISE_USER")
+                .Select(r => (int?)r.Id)
+                .SingleOrDefaultAsync(ct);
+
+            if (roleId is null)
+            {
+                logger.LogError("The ENTERPRISE_USER role is missing; no account issued for {LeanId}.", leanId);
+                return;
+            }
+
+            var password = GenerateApplicantPassword();
+
+            var user = new ApplicationUser
+            {
+                UserName = leanId,
+                UserCode = leanId,
+                Email = draft.SpocEmail,
+                FullName = draft.SpocName ?? enterprise.Name,
+                Designation = draft.SpocDesignation,
+                PhoneNumber = draft.SpocMobile,
+                AccountTypeId = 10,          // MSME Enterprise
+                RoleId = roleId.Value,
+                StateId = enterprise.StateId,
+                DistrictId = enterprise.DistrictId,
+                StatusId = (byte)UserStatusId.Active,
+                MustChangePassword = true,
+                EmailConfirmed = true,       // the OTP at R6 proved the address
+                CreatedOnUtc = clock.UtcNow,
+            };
+
+            var created = await userManager.CreateAsync(user, password);
+
+            if (!created.Succeeded)
+            {
+                logger.LogError("Could not issue an account for {LeanId}: {Errors}.",
+                    leanId, string.Join("; ", created.Errors.Select(e => e.Description)));
+                return;
+            }
+
+            // The enterprise points at the account that speaks for it.
+            enterprise.PrimaryUserId = user.Id;
+            await db.SaveChangesAsync(ct);
+
+            var origin = Request.Headers.Origin.ToString();
+
+            await email.QueueTemplatedAsync("APPLICANT_CREDENTIALS", draft.SpocEmail!, user.Id,
+                new Dictionary<string, string>
+                {
+                    ["unit_name"] = enterprise.Name,
+                    ["lean_id"] = leanId,
+                    ["password"] = password,
+                    ["login_url"] = $"{origin}/msme/login",
+                    ["support_email"] = "consultancy.zed@qcin.org",
+                }, ct);
+
+            logger.LogInformation("Applicant account issued for {LeanId}.", leanId);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Issuing the applicant account for {LeanId} failed.", leanId);
+        }
+    }
+
+    /// <summary>
+    /// A readable password that satisfies the policy: upper, lower, digit and
+    /// symbol. Ambiguous glyphs are left out because this is transcribed from
+    /// an e-mail by hand.
+    /// </summary>
+    private static string GenerateApplicantPassword()
+    {
+        const string upper = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+        const string lower = "abcdefghijkmnopqrstuvwxyz";
+        const string digits = "23456789";
+        const string symbols = "@#$%&*";
+
+        char Pick(string set) => set[RandomNumberGenerator.GetInt32(set.Length)];
+
+        // Fourteen characters: the policy floor is twelve, and the extra two
+        // absorb a future tightening without this silently failing again.
+        var chars = new List<char>
+        {
+            Pick(upper), Pick(upper), Pick(upper),
+            Pick(lower), Pick(lower), Pick(lower), Pick(lower), Pick(lower), Pick(lower),
+            Pick(digits), Pick(digits), Pick(digits),
+            Pick(symbols), Pick(symbols),
+        };
+
+        // Shuffle, so the classes do not always land in the same positions.
+        for (var i = chars.Count - 1; i > 0; i--)
+        {
+            var j = RandomNumberGenerator.GetInt32(i + 1);
+            (chars[i], chars[j]) = (chars[j], chars[i]);
+        }
+
+        return new string([.. chars]);
     }
 
     // ----------------------------------------------------------------- helpers ---

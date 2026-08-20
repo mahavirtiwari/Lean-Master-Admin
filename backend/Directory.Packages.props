@@ -52,6 +52,13 @@
     <PackageVersion Include="AspNetCore.HealthChecks.UI.Client" Version="9.0.0" />
   </ItemGroup>
 
+  <ItemGroup Label="Documents">
+    <!-- Community licence. Renders the LEAN pledge certificate on demand. -->
+    <PackageVersion Include="QuestPDF" Version="2026.7.3" />
+    <!-- MIT. The verification code printed on that certificate. -->
+    <PackageVersion Include="QRCoder" Version="1.8.0" />
+  </ItemGroup>
+
   <ItemGroup Label="Export">
     <!-- MIT. Needed for the 'export' right the permission model grants. -->
     <PackageVersion Include="ClosedXML" Version="0.105.1" />

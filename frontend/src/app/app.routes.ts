@@ -28,6 +28,17 @@ export const routes: Routes = [
       import('./features/registration/registration.component').then((m) => m.RegistrationComponent),
   },
 
+  // What the QR on a pledge certificate opens. Public and outside every guard:
+  // it is scanned by whoever is holding the certificate — a buyer, an auditor —
+  // and a verification page that asks the reader to sign in verifies nothing.
+  {
+    path: 'pledge/:reference',
+    loadComponent: () =>
+      import('./features/registration/pledge-verify.component').then(
+        (m) => m.PledgeVerifyComponent,
+      ),
+  },
+
   // The applicant portal lands on its sign-in, with Register offered from
   // there — someone returning to check an application should not have to step
   // past the registration wizard to reach it.

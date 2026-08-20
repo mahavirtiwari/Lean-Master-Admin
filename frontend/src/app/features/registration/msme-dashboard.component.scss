@@ -107,6 +107,13 @@
 
 .nic-chips { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
 
+/* Sits under the facts it certifies, full width so it reads as the card's
+   one action rather than a chip among the details. */
+.profile-pledge {
+  width: 100%;
+  margin-top: 16px;
+}
+
 .nic-chip {
   padding: 2px 9px;
   border-radius: 4px;

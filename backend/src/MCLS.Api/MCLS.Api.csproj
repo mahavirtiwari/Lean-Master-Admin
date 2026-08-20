@@ -13,6 +13,8 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <PackageReference Include="QRCoder" />
+    <PackageReference Include="QuestPDF" />
     <PackageReference Include="Swashbuckle.AspNetCore" />
     <PackageReference Include="Asp.Versioning.Mvc" />
     <PackageReference Include="Asp.Versioning.Mvc.ApiExplorer" />
@@ -27,6 +29,13 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
+  </ItemGroup>
+
+
+  <ItemGroup>
+    <!-- The pledge template is read at request time and streamed with the
+         values printed on it; it is content, not an embedded resource. -->
+    <Content Include="Assets\pledge-certificate.jpg" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

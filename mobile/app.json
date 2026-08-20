@@ -39,7 +39,8 @@
       ],
       "expo-sqlite",
       "expo-secure-store",
-      "expo-status-bar"
+      "expo-status-bar",
+      "expo-sharing"
     ],
     "extra": {
       "//apiBaseUrl": "The API host the device can reach. 10.0.2.2 is the Android emulator's alias for the host machine; on a physical phone use the machine's LAN address (http://192.168.x.x:5199) or the deployed origin. EXPO_PUBLIC_API_BASE_URL overrides this at build time.",

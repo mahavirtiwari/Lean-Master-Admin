@@ -80,6 +80,13 @@
             @if (d.enterprise.nicFiveDigit) { <span class="nic-chip">{{ d.enterprise.nicFiveDigit }}</span> }
           </span>
         </div>
+
+        <!-- The pledge accepted at registration. Generated when it is asked
+             for, so it always carries the details above. -->
+        <button class="btn-ghost profile-pledge" type="button"
+                [disabled]="downloading()" (click)="downloadPledge()">
+          {{ downloading() ? 'Preparing…' : 'Download LEAN Pledge' }}
+        </button>
       </aside>
 
       <!-- ------------------------------------------------ right: the work -->

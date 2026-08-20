@@ -17,6 +17,16 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using Serilog;
 
+// QuestPDF renders the pledge certificate. It requires the licence to be
+// declared before first use, and refuses to generate anything otherwise.
+//
+// Community is the free tier. It is offered to organisations under USD 1M in
+// annual revenue, to non-profits, and for open-source work. Confirm the scheme
+// qualifies before this goes to production — if it does not, QuestPDF sells a
+// perpetual licence, and the renderer is isolated behind PledgeCertificate so
+// swapping it out touches one file.
+QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // ---------------------------------------------------------------- logging ---

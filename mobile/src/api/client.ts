@@ -39,6 +39,11 @@ export function setBearer(token: string | null): void {
   bearer = token;
 }
 
+/** The session token, for the few calls that do not go through request(). */
+export function getBearer(): string | null {
+  return bearer;
+}
+
 interface RequestOptions {
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
   body?: unknown;

@@ -18,5 +18,17 @@ export type RootStackParamList = {
   Otp: undefined;
   Summary: undefined;
   Pledge: undefined;
-  Complete: { leanId: string; enterpriseName: string; spocEmail: string; queued?: boolean };
+  Complete: {
+    leanId: string;
+    enterpriseName: string;
+    spocEmail: string;
+    queued?: boolean;
+    /**
+     * Carried so the completion screen can still offer the pledge certificate.
+     * The draft is cleared once the registration is accepted, and the server
+     * renders the certificate from its own record, not from the draft.
+     */
+    token?: string;
+    udyamNumber?: string;
+  };
 };

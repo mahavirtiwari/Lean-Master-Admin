@@ -1,3 +1,4 @@
+using MCLS.Api.Services;
 using MCLS.Application.Common.Interfaces;
 using MCLS.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authorization;
@@ -17,8 +18,67 @@ namespace MCLS.Api.Controllers;
 [ApiController]
 [Route("api/msme")]
 [Authorize]
-public sealed class MsmeController(MclsDbContext db, ICurrentUser currentUser) : ControllerBase
+public sealed class MsmeController(
+    MclsDbContext db,
+    ICurrentUser currentUser,
+    IConfiguration configuration) : ControllerBase
 {
+    /// <summary>
+    /// The applicant's pledge certificate, generated and streamed.
+    ///
+    /// Same document as the one offered during registration, reachable from the
+    /// dashboard afterwards. Nothing is stored — see PledgeCertificate.
+    /// </summary>
+    [HttpGet("pledge")]
+    public async Task<IActionResult> DownloadPledge(CancellationToken ct)
+    {
+        var userId = currentUser.UserId;
+        if (userId is null) return Unauthorized();
+
+        var enterprise = await db.Enterprises.AsNoTracking()
+            .Where(e => e.PrimaryUserId == userId)
+            .Select(e => new
+            {
+                e.EnterpriseId,
+                e.Name,
+                e.UdyamRegistrationNo,
+                e.RegisteredOnUtc,
+                Address = db.EnterprisePlants
+                    .Where(p => p.EnterprisePlantId == e.SelectedPlantId)
+                    .Select(p => p.AddressLine)
+                    .FirstOrDefault(),
+            })
+            .FirstOrDefaultAsync(ct);
+
+        if (enterprise is null) return NotFound(new { message = "No enterprise is linked to this account." });
+
+        var template = PledgeCertificate.TemplatePath;
+
+        if (!System.IO.File.Exists(template))
+        {
+            return Problem(
+                title: "The pledge certificate could not be produced.",
+                detail: "The certificate template is not installed on the server.",
+                statusCode: StatusCodes.Status500InternalServerError);
+        }
+
+        var pledgedOn = DateOnly.FromDateTime(enterprise.RegisteredOnUtc.ToLocalTime());
+
+        var reference = PledgeCertificate.BuildReference(pledgedOn, enterprise.EnterpriseId);
+
+        var details = new PledgeDetails(
+            enterprise.Name,
+            enterprise.Address ?? string.Empty,
+            enterprise.UdyamRegistrationNo,
+            pledgedOn,
+            reference,
+            PortalLinks.VerifyPledgeUrl(Request, configuration, reference));
+
+        var pdf = PledgeCertificate.Render(details, template);
+
+        return File(pdf, "application/pdf", $"pledge_certificate_{details.Reference}.pdf");
+    }
+
     /// <summary>Everything the applicant dashboard draws.</summary>
     [HttpGet("dashboard")]
     public async Task<IActionResult> GetDashboard(CancellationToken ct)

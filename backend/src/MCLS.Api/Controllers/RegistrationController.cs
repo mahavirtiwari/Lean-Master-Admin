@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
+using MCLS.Api.Services;
 using MCLS.Application.Common.Interfaces;
 using MCLS.Domain.Entities.Identity;
 using MCLS.Domain.Entities.Msme;
@@ -49,6 +50,7 @@ public sealed class RegistrationController(
     IDateTimeProvider clock,
     IEmailQueue email,
     UserManager<ApplicationUser> userManager,
+    IConfiguration configuration,
     ILogger<RegistrationController> logger) : ControllerBase
 {
     private const int OtpValidMinutes = 10;
@@ -968,6 +970,79 @@ public sealed class RegistrationController(
     private Task<int> SpocEmailUseCountAsync(string email, CancellationToken ct)
         => db.Enterprises.AsNoTracking()
             .CountAsync(e => e.ContactEmail == email, ct);
+
+    /// <summary>
+    /// The pledge certificate for a draft, generated and streamed.
+    ///
+    /// Nothing is written to disk: a certificate is a pure function of the
+    /// registration behind it, so a stored copy would only be a second thing to
+    /// keep in step. Available from R8 before the registration completes, which
+    /// is where the applicant is asked to read and accept it, and from R9
+    /// afterwards — so unlike the rest of the flow this one does not require the
+    /// registration to still be a draft.
+    /// </summary>
+    [HttpGet("{token:guid}/pledge")]
+    public async Task<IActionResult> DownloadPledge(Guid token, CancellationToken ct)
+    {
+        var draft = await db.Registrations.AsNoTracking()
+            .FirstOrDefaultAsync(r => r.SessionToken == token, ct);
+
+        if (draft is null) return NotFound();
+
+        var record = ParsePayload(draft);
+        if (record is null) return BadRequest(new { message = "This registration has no Udyam details yet." });
+
+        var plant = draft.SelectedPlantIdNo is not null
+            ? record.Plants.FirstOrDefault(p => p.PlantIdNo == draft.SelectedPlantIdNo)
+            : record.Plants.FirstOrDefault(p => p.UnitIdNo == draft.SelectedUnitIdNo);
+
+        // Once the registration has completed it has an enterprise, and the
+        // certificate belongs to that: the number printed on it and the page
+        // its code opens are the permanent ones, not the draft's.
+        var enterprise = draft.EnterpriseId is int enterpriseId
+            ? await db.Enterprises.AsNoTracking()
+                .Where(e => e.EnterpriseId == enterpriseId)
+                .Select(e => new { e.EnterpriseId, e.RegisteredOnUtc })
+                .FirstOrDefaultAsync(ct)
+            : null;
+
+        var pledgedOn = enterprise is not null
+            ? DateOnly.FromDateTime(enterprise.RegisteredOnUtc.ToLocalTime())
+            : DateOnly.FromDateTime(draft.PledgeAcceptedOnUtc?.ToLocalTime() ?? clock.UtcNow.ToLocalTime());
+
+        var reference = enterprise is not null
+            ? PledgeCertificate.BuildReference(pledgedOn, enterprise.EnterpriseId)
+            : PledgeCertificate.BuildDraftReference(pledgedOn, draft.RegistrationId);
+
+        var details = new PledgeDetails(
+            record.EnterpriseName ?? draft.UdyamRegistrationNo,
+            plant?.Address ?? record.Address ?? string.Empty,
+            draft.UdyamRegistrationNo,
+            pledgedOn,
+            reference,
+            PortalLinks.VerifyPledgeUrl(Request, configuration, reference));
+
+        return StreamPledge(details);
+    }
+
+    /// <summary>Renders and returns the certificate, never storing it.</summary>
+    private IActionResult StreamPledge(PledgeDetails details)
+    {
+        var template = PledgeCertificate.TemplatePath;
+
+        if (!System.IO.File.Exists(template))
+        {
+            logger.LogError("The pledge template is missing at {Path}.", template);
+            return Problem(
+                title: "The pledge certificate could not be produced.",
+                detail: "The certificate template is not installed on the server.",
+                statusCode: StatusCodes.Status500InternalServerError);
+        }
+
+        var pdf = PledgeCertificate.Render(details, template);
+
+        return File(pdf, "application/pdf", $"pledge_certificate_{details.Reference}.pdf");
+    }
 
     // ----------------------------------------------------------------- helpers ---
 

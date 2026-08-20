@@ -2,9 +2,10 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import React, { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { downloadMyPledge, pledgeFileName } from '../api/pledge';
 import { dashboard, type MsmeDashboard } from '../api/registration';
 
-import { Card, GhostButton, OfflineBanner } from '../components/ui';
+import { AlertDialog, Card, GhostButton, OfflineBanner } from '../components/ui';
 import { useApp } from '../state/AppContext';
 import { colour, radius, space, type } from '../theme/theme';
 import type { RootStackParamList } from '../navigation/types';
@@ -26,6 +27,35 @@ export default function DashboardScreen({ navigation }: Props): React.JSX.Elemen
 
   const [data, setData] = useState<MsmeDashboard | null>(null);
   const [stale, setStale] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+  const [dialog, setDialog] = useState<{ title: string; text: string } | null>(null);
+
+  /**
+   * The pledge certificate accepted at registration.
+   *
+   * Rendered by the server when it is asked for and never stored, so it always
+   * carries the enterprise's current details. It is the one thing on this
+   * screen that needs a connection — everything else is served from the last
+   * copy saved on the device.
+   */
+  async function takeCopy(): Promise<void> {
+    if (downloading) return;
+
+    setDownloading(true);
+    try {
+      await downloadMyPledge(pledgeFileName(data?.enterprise.udyamNumber));
+    } catch (error) {
+      setDialog({
+        title: 'Could not download',
+        text:
+          error instanceof Error
+            ? error.message
+            : 'The certificate could not be prepared. Please try again.',
+      });
+    } finally {
+      setDownloading(false);
+    }
+  }
 
   useEffect(() => {
     void (async () => {
@@ -68,6 +98,12 @@ export default function DashboardScreen({ navigation }: Props): React.JSX.Elemen
           {stale && data ? (
             <Text style={styles.hint}>Showing the last copy saved on this device.</Text>
           ) : null}
+
+          <GhostButton
+            label={downloading ? 'Preparing…' : 'Download LEAN Pledge'}
+            onPress={takeCopy}
+            style={styles.copy}
+          />
         </Card>
 
         <Text style={styles.section}>Certification levels</Text>
@@ -110,6 +146,13 @@ export default function DashboardScreen({ navigation }: Props): React.JSX.Elemen
           />
         </Card>
       </ScrollView>
+
+      <AlertDialog
+        visible={dialog !== null}
+        title={dialog?.title ?? ''}
+        text={dialog?.text ?? ''}
+        onClose={() => setDialog(null)}
+      />
     </View>
   );
 }
@@ -117,6 +160,7 @@ export default function DashboardScreen({ navigation }: Props): React.JSX.Elemen
 const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: colour.page },
   page: { padding: space(4), paddingBottom: space(10) },
+  copy: { marginTop: space(4) },
 
   hello: { fontSize: type.small, color: colour.muted, marginTop: space(4) },
   name: { fontSize: type.hero, fontWeight: '700', color: colour.text, marginBottom: space(5) },

@@ -1,0 +1,156 @@
+// Pledge certification details — the page a scanned certificate opens.
+//
+// Built mobile-first, unlike the rest of the portal: this page is reached by
+// pointing a phone camera at a piece of paper, so the phone is the design
+// target and the desktop is the adaptation.
+
+:host {
+  display: block;
+  min-height: 100vh;
+  background: #f4f7f5;
+}
+
+.ver-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  background: #fff;
+  border-bottom: 3px solid #0f7b45;
+
+  .spacer { flex: 1; }
+}
+
+.ver-ministry { height: 42px; width: auto; object-fit: contain; }
+.ver-lean { height: 40px; width: auto; object-fit: contain; }
+
+.ver-body {
+  padding: 18px 14px 30px;
+  max-width: 620px;
+  margin: 0 auto;
+}
+
+.ver-card {
+  background: #fff;
+  border: 1px solid #dee7e1;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgb(15 123 69 / 6%);
+}
+
+// The heading band, in the scheme green rather than the sample's teal.
+.ver-band {
+  padding: 22px 18px;
+  background: linear-gradient(135deg, #0f7b45, #12945a);
+  text-align: center;
+}
+
+.ver-title {
+  margin: 0;
+  font-size: 27px;
+  font-weight: 800;
+  line-height: 1.18;
+  color: #fff;
+}
+
+.ver-date {
+  margin: 8px 0 0;
+  font-size: 13.4px;
+  font-weight: 700;
+  color: #dff2e7;
+}
+
+.ver-rows { margin: 0; }
+
+// Alternating bands, label above value — the shape of the printed certificate,
+// and the only layout that survives a long Udyam address on a narrow screen.
+.ver-row {
+  padding: 14px 18px;
+  border-bottom: 1px solid #eef3f0;
+
+  &:nth-child(odd) { background: #f6faf8; }
+  &:last-child { border-bottom: 0; }
+
+  dt {
+    font-size: 14.4px;
+    font-weight: 700;
+    color: #16211a;
+  }
+
+  dd {
+    margin: 5px 0 0;
+    font-size: 14.4px;
+    color: #35443b;
+    line-height: 1.55;
+    word-break: break-word;
+  }
+}
+
+.ver-chip {
+  display: inline-block;
+  padding: 3px 12px;
+  border-radius: 999px;
+  background: #f0f2f1;
+  border: 1px solid #dee7e1;
+  font-size: 12.4px;
+  font-weight: 700;
+  color: #5d6b62;
+
+  &.is-on {
+    background: #e6f5ec;
+    border-color: #bfe3cd;
+    color: #0f7b45;
+  }
+}
+
+.ver-state {
+  margin: 0;
+  padding: 26px 18px;
+  text-align: center;
+  font-size: 13.4px;
+  color: #5d6b62;
+}
+
+.ver-bad {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 22px 18px;
+
+  p { margin: 0; font-size: 14.4px; color: #35443b; line-height: 1.55; }
+}
+
+.ver-bad-mark {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 12px;
+  background: #fdecec;
+  color: #c0392b;
+  font-weight: 800;
+  font-size: 14px;
+  display: grid;
+  place-items: center;
+}
+
+.ver-note {
+  margin: 16px 4px 0;
+  font-size: 11.4px;
+  line-height: 1.6;
+  color: #6c7a71;
+  text-align: center;
+}
+
+.ver-foot {
+  padding: 16px;
+  text-align: center;
+  font-size: 11.4px;
+  color: #6c7a71;
+  border-top: 1px solid #e4ece7;
+}
+
+@media (min-width: 700px) {
+  .ver-head { padding: 16px 32px; }
+  .ver-body { padding: 32px 16px 44px; }
+  .ver-title { font-size: 31px; }
+}

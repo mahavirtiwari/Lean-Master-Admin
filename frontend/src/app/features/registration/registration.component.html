@@ -803,22 +803,12 @@
           <span class="step-no">7</span>
           <div>
             <h2 class="step-title">LEAN Pledge</h2>
-            <p class="step-sub">
-              Read the pledge, download a copy for your records, and accept to continue
-            </p>
+            <p class="step-sub">Read the pledge and accept it to complete your registration</p>
           </div>
-          <div class="spacer"></div>
-          <button class="btn-ghost" type="button" (click)="downloadPledge()">Download Pledge</button>
         </div>
-        <div class="pledge">
-          <div class="pledge-head">LEAN PLEDGE</div>
-          <div class="pledge-who">
-            {{ draft()?.enterprise?.enterpriseName }} · {{ draft()?.enterprise?.udyamNumber }}
-          </div>
-          <div class="pledge-unit">
-            {{ chosenPlant()?.unitName }} — {{ chosenPlant()?.address }}
-          </div>
-
+        <!-- The pledge scrolls in its own frame, and the undertaking below it
+             only opens once it has been read to the end. -->
+        <div #pledgeBox class="pledge" (scroll)="onPledgeScroll($event)">
           @for (para of pledgeBody; track para) {
             <p>{{ para }}</p>
           }
@@ -826,12 +816,15 @@
           <div class="pledge-date">Date: {{ today }}</div>
         </div>
 
-        <label class="check">
+        @if (!pledgeRead()) {
+          <p class="pledge-hint">Scroll to the end of the pledge to continue.</p>
+        }
+
+        <label class="check pledge-check">
           <input type="checkbox" [checked]="pledgeAccepted()"
                  (change)="pledgeAccepted.set($any($event.target).checked)" />
           <span>
-            <strong>I have read and accept the LEAN Pledge on behalf of the enterprise</strong><br />
-            Accepted by {{ spocName() }}, {{ spocDesignation() }} · {{ today }}
+            <strong>I have read and accept the LEAN Pledge on behalf of the enterprise</strong>
           </span>
         </label>
 
@@ -839,8 +832,8 @@
           <div class="spacer"></div>
           <button class="btn-ghost" type="button" (click)="back()">Back</button>
           <button class="btn-primary" type="button"
-                  [disabled]="busy() || !pledgeAccepted()" (click)="complete()">
-            {{ busy() ? 'Submitting…' : 'Accept & Complete Registration' }}
+                  [disabled]="busy() || !pledgeRead() || !pledgeAccepted()" (click)="complete()">
+            {{ busy() ? 'Submitting…' : 'I/We Pledge' }}
           </button>
         </div>
       </section>
@@ -883,11 +876,18 @@
                 <div class="sent-name">System-generated password</div>
                 <div class="sent-hint">Change is optional, from profile settings</div>
               </div>
-              <div>
-                <div class="sent-name">LEAN Pledge copy</div>
-                <div class="sent-hint">Includes unit name, address, Udyam number and date</div>
-              </div>
             </div>
+          </div>
+
+          <!-- The certificate is not e-mailed: it is drawn from the record when
+               it is asked for, so it is offered here rather than promised in a
+               message that would carry a copy frozen at this moment. -->
+          <div style="margin-top: 22px; text-align: left">
+            <span class="lbl">LEAN PLEDGE CERTIFICATE</span>
+            <p class="card-note" style="text-align: left; margin-top: 8px">
+              Download your certificate below. It is produced from your registration each time you
+              ask for it, so a copy is always available from your dashboard as well.
+            </p>
           </div>
 
           <p class="card-note" style="text-align: left; margin-top: 26px">
@@ -897,7 +897,9 @@
 
           <div class="actions">
             <div class="spacer"></div>
-            <button class="btn-ghost" type="button" (click)="downloadPledge()">Download Pledge</button>
+            <button class="btn-ghost" type="button" [disabled]="downloading()" (click)="downloadPledge()">
+            {{ downloading() ? 'Preparing…' : 'Download Pledge' }}
+          </button>
             <button class="btn-primary" type="button" (click)="signIn()">Sign in to Dashboard</button>
           </div>
         </div>

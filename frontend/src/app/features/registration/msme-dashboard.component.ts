@@ -83,6 +83,41 @@ export class MsmeDashboardComponent {
       .join('');
   });
 
+  readonly downloading = signal(false);
+
+  /**
+   * The pledge certificate accepted at registration.
+   *
+   * The server renders it on request and streams it back; no copy is kept, so
+   * the certificate always reflects the enterprise as it stands.
+   */
+  downloadPledge(): void {
+    if (this.downloading()) return;
+
+    this.downloading.set(true);
+
+    this.http
+      .get(`${environment.apiBase}/msme/pledge`, { responseType: 'blob' })
+      .subscribe({
+        next: (pdf) => {
+          this.downloading.set(false);
+
+          const url = URL.createObjectURL(pdf);
+          const link = document.createElement('a');
+
+          link.href = url;
+          link.download = `lean-pledge-${this.data()?.enterprise.udyamNumber ?? 'certificate'}.pdf`;
+          link.click();
+
+          URL.revokeObjectURL(url);
+        },
+        error: () => {
+          this.downloading.set(false);
+          this.error.set('The pledge certificate could not be prepared. Please try again.');
+        },
+      });
+  }
+
   /** The level the applicant is invited to start with — the first one open. */
   readonly nextLevel = computed(
     () => this.data()?.levels.find((l) => l.state === 'Open') ?? null,

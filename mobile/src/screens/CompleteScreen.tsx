@@ -1,8 +1,9 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import React from 'react';
+import React, { useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { Card, GhostButton, OfflineBanner, PrimaryButton } from '../components/ui';
+import { downloadDraftPledge, pledgeFileName } from '../api/pledge';
+import { AlertDialog, Card, GhostButton, OfflineBanner, PrimaryButton } from '../components/ui';
 import { useApp } from '../state/AppContext';
 import { colour, radius, space, type } from '../theme/theme';
 import type { RootStackParamList } from '../navigation/types';
@@ -11,7 +12,33 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Complete'>;
 
 export default function CompleteScreen({ navigation, route }: Props): React.JSX.Element {
   const { online, queued } = useApp();
-  const { leanId, enterpriseName, spocEmail, queued: pending } = route.params;
+  const { leanId, enterpriseName, spocEmail, queued: pending, token, udyamNumber } = route.params;
+
+  const [downloading, setDownloading] = useState(false);
+  const [dialog, setDialog] = useState<{ title: string; text: string } | null>(null);
+
+  /**
+   * The certificate for the completed registration. Offered here as well as on
+   * the pledge screen, because this is the screen somebody keeps open.
+   */
+  async function takeCopy(): Promise<void> {
+    if (!token || downloading) return;
+
+    setDownloading(true);
+    try {
+      await downloadDraftPledge(token, pledgeFileName(udyamNumber));
+    } catch (error) {
+      setDialog({
+        title: 'Could not download',
+        text:
+          error instanceof Error
+            ? error.message
+            : 'The certificate could not be prepared. Please try again.',
+      });
+    } finally {
+      setDownloading(false);
+    }
+  }
 
   return (
     <View style={styles.flex}>
@@ -54,6 +81,14 @@ export default function CompleteScreen({ navigation, route }: Props): React.JSX.
             </>
           )}
 
+          {token && !pending ? (
+            <GhostButton
+              label={downloading ? 'Preparing…' : 'Download LEAN Pledge'}
+              onPress={takeCopy}
+              style={styles.copy}
+            />
+          ) : null}
+
           <PrimaryButton
             label="Go to sign in"
             onPress={() => navigation.reset({ index: 0, routes: [{ name: 'SignIn' }] })}
@@ -65,6 +100,13 @@ export default function CompleteScreen({ navigation, route }: Props): React.JSX.
           />
         </Card>
       </ScrollView>
+
+      <AlertDialog
+        visible={dialog !== null}
+        title={dialog?.title ?? ''}
+        text={dialog?.text ?? ''}
+        onClose={() => setDialog(null)}
+      />
     </View>
   );
 }
@@ -108,5 +150,6 @@ const styles = StyleSheet.create({
   idHint: { fontSize: type.tiny, color: colour.muted, marginTop: space(1.5) },
 
   sent: { fontSize: type.tiny, color: colour.muted, textAlign: 'center', marginTop: space(3) },
-  cta: { marginTop: space(6), marginBottom: space(3) },
+  copy: { marginTop: space(6) },
+  cta: { marginTop: space(3), marginBottom: space(3) },
 });

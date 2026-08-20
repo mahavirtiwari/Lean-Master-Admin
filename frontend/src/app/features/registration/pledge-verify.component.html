@@ -1,0 +1,79 @@
+<!-- ========================================= public header (verification) == -->
+<header class="ver-head">
+  <a href="https://www.msme.gov.in/" target="_blank" rel="noopener noreferrer" title="Ministry of MSME">
+    <img class="ver-ministry" src="assets/msme-logo.svg"
+         alt="Ministry of Micro, Small &amp; Medium Enterprises" />
+  </a>
+
+  <span class="spacer"></span>
+
+  <img class="ver-lean" src="assets/mcls-logo.png"
+       alt="MSME Competitive (LEAN) Scheme — MCLS" />
+</header>
+
+<main class="ver-body">
+  <section class="ver-card">
+    <div class="ver-band">
+      <h1 class="ver-title">Pledge Certification Details</h1>
+
+      @if (data(); as d) {
+        <p class="ver-date">{{ formatDate(d.pledgedOn) }}</p>
+      }
+    </div>
+
+    @if (loading()) {
+      <p class="ver-state">Checking this certificate…</p>
+    } @else if (error(); as message) {
+      <div class="ver-bad">
+        <span class="ver-bad-mark">!</span>
+        <p>{{ message }}</p>
+      </div>
+    } @else if (data(); as d) {
+      <dl class="ver-rows">
+        <div class="ver-row">
+          <dt>Unit Name:</dt>
+          <dd>{{ d.unitName || '—' }}</dd>
+        </div>
+        <div class="ver-row">
+          <dt>Udyam Registration No.:</dt>
+          <dd>{{ d.udyamNumber || '—' }}</dd>
+        </div>
+        <div class="ver-row">
+          <dt>Address:</dt>
+          <dd>{{ d.address || '—' }}</dd>
+        </div>
+        <div class="ver-row">
+          <dt>Date of Pledge:</dt>
+          <dd>{{ formatDate(d.pledgedOn) }}</dd>
+        </div>
+        <div class="ver-row">
+          <dt>Certificate No.:</dt>
+          <dd>{{ d.certificateNo }}</dd>
+        </div>
+
+        <!-- The LEAN ID is the scheme's own identifier and only exists once the
+             registration has completed, so it is shown when there is one. -->
+        @if (d.leanId) {
+          <div class="ver-row">
+            <dt>LEAN ID:</dt>
+            <dd>{{ d.leanId }}</dd>
+          </div>
+        }
+
+        <div class="ver-row">
+          <dt>Status:</dt>
+          <dd>
+            <span class="ver-chip" [class.is-on]="d.status === 'Registered'">{{ d.status }}</span>
+          </dd>
+        </div>
+      </dl>
+    }
+  </section>
+
+  <p class="ver-note">
+    Verified against the MSME Competitive (LEAN) Scheme registry at the moment this page was
+    opened. Ministry of Micro, Small &amp; Medium Enterprises, Government of India.
+  </p>
+</main>
+
+<footer class="ver-foot">© {{ year }} Ministry of MSME, Government of India</footer>

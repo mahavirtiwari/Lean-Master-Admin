@@ -15,36 +15,32 @@
 }
 
 // ------------------------------------------------------------------ header ---
+// Nothing sits at the right end of this bar. The Bhashini picker is fixed to
+// that corner by a global rule, and on a phone — which is how this page is
+// reached — there is no width left to share with it, so the bar carries only
+// the lockup and leaves the corner to the picker.
 .pub-head {
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 12px 18px;
+  padding: 12px 120px 12px 18px;
   background: #fff;
   border-bottom: 3px solid #0f7b45;
 
   .spacer { flex: 1; }
 }
 
-.head-lean { height: 40px; width: auto; object-fit: contain; }
-.head-logo { height: 42px; width: auto; object-fit: contain; }
+// Sized to clear the fixed language picker on a phone: at full height the
+// Ministry lockup runs under it, and the picker cannot be moved from here.
+.head-lean { height: 30px; width: auto; object-fit: contain; }
+.head-logo { height: 32px; width: auto; object-fit: contain; }
 
 .head-rule {
   width: 1px;
-  height: 40px;
+  height: 30px;
   background: #c6d3cb;
 }
 
-.head-tag {
-  padding: 5px 12px;
-  border-radius: 999px;
-  background: #f0f8f3;
-  border: 1px solid #d9ebe1;
-  font-size: 11px;
-  font-weight: 600;
-  color: #0f7b45;
-  white-space: nowrap;
-}
 
 // -------------------------------------------------------------------- body ---
 .ver-body {
@@ -192,22 +188,12 @@
 
 .foot-dot { margin: 0 6px; }
 
-.foot-links {
-  display: flex;
-  gap: 18px;
-}
-
-.foot-link {
-  font-size: 11.4px;
-  font-weight: 600;
-  color: #1b4f8a;
-  text-decoration: none;
-
-  &:hover { text-decoration: underline; }
-}
 
 @media (min-width: 700px) {
-  .pub-head { padding: 14px 34px; }
+  .pub-head { padding: 14px 160px 14px 34px; }
+  .head-lean { height: 40px; }
+  .head-logo { height: 42px; }
+  .head-rule { height: 40px; }
   .ver-body { padding: 32px 16px 44px; }
   .ver-title { font-size: 30px; }
   .pub-foot { padding: 22px 34px; }

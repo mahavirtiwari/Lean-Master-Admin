@@ -280,16 +280,46 @@ if (-not (Test-Command 'dotnet') -or -not ((& dotnet --list-sdks) -match '^10\.'
 }
 Write-Good "dotnet SDK: $((& dotnet --version))"
 
-if (-not (Test-Command 'node')) {
-    if ($useWinget) {
-        Invoke-Native 'winget' @('install', '--id', 'OpenJS.NodeJS.LTS', '-e', '--silent',
-            '--accept-package-agreements', '--accept-source-agreements') -What 'Installing Node.js LTS'
+# The Angular CLI has a hard minimum Node version and refuses to build below
+# it. A pinned installer goes stale against that bar - which is how a Node that
+# was "LTS" when this was written ended up just under the line - so check the
+# installed version and resolve the current LTS rather than trusting either.
+$nodeMin = [version]'22.22.3'
+$nodeVersion = if (Test-Command 'node') {
+    try { [version]((& node --version).TrimStart('v')) } catch { $null }
+} else { $null }
+
+if (-not $nodeVersion -or $nodeVersion -lt $nodeMin) {
+    if ($nodeVersion) {
+        Write-Note "Node $nodeVersion is below the $nodeMin the Angular CLI needs - upgrading"
     }
-    else {
-        Install-FromWebInstaller `
-            -Url 'https://nodejs.org/dist/v22.20.0/node-v22.20.0-x64.msi' `
-            -FileName 'node-lts.msi'
+
+    # Newest LTS that meets the minimum, from the dist index so it cannot go
+    # stale; a known-good pin only if the index cannot be reached.
+    $nodeUrl = $null
+    try {
+        $index = Invoke-RestMethod -Uri 'https://nodejs.org/dist/index.json' -UseBasicParsing
+        $pick = $index |
+            Where-Object { $_.lts -and ([version]($_.version.TrimStart('v')) -ge $nodeMin) } |
+            Select-Object -First 1
+        if ($pick) { $nodeUrl = "https://nodejs.org/dist/$($pick.version)/node-$($pick.version)-x64.msi" }
+    } catch { }
+
+    if (-not $nodeUrl) { $nodeUrl = 'https://nodejs.org/dist/v24.19.0/node-v24.19.0-x64.msi' }
+
+    $nodeMsi = Join-Path $env:TEMP 'node-lts.msi'
+    Write-Note "Downloading Node.js ($(Split-Path $nodeUrl -Leaf))"
+    Invoke-WebRequest -Uri $nodeUrl -OutFile $nodeMsi -UseBasicParsing
+
+    # msiexec explicitly, so the silent switches reach the installer and an
+    # in-place upgrade over the old Node behaves.
+    Write-Note 'Installing Node.js'
+    $nodeInstall = Start-Process -FilePath 'msiexec.exe' `
+        -ArgumentList '/i', "`"$nodeMsi`"", '/quiet', '/norestart' -Wait -PassThru
+    if ($nodeInstall.ExitCode -notin @(0, 1638, 3010)) {
+        throw "Node.js installer exited with code $($nodeInstall.ExitCode)."
     }
+    Remove-Item $nodeMsi -Force -ErrorAction SilentlyContinue
 
     $env:Path = [Environment]::GetEnvironmentVariable('Path', 'Machine') + ';' +
                 [Environment]::GetEnvironmentVariable('Path', 'User')

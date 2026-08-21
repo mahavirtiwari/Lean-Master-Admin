@@ -295,31 +295,17 @@ Write-Good "Node: $((& node --version))"
 # it the site returns 500.19 and nothing else works, so this is checked by
 # looking for the module rather than by trusting an installer's exit code.
 #
-# The bundle registers that module only when IIS is already present AND no
-# reboot is pending. The IIS feature install a moment ago can leave a reboot
-# flag set, and then the bundle installs its runtime but silently skips the
-# module - the "installed, but the DLL is missing" case seen on the first run.
-# So: refuse to guess past a pending reboot, install with a log, and if the
-# module still is not there, hand over the log rather than a bare failure.
-$ancmPath = 'C:\Windows\System32\inetsrv\aspnetcorev2.dll'
+# Where the module lives changed: current bundles install it under
+# Program Files\IIS and point applicationHost.config there, while older ones
+# used a shim under System32\inetsrv. Accept either, or the check condemns a
+# bundle that installed perfectly.
+$ancmPaths = @(
+    'C:\Program Files\IIS\Asp.Net Core Module\V2\aspnetcorev2.dll',
+    'C:\Windows\System32\inetsrv\aspnetcorev2.dll'
+)
+$ancmPresent = ($ancmPaths | Where-Object { Test-Path $_ } | Select-Object -First 1) -ne $null
 
-if (-not (Test-Path $ancmPath)) {
-    $pendingReboot =
-        (Test-Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Component Based Servicing\RebootPending') -or
-        (Test-Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Auto Update\RebootRequired') -or
-        [bool](Get-ItemProperty 'HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager' `
-            -Name PendingFileRenameOperations -ErrorAction SilentlyContinue)
-
-    if ($pendingReboot) {
-        throw @'
-A reboot is pending from the IIS install, and the ASP.NET Core Hosting Bundle
-will not register its IIS module until it clears.
-
-Reboot the server, sign back in, and run this script again. It is idempotent:
-it skips everything already done and resumes here.
-'@
-    }
-
+if (-not $ancmPresent) {
     $bundleExe = Join-Path $env:TEMP 'dotnet-hosting-win.exe'
     $bundleLog = Join-Path $env:TEMP 'dotnet-hosting-install.log'
 
@@ -343,21 +329,24 @@ it skips everything already done and resumes here.
         throw "The Hosting Bundle installer exited with code $($bundle.ExitCode).$([Environment]::NewLine)Last lines of ${bundleLog}:$([Environment]::NewLine)$tail"
     }
 
-    # The module is registered against the running IIS; bounce it so the shim
-    # is in place before anything is asked of it.
+    # The module registers against the running IIS; bounce it so the module is
+    # in place before anything is asked of it.
     net stop was /y  2>&1 | Out-Null
     net start w3svc  2>&1 | Out-Null
 
     Remove-Item $bundleExe -Force -ErrorAction SilentlyContinue
+
+    $ancmPresent = ($ancmPaths | Where-Object { Test-Path $_ } | Select-Object -First 1) -ne $null
 }
 
-if (-not (Test-Path $ancmPath)) {
+if (-not $ancmPresent) {
     throw @'
-The Hosting Bundle ran but its IIS module is still missing.
+The Hosting Bundle ran but its IIS module was not found in either the
+Program Files\IIS or System32\inetsrv location.
 
-This almost always means a reboot is needed. Reboot the server, sign back in,
-and run this script again - it resumes from here. If it still fails after a
-reboot, the installer log at %TEMP%\dotnet-hosting-install.log says why.
+Confirm IIS itself is installed (Get-WindowsFeature Web-Server), reboot if a
+Windows update is pending, then run this script again - it resumes from here.
+The installer log at %TEMP%\dotnet-hosting-install.log records what it did.
 '@
 }
 Write-Good 'ASP.NET Core Hosting Bundle present'

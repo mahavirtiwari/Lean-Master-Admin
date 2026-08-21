@@ -517,19 +517,53 @@ Write-Step 'Build'
 $frontendPath = Join-Path $SourceRoot 'frontend'
 $apiPath      = Join-Path $SourceRoot 'backend\src\MCLS.Api'
 
-Write-Note 'Restoring front-end packages (this takes a few minutes on a first run)'
-Invoke-Native 'cmd.exe' @('/c', 'npm', 'ci', '--no-audit', '--no-fund') -WorkingDirectory $frontendPath
+# Runs a build command, capturing its output to a log and, on failure, showing
+# the tail of it - so a broken build reports why, not just an exit code.
+function Invoke-Build {
+    param(
+        [Parameter(Mandatory = $true)][string] $CommandLine,
+        [Parameter(Mandatory = $true)][string] $WorkingDirectory,
+        [Parameter(Mandatory = $true)][string] $LogPath,
+        [string] $What
+    )
 
-Write-Note 'Building the front end'
-Invoke-Native 'cmd.exe' @('/c', 'npx', 'ng', 'build', '--configuration', 'production') `
-    -WorkingDirectory $frontendPath
+    if ($What) { Write-Note $What }
+
+    Push-Location $WorkingDirectory
+    try {
+        $output = & cmd.exe /c "$CommandLine 2>&1"
+        $exit = $LASTEXITCODE
+    }
+    finally {
+        Pop-Location
+    }
+
+    $output | Out-File -FilePath $LogPath -Encoding utf8
+
+    if ($exit -ne 0) {
+        $tail = ($output | Select-Object -Last 40) -join [Environment]::NewLine
+        throw "$What failed (exit $exit). Full log at $LogPath$([Environment]::NewLine)--- last lines ---$([Environment]::NewLine)$tail"
+    }
+}
+
+# The production build can exhaust a small VM's memory; give Node room so the
+# failure is a real error, not an out-of-memory kill. Harmless when unneeded.
+$env:NODE_OPTIONS = '--max-old-space-size=4096'
+
+Invoke-Build -CommandLine 'npm ci --no-audit --no-fund' `
+    -WorkingDirectory $frontendPath -LogPath (Join-Path $env:TEMP 'mcls-npm-ci.log') `
+    -What 'Restoring front-end packages (a few minutes on a first run)'
+
+Invoke-Build -CommandLine 'npx ng build --configuration production' `
+    -WorkingDirectory $frontendPath -LogPath (Join-Path $env:TEMP 'mcls-ng-build.log') `
+    -What 'Building the front end'
 
 $publishPath = Join-Path $env:TEMP 'mcls-api-publish'
 Remove-Item $publishPath -Recurse -Force -ErrorAction SilentlyContinue
 
-Write-Note 'Publishing the API'
-Invoke-Native 'dotnet' @('publish', $apiPath, '-c', 'Release', '-o', $publishPath, '--nologo') `
-    -WorkingDirectory $SourceRoot
+Invoke-Build -CommandLine "dotnet publish `"$apiPath`" -c Release -o `"$publishPath`" --nologo" `
+    -WorkingDirectory $SourceRoot -LogPath (Join-Path $env:TEMP 'mcls-api-publish.log') `
+    -What 'Publishing the API'
 
 Write-Good 'Both built'
 

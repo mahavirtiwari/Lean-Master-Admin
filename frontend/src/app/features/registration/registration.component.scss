@@ -989,15 +989,20 @@
   color: #16211a;
 }
 
-// Sits under the hairline the artboard draws at the foot of the card.
+// The closing instruction reads as its own band, in the same light green as the
+// confirmations earlier in the wizard — it is the one thing on this screen the
+// applicant still has to act on, and plain text under a hairline let it pass
+// as a footnote.
 .done-next {
   margin: 26px 0 0;
-  padding-top: 24px;
-  border-top: 1px solid #dee7e1;
+  padding: 16px 20px;
+  background: #f0faf4;
+  border: 1px solid #b7e4c9;
+  border-radius: 9px;
   text-align: left;
   font-size: 12px;
   line-height: 1.75;
-  color: #47554c;
+  color: #35443b;
 }
 
 .done-actions { margin-top: 18px; }

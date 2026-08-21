@@ -91,8 +91,16 @@ export class DashboardComponent {
   /** Which figure the two geography panels are ranked by. */
   readonly rankBy = signal<'certified' | 'registered'>('certified');
 
-  /** Whether the demographic panels count everyone, or only the certified. */
-  readonly demoBasis = signal<'registered' | 'certified'>('registered');
+  // Each demographic panel carries its own switch, so the three are read
+  // independently. Both readings are fetched together and held here, which
+  // makes a switch instant and costs one extra call on load rather than one on
+  // every toggle.
+  readonly demoRegistered = signal<Demographics | null>(null);
+  readonly demoCertified = signal<Demographics | null>(null);
+
+  readonly genderBasis = signal<'registered' | 'certified'>('registered');
+  readonly typeBasis = signal<'registered' | 'certified'>('registered');
+  readonly socialBasis = signal<'registered' | 'certified'>('registered');
 
   readonly demographics = signal<Demographics | null>(null);
 
@@ -149,24 +157,28 @@ export class DashboardComponent {
   });
 
   /** "QCI: 11,250 | NPC: 8,770" under each KPI card. */
-  demoCaption(): string {
-    return this.demoBasis() === 'certified' ? 'Certified MSMEs' : 'Registered MSMEs';
+  /** The reading a panel is showing, by its own switch. */
+  demoFor(basis: 'registered' | 'certified'): Demographics | null {
+    return basis === 'certified' ? this.demoCertified() : this.demoRegistered();
   }
 
-  setDemoBasis(basis: 'registered' | 'certified'): void {
-    this.demoBasis.set(basis);
-    this.load();
+  caption(basis: 'registered' | 'certified'): string {
+    return basis === 'certified' ? 'Certified MSMEs' : 'Registered MSMEs';
   }
 
   /** A donut or bar panel as a PNG: its slices, their counts and their share. */
-  exportSlices(title: string, slices: { label: string; count: number; percent: number }[]): void {
+  exportSlices(
+    title: string,
+    basis: 'registered' | 'certified',
+    slices: { label: string; count: number; percent: number }[],
+  ): void {
     if (slices.length === 0) return;
 
     this.paint(
       title,
       ['Category', 'MSMEs', 'Share'],
       slices.map((s) => [s.label, s.count.toLocaleString('en-IN'), `${s.percent}%`]),
-      `${this.demoCaption()} · ${new Date().toLocaleDateString('en-IN')}`,
+      `${this.caption(basis)} · ${new Date().toLocaleDateString('en-IN')}`,
     );
   }
 
@@ -368,9 +380,13 @@ export class DashboardComponent {
       this.districtRows.set(geo.districts);
     });
 
-    this.api
-      .demographics({ ...query, basis: this.demoBasis() })
-      .subscribe((d) => this.demographics.set(d));
+    // Both readings, so each panel's switch is instant.
+    this.api.demographics({ ...query, basis: 'registered' }).subscribe((d) => {
+      this.demoRegistered.set(d);
+      this.demographics.set(d);   // the NIC panel reads the registered view
+    });
+
+    this.api.demographics({ ...query, basis: 'certified' }).subscribe((d) => this.demoCertified.set(d));
   }
 
   /**

@@ -584,6 +584,19 @@ internal sealed class IncentiveProviderConfiguration : IEntityTypeConfiguration<
     }
 }
 
+internal sealed class StatusChangeLogConfiguration : IEntityTypeConfiguration<StatusChangeLog>
+{
+    public void Configure(EntityTypeBuilder<StatusChangeLog> b)
+    {
+        b.ToTable("StatusChangeLog", "master");
+        b.HasKey(x => x.StatusChangeLogId);
+        b.Property(x => x.EntityName).HasMaxLength(40).IsUnicode(false).IsRequired();
+        b.Property(x => x.EntityLabel).HasMaxLength(300);
+        b.Property(x => x.Reason).HasMaxLength(500).IsRequired();
+        b.HasIndex(x => new { x.EntityName, x.EntityId });
+    }
+}
+
 internal sealed class IncentiveCategoryConfiguration : IEntityTypeConfiguration<IncentiveCategory>
 {
     public void Configure(EntityTypeBuilder<IncentiveCategory> b)

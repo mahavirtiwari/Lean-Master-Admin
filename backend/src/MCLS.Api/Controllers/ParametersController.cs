@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using MCLS.Api.Authorization;
+using MCLS.Api.Services;
 using MCLS.Application.Common.Models;
 using MCLS.Domain.Entities.Master;
 using MCLS.Domain.Enums;
@@ -139,6 +140,16 @@ public sealed class ParametersController(MclsDbContext db) : ControllerBase
     {
         var parameter = await db.Parameters.AsTracking().SingleOrDefaultAsync(p => p.ParameterId == id, ct);
         if (parameter is null) return NotFound();
+
+        if (string.IsNullOrWhiteSpace(request.Reason))
+        {
+            ModelState.AddModelError(nameof(request.Reason), StatusChanges.ReasonRequired);
+            return ValidationProblem(ModelState);
+        }
+
+        StatusChanges.Record(
+            db, "Parameter", id, parameter.Name,
+            parameter.IsActive, request.IsActive, request.Reason, currentUser.UserId);
 
         parameter.IsActive = request.IsActive;
         await db.SaveChangesAsync(ct);

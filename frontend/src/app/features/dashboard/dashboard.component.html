@@ -334,33 +334,30 @@
 
     <!-- ------------------- gender / enterprise type / social category -->
     @if (demographics(); as demo) {
-      <!-- One switch for the three panels: they answer the same question about
-           the same population, and reading one by certified and its neighbour
-           by registered would invite a comparison that is not valid. -->
-      <div class="demo-bar">
-        <span class="demo-bar-label">Showing</span>
-        <div class="rank-toggle">
-          <button type="button" [class.is-on]="demoBasis() === 'registered'"
-                  (click)="setDemoBasis('registered')">Registered MSMEs</button>
-          <button type="button" [class.is-on]="demoBasis() === 'certified'"
-                  (click)="setDemoBasis('certified')">Certified MSMEs</button>
-        </div>
-      </div>
-
       <div class="demo-grid">
         <section class="card card-pad">
           <div class="panel-head">
             <div>
               <h3 class="card-title">Gender</h3>
-              <p class="card-sub">{{ demoCaption() }} by promoter gender</p>
+              <p class="card-sub">{{ caption(genderBasis()) }} by promoter gender</p>
             </div>
-            <button class="icon-btn" type="button" title="Export as image"
-                    (click)="exportSlices('Gender', demo.gender)">Export</button>
+            <div class="rank-tools">
+              <div class="rank-toggle">
+                <button type="button" [class.is-on]="genderBasis() === 'registered'"
+                        (click)="genderBasis.set('registered')" title="Registered MSMEs">Registered</button>
+                <button type="button" [class.is-on]="genderBasis() === 'certified'"
+                        (click)="genderBasis.set('certified')" title="Certified MSMEs">Certified</button>
+              </div>
+              <button class="icon-btn" type="button" title="Export as image"
+                      (click)="exportSlices('Gender', genderBasis(), demoFor(genderBasis())?.gender || [])">
+                Export
+              </button>
+            </div>
           </div>
           <div class="donut-row">
             <svg class="donut" viewBox="0 0 140 140" aria-hidden="true">
               <circle cx="70" cy="70" r="54" fill="none" stroke="var(--border-divider)" stroke-width="18" />
-              @for (seg of donutSegments(demo.gender); track seg.label) {
+              @for (seg of donutSegments(demoFor(genderBasis())?.gender || []); track seg.label) {
                 <circle
                   cx="70"
                   cy="70"
@@ -375,12 +372,12 @@
               }
               <text x="70" y="66" text-anchor="middle" class="donut-cap">TOTAL</text>
               <text x="70" y="86" text-anchor="middle" class="donut-total">
-                {{ demo.total | number }}
+                {{ demoFor(genderBasis())?.total | number }}
               </text>
             </svg>
 
             <div class="legend">
-              @for (slice of demo.gender; track slice.label; let i = $index) {
+              @for (slice of demoFor(genderBasis())?.gender || []; track slice.label; let i = $index) {
                 <div class="legend-row">
                   <span class="legend-dot" [style.background]="colourFor(i)"></span>
                   <span class="legend-label">{{ slice.label }}</span>
@@ -396,15 +393,25 @@
           <div class="panel-head">
             <div>
               <h3 class="card-title">Enterprise Type</h3>
-              <p class="card-sub">As per revised MSME investment/turnover criteria</p>
+              <p class="card-sub">{{ caption(typeBasis()) }}, by investment/turnover criteria</p>
             </div>
-            <button class="icon-btn" type="button" title="Export as image"
-                    (click)="exportSlices('Enterprise Type', demo.enterpriseType)">Export</button>
+            <div class="rank-tools">
+              <div class="rank-toggle">
+                <button type="button" [class.is-on]="typeBasis() === 'registered'"
+                        (click)="typeBasis.set('registered')" title="Registered MSMEs">Registered</button>
+                <button type="button" [class.is-on]="typeBasis() === 'certified'"
+                        (click)="typeBasis.set('certified')" title="Certified MSMEs">Certified</button>
+              </div>
+              <button class="icon-btn" type="button" title="Export as image"
+                      (click)="exportSlices('Enterprise Type', typeBasis(), demoFor(typeBasis())?.enterpriseType || [])">
+                Export
+              </button>
+            </div>
           </div>
           <div class="donut-row">
             <svg class="donut" viewBox="0 0 140 140" aria-hidden="true">
               <circle cx="70" cy="70" r="54" fill="none" stroke="var(--border-divider)" stroke-width="18" />
-              @for (seg of donutSegments(demo.enterpriseType); track seg.label) {
+              @for (seg of donutSegments(demoFor(typeBasis())?.enterpriseType || []); track seg.label) {
                 <circle
                   cx="70"
                   cy="70"
@@ -419,12 +426,12 @@
               }
               <text x="70" y="66" text-anchor="middle" class="donut-cap">TOTAL</text>
               <text x="70" y="86" text-anchor="middle" class="donut-total">
-                {{ demo.total | number }}
+                {{ demoFor(typeBasis())?.total | number }}
               </text>
             </svg>
 
             <div class="legend">
-              @for (slice of demo.enterpriseType; track slice.label; let i = $index) {
+              @for (slice of demoFor(typeBasis())?.enterpriseType || []; track slice.label; let i = $index) {
                 <div class="legend-row">
                   <span class="legend-dot" [style.background]="colourFor(i)"></span>
                   <span class="legend-label">{{ slice.label }}</span>
@@ -440,14 +447,24 @@
           <div class="panel-head">
             <div>
               <h3 class="card-title">Social Category</h3>
-              <p class="card-sub">Promoter social category, {{ demoCaption().toLowerCase() }}</p>
+              <p class="card-sub">Promoter social category, {{ caption(socialBasis()).toLowerCase() }}</p>
             </div>
-            <button class="icon-btn" type="button" title="Export as image"
-                    (click)="exportSlices('Social Category', demo.socialCategory)">Export</button>
+            <div class="rank-tools">
+              <div class="rank-toggle">
+                <button type="button" [class.is-on]="socialBasis() === 'registered'"
+                        (click)="socialBasis.set('registered')" title="Registered MSMEs">Registered</button>
+                <button type="button" [class.is-on]="socialBasis() === 'certified'"
+                        (click)="socialBasis.set('certified')" title="Certified MSMEs">Certified</button>
+              </div>
+              <button class="icon-btn" type="button" title="Export as image"
+                      (click)="exportSlices('Social Category', socialBasis(), demoFor(socialBasis())?.socialCategory || [])">
+                Export
+              </button>
+            </div>
           </div>
 
           <div class="social">
-            @for (slice of demo.socialCategory; track slice.label; let i = $index) {
+            @for (slice of demoFor(socialBasis())?.socialCategory || []; track slice.label; let i = $index) {
               <div class="social-row">
                 <div class="social-head">
                   <span class="social-label">{{ slice.label }}</span>

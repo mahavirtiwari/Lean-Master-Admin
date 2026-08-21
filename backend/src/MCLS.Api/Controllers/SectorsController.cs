@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using MCLS.Api.Authorization;
+using MCLS.Api.Services;
 using MCLS.Application.Common.Models;
 using MCLS.Domain.Entities.Master;
 using MCLS.Domain.Enums;
@@ -150,6 +151,16 @@ public sealed class SectorsController(MclsDbContext db) : ControllerBase
     {
         var sector = await db.Sectors.AsTracking().SingleOrDefaultAsync(s => s.SectorId == id, ct);
         if (sector is null) return NotFound();
+
+        if (string.IsNullOrWhiteSpace(request.Reason))
+        {
+            ModelState.AddModelError(nameof(request.Reason), StatusChanges.ReasonRequired);
+            return ValidationProblem(ModelState);
+        }
+
+        StatusChanges.Record(
+            db, "Sector", id, sector.Name,
+            sector.IsActive, request.IsActive, request.Reason, currentUser.UserId);
 
         sector.IsActive = request.IsActive;
         await db.SaveChangesAsync(ct);

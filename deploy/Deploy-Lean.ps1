@@ -421,7 +421,11 @@ Write-Step 'Database'
 # On an existing database the table-creation scripts are skipped: they are not
 # written to run twice, and every change since the schema was cut is carried by
 # a migration anyway.
-$tableCount = [int](Invoke-Sql -Query 'SET NOCOUNT ON; SELECT COUNT(*) FROM sys.tables').Trim()
+# sqlcmd prints a header and a separator around the value, so the result is
+# several lines, not one number. Join them and take the first run of digits -
+# robust whether or not a header is emitted.
+$countText  = (Invoke-Sql -Query 'SET NOCOUNT ON; SELECT COUNT(*) FROM sys.tables') -join ' '
+$tableCount = [int]([regex]::Match($countText, '\d+').Value)
 
 if ($tableCount -eq 0) {
     Write-Note 'Empty database - creating the schema'

@@ -98,7 +98,7 @@ export default function UdyamScreen({ navigation }: Props): React.JSX.Element {
           <View style={styles.notice}>
             <Text style={styles.noticeText}>
               Validation is done through the Udyam API by matching your mobile number to Udyam
-              records. No OTP is sent at this step.
+              records.
             </Text>
           </View>
 
@@ -161,7 +161,17 @@ const styles = StyleSheet.create({
   },
   noticeText: { fontSize: type.tiny, color: colour.body, lineHeight: 18 },
 
-  check: { flexDirection: 'row', gap: space(3), marginBottom: space(5), alignItems: 'flex-start' },
+  check: {
+    flexDirection: 'row',
+    gap: space(3),
+    marginBottom: space(5),
+    alignItems: 'center',
+    padding: space(4),
+    backgroundColor: colour.greenTint,
+    borderWidth: 1,
+    borderColor: colour.greenLine,
+    borderRadius: radius.md,
+  },
   box: {
     width: 22,
     height: 22,
@@ -171,7 +181,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  boxOn: { backgroundColor: colour.green, borderColor: colour.green },
+  boxOn: { backgroundColor: colour.blue, borderColor: colour.blue },
   tick: { color: colour.surface, fontSize: type.small, fontWeight: '700' },
-  checkText: { flex: 1, fontSize: type.small, color: colour.body, lineHeight: 20 },
+  checkText: { flex: 1, fontSize: type.small, fontWeight: '600', color: colour.text, lineHeight: 20 },
 });

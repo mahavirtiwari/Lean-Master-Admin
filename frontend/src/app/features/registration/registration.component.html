@@ -193,7 +193,7 @@
           <span class="notice-mark"></span>
           <span>
             Validation is done entirely through the Udyam API by matching your mobile number to
-            Udyam records. No OTP is sent at this step.
+            Udyam records.
           </span>
         </div>
 
@@ -225,14 +225,10 @@
           </div>
         </div>
 
-        <label class="check">
+        <label class="check pledge-check">
           <input type="checkbox" [checked]="authorised()" (change)="authorised.set($any($event.target).checked)" />
-          <span>I confirm I am authorised to register this enterprise for the LEAN Scheme</span>
+          <span><strong>I confirm I am authorised to register this enterprise for the LEAN Scheme</strong></span>
         </label>
-
-        <p class="card-note">
-          Your details are fetched from the Udyam database and cannot be edited here.
-        </p>
 
         <div class="actions">
           <div class="spacer"></div>
@@ -809,12 +805,10 @@
         <!-- The pledge carries itself past the reader, the way it is taken
              aloud, and the button that makes it opens only once the whole text
              has gone by. Scrolling by hand takes over from the crawl. -->
-        <div #pledgeBox class="pledge" (scroll)="onPledgeScroll($event)">
+        <div #pledgeBox class="pledge" [class.is-read]="pledgeRead()" (scroll)="onPledgeScroll($event)">
           @for (para of pledgeBody; track para) {
             <p>{{ para }}</p>
           }
-
-          <div class="pledge-date">Date: {{ today }}</div>
         </div>
 
         <!-- Only while the button is shut: once the pledge has been shown, the

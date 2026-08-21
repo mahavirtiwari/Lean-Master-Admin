@@ -20,8 +20,14 @@ import type { RootStackParamList } from '../navigation/types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Pledge'>;
 
-/** How long the whole pledge takes to pass through its frame. */
-const CRAWL_MS = 20_000;
+/**
+ * How fast the pledge rises through its frame, in pixels a millisecond, with a
+ * floor and a ceiling. Speed rather than duration, because the distance varies
+ * with the width of the screen — the same reasoning as the web wizard's R8.
+ */
+const CRAWL_PX_PER_MS = 0.055;
+const CRAWL_MIN_MS = 3_000;
+const CRAWL_MAX_MS = 12_000;
 const TICK_MS = 50;
 
 const PLEDGE = [
@@ -75,7 +81,8 @@ export default function PledgeScreen({ navigation }: Props): React.JSX.Element {
       return undefined;
     }
 
-    const perTick = (range / CRAWL_MS) * TICK_MS;
+    const duration = Math.min(Math.max(range / CRAWL_PX_PER_MS, CRAWL_MIN_MS), CRAWL_MAX_MS);
+    const perTick = (range / duration) * TICK_MS;
 
     const timer = setInterval(() => {
       position.current += perTick;
@@ -193,7 +200,8 @@ export default function PledgeScreen({ navigation }: Props): React.JSX.Element {
 
           <ScrollView
             ref={frame}
-            style={styles.pledge}
+            style={[styles.pledge, read ? styles.pledgeRead : null]}
+            scrollEnabled={!read}
             contentContainerStyle={styles.pledgeInner}
             nestedScrollEnabled
             scrollEventThrottle={16}
@@ -242,6 +250,8 @@ const styles = StyleSheet.create({
   half: { flex: 1 },
   page: { padding: space(4), paddingBottom: space(10) },
 
+  pledgeRead: { maxHeight: undefined },
+
   pledge: {
     maxHeight: 260,
     backgroundColor: colour.surfaceQuiet,
@@ -254,7 +264,7 @@ const styles = StyleSheet.create({
   pledgeHint: { fontSize: type.tiny, color: colour.muted, marginBottom: space(4) },
 
   pledgeText: {
-    fontSize: type.small + 2,
+    fontSize: type.small + 4,
     color: colour.body,
     lineHeight: 24,
     marginTop: space(3),

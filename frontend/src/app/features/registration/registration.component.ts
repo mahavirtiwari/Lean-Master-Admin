@@ -182,13 +182,20 @@ export class RegistrationComponent {
   private readonly pledgeBox = viewChild<ElementRef<HTMLElement>>('pledgeBox');
 
   /**
-   * How long the pledge takes to pass through its frame, whatever its height.
+   * How fast the pledge rises through its frame, in pixels a millisecond.
    *
-   * Tied to the whole text rather than to a fixed speed, so the wait is the
-   * same on a phone — where the same words are three times taller — as on a
-   * desktop.
+   * Speed rather than duration, because the distance varies enormously: the
+   * same words are a few dozen pixels taller than the frame on a wide screen
+   * and several hundred on a phone. A fixed duration made the wide case creep
+   * imperceptibly and the narrow case race.
    */
-  private static readonly CrawlMs = 20_000;
+  private static readonly CrawlPxPerMs = 0.055;
+
+  /** Never faster than this, so short text still reads as moving. */
+  private static readonly CrawlMinMs = 3_000;
+
+  /** Never slower than this, so long text does not become a wait. */
+  private static readonly CrawlMaxMs = 12_000;
 
   private crawl = 0;
 
@@ -658,7 +665,17 @@ export class RegistrationComponent {
     // and is read by scrolling, which opens the button just the same.
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
-    const perMs = range / RegistrationComponent.CrawlMs;
+    const duration = Math.min(
+      Math.max(range / RegistrationComponent.CrawlPxPerMs, RegistrationComponent.CrawlMinMs),
+      RegistrationComponent.CrawlMaxMs,
+    );
+
+    const perMs = range / duration;
+
+    // The end tolerance has to scale with the distance: four pixels is nothing
+    // across a phone's worth of text and a third of the way across a wide
+    // screen's, where it would stop the pledge before it finished.
+    const tolerance = Math.min(4, range * 0.05);
 
     // The position is kept here rather than read back off the element. A frame
     // advances it by a third of a pixel, and scrollTop rounds what it is given
@@ -687,7 +704,7 @@ export class RegistrationComponent {
       box.scrollTop = position;
       written = box.scrollTop;
 
-      if (position + box.clientHeight >= box.scrollHeight - 4) {
+      if (position + box.clientHeight >= box.scrollHeight - tolerance) {
         this.pledgeRead.set(true);
         return;
       }

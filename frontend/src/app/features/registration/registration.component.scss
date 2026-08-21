@@ -791,14 +791,20 @@
 
   p {
     margin: 0 0 18px;
-    font-size: 14.6px;
-    line-height: 1.75;
+    font-size: 16.6px;
+    line-height: 1.7;
     color: #47554c;
 
     &:last-of-type { margin-bottom: 0; }
   }
 
-  .pledge-date { margin-top: 20px; font-size: 11.6px; color: #5d6b62; text-align: right; }
+  // Once the whole pledge has been shown, the frame lets go: the text stops
+  // moving and stands still in full, which is what somebody about to make an
+  // undertaking wants in front of them when they press the button.
+  &.is-read {
+    max-height: none;
+    overflow: visible;
+  }
 }
 
 // Says why the button is shut, and disappears the moment it is not.

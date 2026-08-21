@@ -278,4 +278,12 @@ public class LoginAudit
     public string? IpAddress { get; set; }
     public string? UserAgent { get; set; }
     public DateTime OccurredOnUtc { get; set; }
+
+    /// <summary>Desktop, Mobile, Tablet or Unknown, read from the agent.</summary>
+    public string? DeviceType { get; set; }
+
+    /// <summary>Windows, Android, iOS, macOS, Linux or Unknown.</summary>
+    public string? OperatingSystem { get; set; }
+
+    public string? Browser { get; set; }
 }

@@ -762,6 +762,9 @@ internal sealed class AuditLogConfiguration : IEntityTypeConfiguration<AuditLog>
         b.Property(x => x.AffectedColumns).HasMaxLength(1000);
         b.Property(x => x.IpAddress).HasMaxLength(45).IsUnicode(false);
         b.Property(x => x.UserAgent).HasMaxLength(400);
+        b.Property(x => x.DeviceType).HasMaxLength(12).IsUnicode(false);
+        b.Property(x => x.OperatingSystem).HasMaxLength(16).IsUnicode(false);
+        b.Property(x => x.Browser).HasMaxLength(24).IsUnicode(false);
         b.HasIndex(x => x.OccurredOnUtc);
         b.HasIndex(x => new { x.EntityName, x.EntityKey });
     }

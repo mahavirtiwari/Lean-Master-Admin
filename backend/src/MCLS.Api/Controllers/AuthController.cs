@@ -3,6 +3,7 @@ using System.Globalization;
 using MCLS.Application.Common.Interfaces;
 using MCLS.Domain.Entities.Identity;
 using MCLS.Domain.Enums;
+using MCLS.Infrastructure.Identity;
 using MCLS.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -356,6 +357,8 @@ public sealed class AuthController(
     private async Task RecordLoginAsync(
         int? userId, string emailAddress, bool success, string? reason, CancellationToken ct)
     {
+        var client = ClientDevice.Describe(currentUser.UserAgent, currentUser.ClientPlatform);
+
         db.LoginAudits.Add(new LoginAudit
         {
             UserId = userId,
@@ -364,6 +367,9 @@ public sealed class AuthController(
             FailureReason = reason,
             IpAddress = currentUser.IpAddress,
             UserAgent = currentUser.UserAgent,
+            DeviceType = client.DeviceType,
+            OperatingSystem = client.OperatingSystem,
+            Browser = client.Browser,
             OccurredOnUtc = clock.UtcNow,
         });
 

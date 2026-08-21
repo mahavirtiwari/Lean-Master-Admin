@@ -3,7 +3,7 @@ import * as Sharing from 'expo-sharing';
 import { Platform } from 'react-native';
 
 import { ApiError, OfflineError, getBearer } from './client';
-import { API_BASE_URL } from '../config';
+import { API_BASE_URL, APP_VERSION } from '../config';
 
 /**
  * The LEAN pledge certificate.
@@ -30,7 +30,7 @@ export function downloadMyPledge(fileName: string): Promise<void> {
 
 async function download(path: string, fileName: string, anonymous: boolean): Promise<void> {
   const url = `${API_BASE_URL}${path}`;
-  const headers: Record<string, string> = {};
+  const headers: Record<string, string> = { 'X-Client-Platform': `${Platform.OS}/${APP_VERSION}` };
   const bearer = getBearer();
 
   if (!anonymous && bearer) headers.Authorization = `Bearer ${bearer}`;

@@ -70,6 +70,19 @@ public sealed class CurrentUserService(IHttpContextAccessor accessor) : ICurrent
         }
     }
 
+    /// <summary>The X-Client-Platform header the mobile app sends about itself.</summary>
+    public string? ClientPlatform
+    {
+        get
+        {
+            var value = accessor.HttpContext?.Request.Headers["X-Client-Platform"].ToString();
+
+            return string.IsNullOrWhiteSpace(value)
+                ? null
+                : value.Length > 40 ? value[..40] : value;
+        }
+    }
+
     public string? UserAgent
     {
         get

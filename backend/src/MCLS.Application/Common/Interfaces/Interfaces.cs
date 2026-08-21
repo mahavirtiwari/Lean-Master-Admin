@@ -27,6 +27,16 @@ public interface ICurrentUser
 
     string? IpAddress { get; }
     string? UserAgent { get; }
+
+    /// <summary>
+    /// What the mobile app says it is, e.g. "android/1.0.0".
+    ///
+    /// A React Native app's user agent is whatever the platform's HTTP stack
+    /// chose to send, which on Android reads like a browser. The app knows what
+    /// it is running on; the agent string only guesses.
+    /// </summary>
+    string? ClientPlatform { get; }
+
     ClaimsPrincipal? Principal { get; }
 
     bool HasPermission(string permissionKey);

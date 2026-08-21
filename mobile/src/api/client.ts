@@ -1,5 +1,16 @@
-import { API_BASE_URL, REQUEST_TIMEOUT_MS } from '../config';
+import { Platform } from 'react-native';
+
+import { API_BASE_URL, APP_VERSION, REQUEST_TIMEOUT_MS } from '../config';
 import { getCache, putCache } from '../offline/db';
+
+/**
+ * What this app is, told to the server rather than guessed from a user agent.
+ *
+ * React Native sends whatever the platform's HTTP stack chose, which on Android
+ * reads like a browser — so an audit trail would record every registration made
+ * on a phone as coming from a desktop. The app knows; it says so.
+ */
+const CLIENT_PLATFORM = `${Platform.OS}/${APP_VERSION}`;
 
 /** Thrown when the server answered, but with a refusal. */
 export class ApiError extends Error {
@@ -69,6 +80,7 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
       method: options.method ?? 'GET',
       headers: {
         'Content-Type': 'application/json',
+        'X-Client-Platform': CLIENT_PLATFORM,
         ...(bearer && !options.anonymous ? { Authorization: `Bearer ${bearer}` } : {}),
       },
       body: options.body === undefined ? undefined : JSON.stringify(options.body),

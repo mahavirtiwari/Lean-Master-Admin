@@ -40,6 +40,15 @@ public class AuditLog
     public string? AffectedColumns { get; set; }
     public string? IpAddress { get; set; }
     public string? UserAgent { get; set; }
+
+    /// <summary>
+    /// What the request came from, worked out once when the row is written.
+    /// The agent string above stays as the evidence; these are what a report
+    /// can group by.
+    /// </summary>
+    public string? DeviceType { get; set; }
+    public string? OperatingSystem { get; set; }
+    public string? Browser { get; set; }
     public Guid? CorrelationId { get; set; }
 }
 

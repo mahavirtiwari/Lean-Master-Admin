@@ -30,3 +30,6 @@ export const SUPPORT_EMAIL = 'consultancy.zed@qcin.org';
 
 /** Matches the server's OTP window, for the countdown on the OTP screen. */
 export const OTP_VALID_MINUTES = 10;
+
+/** Reported to the server with every request, so the audit trail records it. */
+export const APP_VERSION = '1.0.0';

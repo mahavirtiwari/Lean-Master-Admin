@@ -2,6 +2,7 @@ using System.Text.Json;
 using MCLS.Application.Common.Interfaces;
 using MCLS.Domain.Common;
 using MCLS.Domain.Entities.Audit;
+using MCLS.Infrastructure.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Diagnostics;
@@ -141,6 +142,10 @@ public sealed class AuditSaveChangesInterceptor(
     {
         var now = clock.UtcNow;
 
+        // Read once per save, not per row: one request writes many audit rows
+        // and they all came from the same client.
+        var client = ClientDevice.Describe(currentUser.UserAgent, currentUser.ClientPlatform);
+
         foreach (var entry in context.ChangeTracker.Entries())
         {
             if (entry.Entity is AuditLog or ErrorLog) continue;
@@ -174,6 +179,9 @@ public sealed class AuditSaveChangesInterceptor(
                 EntityName = $"{entry.Metadata.GetSchema() ?? "dbo"}.{entry.Metadata.GetTableName()}",
                 IpAddress = currentUser.IpAddress,
                 UserAgent = currentUser.UserAgent,
+                DeviceType = client.DeviceType,
+                OperatingSystem = client.OperatingSystem,
+                Browser = client.Browser,
                 OldValues = entry.State == EntityState.Added ? null : Serialise(entry, useOriginal: true),
                 NewValues = entry.State == EntityState.Deleted ? null : Serialise(entry, useOriginal: false),
                 AffectedColumns = entry.State == EntityState.Modified && changed.Count > 0

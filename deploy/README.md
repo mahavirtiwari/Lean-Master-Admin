@@ -1,18 +1,26 @@
 # Deployment — lean.umon.in
 
-The portal runs on a Windows Server behind IIS: the Angular build is the site,
-the API is a child application at `/api`, and the database is the shared SQL
-Server instance on the same host.
+The portal runs on a Windows Server behind IIS as a single ASP.NET Core
+application: it answers the API on `/api/*` and serves the Angular build for
+everything else, from one origin. The database is the shared SQL Server
+instance on the same host.
 
-Serving both from one site is deliberate — the browser calls `/api` on its own
-origin, so there is no CORS pre-flight on any request and no second host name
-to keep a certificate for.
+One process for both is deliberate — the browser calls `/api` on its own origin,
+so there is no CORS pre-flight and no second host name to certificate. It is
+**not** a static site with an `/api` child application: a child app at `/api`
+sets the request path base to `/api`, the controllers are already routed at
+`api/*`, and the doubled prefix makes every call miss the router and return 401.
 
 ```
-  https://lean.umon.in/            C:\MCLS\site      Angular build
-  https://lean.umon.in/api         C:\MCLS\api       .NET API (in-process)
-                                   C:\MCLS\Uploads   uploaded documents
-                                   C:\MCLS\Logs      rolling API log
+  IIS site "MCLS"  ->  C:\MCLS\api      the .NET API (in-process), which also
+                                        serves the Angular build below
+                       C:\MCLS\site     Angular build (Portal:StaticRoot)
+                       C:\MCLS\Uploads  uploaded documents
+                       C:\MCLS\Logs     rolling API log
+
+  https://lean.umon.in/            index.html (Angular)
+  https://lean.umon.in/api/*       the API's controllers
+  https://lean.umon.in/register    an Angular route -> index.html
   MCLS database                    20.219.21.200,1433 (zeddev\SQLEXPRESS)
 ```
 
@@ -84,8 +92,9 @@ SDK and Node. What it does:
 5. Lays both out under `C:\MCLS`.
 6. Writes `appsettings.Production.json` — the domain, and a JWT signing key
    generated on the server so no secret is ever committed or typed.
-7. Creates the IIS site and the `/api` application, and stops the Default Web
-   Site, which would otherwise shadow it on port 80.
+7. Creates one IIS site over the API (which serves the Angular build via
+   Portal:StaticRoot) and stops the Default Web Site, which would shadow it
+   on port 80.
 8. Restricts that settings file to administrators and the application pool.
 9. Requests a Let's Encrypt certificate through win-acme, with renewal
    scheduled.
@@ -122,8 +131,9 @@ password, sign in as any administrator and change it, or reset it directly:
 ## Verifying a release
 
 ```powershell
-Invoke-WebRequest https://lean.umon.in/api/health/ready -UseBasicParsing   # 200 and "Healthy"
-Invoke-WebRequest https://lean.umon.in/ -UseBasicParsing                   # contains <app-root>
+Invoke-WebRequest https://lean.umon.in/health/ready -UseBasicParsing                         # 200 and "Healthy"
+Invoke-WebRequest https://lean.umon.in/api/registration/awareness-programs -UseBasicParsing   # 200, not 401
+Invoke-WebRequest https://lean.umon.in/register -UseBasicParsing                              # contains <app-root>
 Get-Content C:\MCLS\Logs\mcls-api-*.log -Tail 40
 ```
 

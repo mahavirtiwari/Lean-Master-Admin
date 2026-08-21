@@ -675,6 +675,11 @@ $settings = [ordered]@{
     }
     'Portal' = [ordered]@{
         'BaseUrl' = "https://$Domain"
+        # The API process serves the Angular build itself: controllers answer
+        # /api/*, everything else falls back to index.html. One app, one origin,
+        # no CORS - and no /api child application, whose path base would double
+        # the api prefix the controllers already carry and 401 every call.
+        'StaticRoot' = $sitePath
     }
     'Cors' = [ordered]@{
         'AllowedOrigins' = @("https://$Domain")
@@ -726,13 +731,28 @@ Set-ItemProperty "IIS:\AppPools\$AppPoolName" -Name startMode -Value 'AlwaysRunn
 Set-ItemProperty "IIS:\AppPools\$AppPoolName" -Name processModel.idleTimeout -Value '00:00:00'
 Set-ItemProperty "IIS:\AppPools\$AppPoolName" -Name recycling.periodicRestart.time -Value '00:00:00'
 
+# The site IS the API application: its physical path is the published API,
+# which serves the Angular build through Portal:StaticRoot. This is the single-
+# process model the app is written for - controllers at /api/*, a fallback to
+# index.html for Angular's own routes. It is NOT a static site with an /api
+# child application: a child app at /api sets the request path base to /api,
+# and the controllers are already routed at api/*, so the prefix doubles and
+# every call lands on the no-endpoint fallback policy as a 401.
 if (-not (Get-Website -Name $SiteName -ErrorAction SilentlyContinue)) {
-    Write-Note "Creating site $SiteName"
-    New-Website -Name $SiteName -PhysicalPath $sitePath -ApplicationPool $AppPoolName `
+    Write-Note "Creating site $SiteName over the API"
+    New-Website -Name $SiteName -PhysicalPath $apiRoot -ApplicationPool $AppPoolName `
                 -HostHeader $Domain -Port 80 | Out-Null
 }
 else {
-    Set-ItemProperty "IIS:\Sites\$SiteName" -Name physicalPath -Value $sitePath
+    Set-ItemProperty "IIS:\Sites\$SiteName" -Name physicalPath -Value $apiRoot
+}
+
+# Remove the /api child application an earlier version of this script created;
+# the single-process model does not use it, and leaving it would re-introduce
+# the path-base doubling.
+if (Get-WebApplication -Site $SiteName -Name 'api' -ErrorAction SilentlyContinue) {
+    Write-Note 'Removing the obsolete /api child application'
+    Remove-WebApplication -Site $SiteName -Name 'api'
 }
 
 # The default site answers on the same port and would shadow this one.
@@ -744,27 +764,15 @@ if ($defaultSite -and $defaultSite.State -eq 'Started') {
     Set-ItemProperty "IIS:\Sites\Default Web Site" -Name serverAutoStart -Value $false
 }
 
-# The API as a child application, so the browser calls /api on the same origin
-# and no CORS pre-flight is ever needed.
-$apiApp = Get-WebApplication -Site $SiteName -Name 'api' -ErrorAction SilentlyContinue
-
-if (-not $apiApp) {
-    Write-Note 'Creating the /api application'
-    New-WebApplication -Site $SiteName -Name 'api' -PhysicalPath $apiRoot `
-                       -ApplicationPool $AppPoolName | Out-Null
-}
-else {
-    Set-ItemProperty "IIS:\Sites\$SiteName\api" -Name physicalPath -Value $apiRoot
-}
-
-# ASPNETCORE_ENVIRONMENT, which is what makes the API read
-# appsettings.Production.json.
-Set-WebConfigurationProperty -PSPath "IIS:\Sites\$SiteName\api" `
+# ASPNETCORE_ENVIRONMENT on the site, which is what makes the API read
+# appsettings.Production.json (the connection string, signing key and static
+# root all live there).
+Set-WebConfigurationProperty -PSPath "IIS:\Sites\$SiteName" `
     -Filter 'system.webServer/aspNetCore/environmentVariables' `
     -Name '.' -Value @{ name = 'ASPNETCORE_ENVIRONMENT'; value = 'Production' } `
     -ErrorAction SilentlyContinue
 
-Write-Good "Site $SiteName bound to $Domain, API at /api"
+Write-Good "Site $SiteName bound to $Domain, serving the API and the portal"
 
 # ---------------------------------------------------------------------------
 Write-Step 'Permissions'
@@ -804,9 +812,11 @@ Start-Website  -Name $SiteName -ErrorAction SilentlyContinue
 # The first request compiles and warms the app; give it room before judging it.
 Start-Sleep -Seconds 8
 
+# Health lives at /health/ready on the app root - no /api, that prefix belongs
+# to the controllers.
 $health = $null
 try {
-    $health = Invoke-WebRequest -Uri "http://localhost/api/health/ready" -Headers @{ Host = $Domain } `
+    $health = Invoke-WebRequest -Uri "http://localhost/health/ready" -Headers @{ Host = $Domain } `
                                 -UseBasicParsing -TimeoutSec 60
 }
 catch {
@@ -816,10 +826,29 @@ catch {
 
 if ($health -and $health.StatusCode -eq 200) { Write-Good 'API healthy' }
 
+# Smoke test the one thing the child-app layout got wrong: an anonymous API call
+# must reach a controller, not the fallback policy. A 401 here means /api/* is
+# not routing to the controllers - exactly the bug this layout change fixes.
 try {
-    $page = Invoke-WebRequest -Uri 'http://localhost/' -Headers @{ Host = $Domain } `
+    $anon = Invoke-WebRequest -Uri 'http://localhost/api/registration/awareness-programs' `
+                              -Headers @{ Host = $Domain } -UseBasicParsing -TimeoutSec 30
+    if ($anon.StatusCode -eq 200) { Write-Good 'Anonymous API routing works (/api/* reaches the controllers)' }
+}
+catch {
+    $status = $_.Exception.Response.StatusCode.value__
+    if ($status -eq 401) {
+        Write-Warn 'An anonymous API call returned 401 - /api/* is not reaching the controllers.'
+        Write-Warn 'Confirm the site points at the API folder and has no /api child application.'
+    }
+    else {
+        Write-Warn "The anonymous API smoke test did not pass: $($_.Exception.Message)"
+    }
+}
+
+try {
+    $page = Invoke-WebRequest -Uri 'http://localhost/register' -Headers @{ Host = $Domain } `
                               -UseBasicParsing -TimeoutSec 30
-    if ($page.Content -match '<app-root') { Write-Good 'Front end serving' }
+    if ($page.Content -match '<app-root') { Write-Good 'Front end serving (SPA routes fall back to index.html)' }
 }
 catch {
     Write-Warn "The front end did not answer: $($_.Exception.Message)"

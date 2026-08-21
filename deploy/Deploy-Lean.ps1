@@ -428,12 +428,17 @@ $countText  = (Invoke-Sql -Query 'SET NOCOUNT ON; SELECT COUNT(*) FROM sys.table
 $tableCount = [int]([regex]::Match($countText, '\d+').Value)
 
 if ($tableCount -eq 0) {
-    Write-Note 'Empty database - creating the schema'
+    # Fresh database: schema, then the reference/seed data, then migrations.
+    Write-Note 'Empty database - creating the schema and seeding reference data'
     $folders = @('02-schema', '03-programmability', '04-seed', '07-migrations')
 }
 else {
-    Write-Note "$tableCount tables already present - upgrading in place"
-    $folders = @('03-programmability', '04-seed', '07-migrations')
+    # Existing database: refresh the views and procedures (written as CREATE OR
+    # ALTER, so re-running is safe), then apply migrations (idempotent). The
+    # seed folder is deliberately left out - it plain-INSERTs the reference
+    # data, which is already present, and is not written to run twice.
+    Write-Note "$tableCount tables already present - refreshing code and applying migrations"
+    $folders = @('03-programmability', '07-migrations')
 }
 
 # 05-security and 06-maintenance are deliberately not run. The first creates

@@ -382,8 +382,13 @@ public sealed class RegistrationController(
         // assessor — is not an applicant's to use. Only applicant accounts
         // (account type 10) may share an address with a registration, and that
         // is how a SPOC registers a second plant.
+        // NormalizedEmail, not Email: Identity indexes the normalised column and
+        // leaves the raw one unindexed, so comparing Email scans the whole user
+        // table on every registration.
+        var normalised = email.ToUpperInvariant();
+
         var staffAccount = await db.Users.AsNoTracking()
-            .AnyAsync(u => u.Email == email && u.AccountTypeId != 10 && !u.IsDeleted, ct);
+            .AnyAsync(u => u.NormalizedEmail == normalised && u.AccountTypeId != 10 && !u.IsDeleted, ct);
 
         if (staffAccount)
         {
@@ -774,6 +779,12 @@ public sealed class RegistrationController(
 
         draft.Status = "Completed";
         draft.EnterpriseId = enterprise.EnterpriseId;
+
+        // The Udyam response was the draft's working copy. The enterprise, its
+        // plants and its activities now hold everything the portal reads from
+        // here on, and the payload averages 8.7 KB a registration — some 43 GB
+        // of dead weight at the volumes this scheme expects. It goes.
+        draft.UdyamPayload = null;
         draft.CompletedOnUtc = clock.UtcNow;
         draft.PledgeAcceptedOnUtc = clock.UtcNow;
         draft.PledgeAcceptedBy = draft.SpocName;
@@ -989,22 +1000,40 @@ public sealed class RegistrationController(
 
         if (draft is null) return NotFound();
 
-        var record = ParsePayload(draft);
-        if (record is null) return BadRequest(new { message = "This registration has no Udyam details yet." });
-
-        var plant = draft.SelectedPlantIdNo is not null
-            ? record.Plants.FirstOrDefault(p => p.PlantIdNo == draft.SelectedPlantIdNo)
-            : record.Plants.FirstOrDefault(p => p.UnitIdNo == draft.SelectedUnitIdNo);
-
         // Once the registration has completed it has an enterprise, and the
-        // certificate belongs to that: the number printed on it and the page
-        // its code opens are the permanent ones, not the draft's.
+        // certificate belongs to that: the number printed on it, the page its
+        // code opens, and the details on it are the permanent ones. The draft's
+        // Udyam payload is cleared at completion, so a completed registration
+        // has nothing else to read from anyway.
         var enterprise = draft.EnterpriseId is int enterpriseId
             ? await db.Enterprises.AsNoTracking()
                 .Where(e => e.EnterpriseId == enterpriseId)
-                .Select(e => new { e.EnterpriseId, e.RegisteredOnUtc })
+                .Select(e => new
+                {
+                    e.EnterpriseId,
+                    e.Name,
+                    e.UdyamRegistrationNo,
+                    e.RegisteredOnUtc,
+                    Address = db.EnterprisePlants
+                        .Where(p => p.EnterprisePlantId == e.SelectedPlantId)
+                        .Select(p => p.AddressLine)
+                        .FirstOrDefault(),
+                })
                 .FirstOrDefaultAsync(ct)
             : null;
+
+        var record = enterprise is null ? ParsePayload(draft) : null;
+
+        if (enterprise is null && record is null)
+        {
+            return BadRequest(new { message = "This registration has no Udyam details yet." });
+        }
+
+        var plant = record is null
+            ? null
+            : draft.SelectedPlantIdNo is not null
+                ? record.Plants.FirstOrDefault(p => p.PlantIdNo == draft.SelectedPlantIdNo)
+                : record.Plants.FirstOrDefault(p => p.UnitIdNo == draft.SelectedUnitIdNo);
 
         var pledgedOn = enterprise is not null
             ? DateOnly.FromDateTime(enterprise.RegisteredOnUtc.ToLocalTime())
@@ -1015,9 +1044,9 @@ public sealed class RegistrationController(
             : PledgeCertificate.BuildDraftReference(pledgedOn, draft.RegistrationId);
 
         var details = new PledgeDetails(
-            record.EnterpriseName ?? draft.UdyamRegistrationNo,
-            plant?.Address ?? record.Address ?? string.Empty,
-            draft.UdyamRegistrationNo,
+            enterprise?.Name ?? record?.EnterpriseName ?? draft.UdyamRegistrationNo,
+            enterprise?.Address ?? plant?.Address ?? record?.Address ?? string.Empty,
+            enterprise?.UdyamRegistrationNo ?? draft.UdyamRegistrationNo,
             pledgedOn,
             reference,
             PortalLinks.VerifyPledgeUrl(Request, configuration, reference));

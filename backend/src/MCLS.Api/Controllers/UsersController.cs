@@ -311,6 +311,28 @@ public sealed class UsersController(
             // otherwise show up in the user code.
             .Trim();
 
+        // A State Specific account is identified by its state, not by the type:
+        // the format is MCLS-<STATE>-001, so Uttar Pradesh's first officer is
+        // MCLS-UP-001 and Maharashtra's is MCLS-MH-001. Each state therefore
+        // numbers its own people, and a state whose code cannot be resolved
+        // falls back to the type's own segment rather than issuing a code that
+        // says nothing.
+        if (prefix == "STA")
+        {
+            // The same state the account itself is given below, which may come
+            // from the organisation rather than the request.
+            var stateId = request.StateId ?? request.Organisation?.StateId;
+
+            var stateAlpha = stateId is null
+                ? null
+                : await db.States.AsNoTracking()
+                    .Where(x => x.StateId == stateId)
+                    .Select(x => x.AlphaCode)
+                    .SingleOrDefaultAsync(ct);
+
+            if (!string.IsNullOrWhiteSpace(stateAlpha)) prefix = stateAlpha;
+        }
+
         var userCode = await sequences.NextAsync($"User-{prefix}", null, ct);
 
         var user = new ApplicationUser

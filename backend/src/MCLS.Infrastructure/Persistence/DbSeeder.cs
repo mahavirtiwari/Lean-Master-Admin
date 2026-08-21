@@ -71,7 +71,9 @@ public static class DbSeeder
             UserName = email,
             Email = email,
             EmailConfirmed = true,
-            UserCode = "MCLS-MIN-000001",
+            // Not a generated code: the Super Admin is one account and signs in
+            // by name, which is what the scheme's own documentation calls it.
+            UserCode = "Super Admin",
             FullName = fullName,
             Initials = BuildInitials(fullName),
             Designation = "System Administrator",

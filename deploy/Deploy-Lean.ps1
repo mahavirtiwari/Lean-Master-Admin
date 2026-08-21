@@ -88,6 +88,17 @@ param(
 $ErrorActionPreference = 'Stop'
 $ProgressPreference    = 'SilentlyContinue'   # or every download paints the console
 
+# Windows PowerShell 5.1 still negotiates TLS 1.0 by default, which GitHub and
+# the .NET download hosts refuse outright - the symptom is a download that
+# "closed unexpectedly" before a byte arrives. Turn on 1.2 (and 1.3 where the
+# framework knows it) for every web request this script makes.
+[Net.ServicePointManager]::SecurityProtocol =
+    [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
+try {
+    [Net.ServicePointManager]::SecurityProtocol =
+        [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls13
+} catch { }   # Tls13 is not defined on older frameworks; 1.2 is enough
+
 $script:StepNumber = 0
 
 function Write-Step {
@@ -218,9 +229,29 @@ if (-not (Test-Command 'git')) {
             '--accept-package-agreements', '--accept-source-agreements') -What 'Installing Git'
     }
     else {
-        Install-FromWebInstaller `
-            -Url 'https://github.com/git-for-windows/git/releases/latest/download/Git-2.51.0-64-bit.exe' `
-            -FileName 'git-setup.exe' `
+        # The asset name carries the version, so it changes with every Git
+        # release; ask the API for the current one rather than guessing.
+        $gitUrl = try {
+            $release = Invoke-RestMethod -UseBasicParsing `
+                -Uri 'https://api.github.com/repos/git-for-windows/git/releases/latest' `
+                -Headers @{ 'User-Agent' = 'MCLS-Deploy' }
+            ($release.assets | Where-Object { $_.name -match '^Git-.*-64-bit\.exe$' } |
+                Select-Object -First 1).browser_download_url
+        } catch { $null }
+
+        if (-not $gitUrl) {
+            throw @'
+Could not resolve the Git for Windows installer from GitHub.
+
+Either the machine cannot reach github.com, or TLS 1.2 is still off. Confirm
+with:
+    [Net.ServicePointManager]::SecurityProtocol
+and install Git by hand from https://git-scm.com/download/win, then re-run
+this script - it will skip everything already done.
+'@
+        }
+
+        Install-FromWebInstaller -Url $gitUrl -FileName 'git-setup.exe' `
             -Arguments @('/VERYSILENT', '/NORESTART')
     }
 

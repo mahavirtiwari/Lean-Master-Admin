@@ -166,13 +166,18 @@ function Install-FromWebInstaller {
     Remove-Item $target -Force -ErrorAction SilentlyContinue
 }
 
+# -C trusts the server certificate. ODBC Driver 18 (which the server's sqlcmd
+# is built on) encrypts by default and validates the certificate; the instance
+# presents a self-signed one, so without this every call fails with "the
+# certificate chain was issued by an authority that is not trusted." This is
+# the command-line twin of TrustServerCertificate=true in the app's own string.
 function Invoke-Sql {
     param(
         [Parameter(Mandatory = $true)][string] $Query,
         [string] $Database = $DbName
     )
 
-    $output = & sqlcmd -S $SqlInstance -U $DbUser -P $DbPassword -d $Database -b -I -Q $Query 2>&1
+    $output = & sqlcmd -S $SqlInstance -U $DbUser -P $DbPassword -d $Database -C -b -I -Q $Query 2>&1
 
     if ($LASTEXITCODE -ne 0) {
         throw "SQL failed against $SqlInstance/$Database`n$output"
@@ -184,7 +189,7 @@ function Invoke-Sql {
 function Invoke-SqlFile {
     param([Parameter(Mandatory = $true)][string] $Path)
 
-    $output = & sqlcmd -S $SqlInstance -U $DbUser -P $DbPassword -d $DbName -b -I -i $Path 2>&1
+    $output = & sqlcmd -S $SqlInstance -U $DbUser -P $DbPassword -d $DbName -C -b -I -i $Path 2>&1
     return @{ ExitCode = $LASTEXITCODE; Output = $output }
 }
 

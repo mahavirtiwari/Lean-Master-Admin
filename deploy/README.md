@@ -52,7 +52,7 @@ hosts `ZEDCS_V2_LIVE` and the other production databases.
 registrations arrive. To fill it for a demonstration:
 
 ```powershell
-sqlcmd -S 20.219.21.200,1433 -U dbadmin -P '<password>' -d MCLS -b -I -i database\08-demo\01-demo-data.sql
+sqlcmd -S 20.219.21.200,1433 -U dbadmin -P '<password>' -d MCLS -C -b -I -i database\08-demo\01-demo-data.sql
 ```
 
 Every row it writes is marked `CorrelationId = 00000000-0000-0000-0000-0000000000DE`

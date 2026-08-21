@@ -78,6 +78,12 @@ param(
     # Not defaulted and not stored: passed in at run time, or prompted for.
     [Parameter(Mandatory = $true)]
     [string] $DbPassword,
+
+    # The Ministry's Udyam API token. Empty disables the lookup, and the
+    # registration wizard falls back to manual entry rather than erroring;
+    # supply the token to turn on registry verification.
+    [string] $UdyamToken  = '',
+
     [string] $SiteName    = 'MCLS',
     [string] $AppPoolName = 'MCLS',
 
@@ -686,6 +692,12 @@ $settings = [ordered]@{
     }
     'FileStorage' = [ordered]@{
         'RootPath' = $uploadsPath
+    }
+    'Udyam' = [ordered]@{
+        # On only when a token is supplied. Enabled without a token throws on
+        # every lookup; disabled, the wizard uses manual entry.
+        'Enabled' = -not [string]::IsNullOrWhiteSpace($UdyamToken)
+        'Token'   = $UdyamToken
     }
     'Serilog' = [ordered]@{
         'WriteTo' = @(

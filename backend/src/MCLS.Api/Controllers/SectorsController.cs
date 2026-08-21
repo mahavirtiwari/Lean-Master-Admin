@@ -4,6 +4,7 @@ using MCLS.Api.Services;
 using MCLS.Application.Common.Models;
 using MCLS.Domain.Entities.Master;
 using MCLS.Domain.Enums;
+using MCLS.Application.Common.Interfaces;
 using MCLS.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -20,7 +21,7 @@ namespace MCLS.Api.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/sectors")]
-public sealed class SectorsController(MclsDbContext db) : ControllerBase
+public sealed class SectorsController(MclsDbContext db, ICurrentUser currentUser) : ControllerBase
 {
     /// <summary>The sector list behind Masters &gt; Sectors, with its search and status filter.</summary>
     [HttpGet]

@@ -1,8 +1,10 @@
 using System.ComponentModel.DataAnnotations;
 using MCLS.Api.Authorization;
+using MCLS.Api.Services;
 using MCLS.Application.Common.Models;
 using MCLS.Domain.Entities.Master;
 using MCLS.Domain.Enums;
+using MCLS.Application.Common.Interfaces;
 using MCLS.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -20,7 +22,7 @@ namespace MCLS.Api.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/technologies")]
-public sealed class TechnologiesController(MclsDbContext db) : ControllerBase
+public sealed class TechnologiesController(MclsDbContext db, ICurrentUser currentUser) : ControllerBase
 {
     /// <summary>The Technology List, with search plus category and status filters.</summary>
     [HttpGet]
@@ -167,6 +169,16 @@ public sealed class TechnologiesController(MclsDbContext db) : ControllerBase
     {
         var technology = await db.Technologies.AsTracking().SingleOrDefaultAsync(t => t.TechnologyId == id, ct);
         if (technology is null) return NotFound();
+
+        if (string.IsNullOrWhiteSpace(request.Reason))
+        {
+            ModelState.AddModelError(nameof(request.Reason), StatusChanges.ReasonRequired);
+            return ValidationProblem(ModelState);
+        }
+
+        StatusChanges.Record(
+            db, "Technology", id, technology.Name,
+            technology.IsActive, request.IsActive, request.Reason, currentUser.UserId);
 
         technology.IsActive = request.IsActive;
         await db.SaveChangesAsync(ct);

@@ -33,7 +33,7 @@ import {
   template: `
     <app-page-intro
       title="Parameters"
-      subtitle="LEAN assessment parameters used to score MSMEs during assessment"
+      subtitle="LEAN parameters used for MSME handholding and assessment"
     />
 
     <div class="stack">
@@ -41,7 +41,7 @@ import {
         <section class="card card-pad">
           <h3 class="card-title">{{ editingId() ? 'Edit Parameter' : 'Add Parameter' }}</h3>
           <p class="card-sub">
-            Parameters are scored by the assessor during the LEAN assessment
+            LEAN parameters used for MSME handholding and assessment
           </p>
 
           <form class="master-form" (ngSubmit)="save()">
@@ -62,11 +62,13 @@ import {
               <input
                 id="name"
                 class="input"
-                placeholder="e.g. Cellular Layout &amp; Line Balancing"
+                maxlength="500"
+                placeholder="Enter parameter name here"
                 name="name"
                 [ngModel]="form().name"
                 (ngModelChange)="form.set({ ...form(), name: $event })"
               />
+              <div class="char-count">{{ form().name.length }} / 500</div>
             </div>
 
             <div class="field span-2">
@@ -74,11 +76,13 @@ import {
               <textarea
                 id="description"
                 class="textarea"
-                placeholder="Describe what the assessor should look for when scoring this parameter"
+                maxlength="500"
+                placeholder="Enter parameter description here"
                 name="description"
                 [ngModel]="form().description"
                 (ngModelChange)="form.set({ ...form(), description: $event })"
               ></textarea>
+              <div class="char-count">{{ (form().description || '').length }} / 500</div>
             </div>
 
             <div class="form-actions">
@@ -213,8 +217,26 @@ import {
         [confirmLabel]="row.isActive ? 'Disable Parameter' : 'Enable Parameter'"
         [tone]="row.isActive ? 'danger' : 'primary'"
         (confirmed)="confirmToggle()"
-        (cancelled)="confirming.set(null)"
-      />
+        (cancelled)="closeConfirm()"
+      >
+        <!-- Required, not optional: a flag that went from true to false does
+             not say whether this was withdrawn, replaced, or switched off by
+             mistake. -->
+        <label class="field-label" for="reason">REASON<span class="req">*</span></label>
+        <textarea
+          id="reason"
+          class="textarea"
+          maxlength="500"
+          placeholder="Why is this being changed? Recorded against the parameter."
+          [ngModel]="reason()"
+          (ngModelChange)="reason.set($event)"
+        ></textarea>
+        <div class="char-count">{{ reason().length }} / 500</div>
+
+        @if (reasonError(); as message) {
+          <p class="field-error">{{ message }}</p>
+        }
+      </app-confirm>
     }
   `,
 })
@@ -321,16 +343,30 @@ export class ParametersComponent {
     });
   }
 
+  readonly reason = signal('');
+  readonly reasonError = signal<string | null>(null);
+
+  closeConfirm(): void {
+    this.confirming.set(null);
+    this.reason.set('');
+    this.reasonError.set(null);
+  }
+
   confirmToggle(): void {
     const row = this.confirming();
     if (!row) return;
 
-    this.api.setParameterStatus(row.parameterId, !row.isActive).subscribe({
+    if (this.reason().trim().length === 0) {
+      this.reasonError.set('Give a reason for this change. It is recorded against the parameter.');
+      return;
+    }
+
+    this.api.setParameterStatus(row.parameterId, !row.isActive, this.reason().trim()).subscribe({
       next: () => {
-        this.confirming.set(null);
+        this.closeConfirm();
         this.load();
       },
-      error: () => this.confirming.set(null),
+      error: () => this.closeConfirm(),
     });
   }
 

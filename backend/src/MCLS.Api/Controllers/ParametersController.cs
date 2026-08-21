@@ -4,6 +4,7 @@ using MCLS.Api.Services;
 using MCLS.Application.Common.Models;
 using MCLS.Domain.Entities.Master;
 using MCLS.Domain.Enums;
+using MCLS.Application.Common.Interfaces;
 using MCLS.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -19,7 +20,7 @@ namespace MCLS.Api.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/parameters")]
-public sealed class ParametersController(MclsDbContext db) : ControllerBase
+public sealed class ParametersController(MclsDbContext db, ICurrentUser currentUser) : ControllerBase
 {
     /// <summary>The LEAN Parameters list, with search and status filter.</summary>
     [HttpGet]

@@ -89,11 +89,13 @@ import {
               <input
                 id="name"
                 class="input"
-                placeholder="e.g. Laser Cutting Automation"
+                maxlength="250"
+                placeholder="Enter technology name here"
                 name="name"
                 [ngModel]="form().name"
                 (ngModelChange)="form.set({ ...form(), name: $event })"
               />
+              <div class="char-count">{{ form().name.length }} / 250</div>
             </div>
 
             <div class="field">
@@ -133,13 +135,13 @@ import {
               <textarea
                 id="description"
                 class="textarea"
-                maxlength="300"
-                placeholder="Describe what the technology does and the improvement an MSME should expect"
+                maxlength="500"
+                placeholder="Enter technology description here"
                 name="description"
                 [ngModel]="form().description"
                 (ngModelChange)="form.set({ ...form(), description: $event })"
               ></textarea>
-              <div class="char-count">{{ form().description.length }} / 300</div>
+              <div class="char-count">{{ form().description.length }} / 500</div>
             </div>
 
             <div class="form-actions">
@@ -288,8 +290,26 @@ import {
         [confirmLabel]="row.isActive ? 'Disable Technology' : 'Enable Technology'"
         [tone]="row.isActive ? 'danger' : 'primary'"
         (confirmed)="confirmToggle()"
-        (cancelled)="confirming.set(null)"
-      />
+        (cancelled)="closeConfirm()"
+      >
+        <!-- Required, not optional: a flag that went from true to false does
+             not say whether this was superseded, withdrawn, or switched off by
+             mistake. -->
+        <label class="field-label" for="reason">REASON<span class="req">*</span></label>
+        <textarea
+          id="reason"
+          class="textarea"
+          maxlength="500"
+          placeholder="Why is this being changed? Recorded against the technology."
+          [ngModel]="reason()"
+          (ngModelChange)="reason.set($event)"
+        ></textarea>
+        <div class="char-count">{{ reason().length }} / 500</div>
+
+        @if (reasonError(); as message) {
+          <p class="field-error">{{ message }}</p>
+        }
+      </app-confirm>
     }
   `,
 })
@@ -431,17 +451,31 @@ export class TechnologyComponent {
     });
   }
 
+  readonly reason = signal('');
+  readonly reasonError = signal<string | null>(null);
+
+  closeConfirm(): void {
+    this.confirming.set(null);
+    this.reason.set('');
+    this.reasonError.set(null);
+  }
+
   confirmToggle(): void {
     const row = this.confirming();
     if (!row) return;
 
-    this.api.setTechnologyStatus(row.technologyId, !row.isActive).subscribe({
+    if (this.reason().trim().length === 0) {
+      this.reasonError.set('Give a reason for this change. It is recorded against the technology.');
+      return;
+    }
+
+    this.api.setTechnologyStatus(row.technologyId, !row.isActive, this.reason().trim()).subscribe({
       next: () => {
-        this.confirming.set(null);
+        this.closeConfirm();
         this.api.technologySummary().subscribe((s) => this.summary.set(s));
         this.load();
       },
-      error: () => this.confirming.set(null),
+      error: () => this.closeConfirm(),
     });
   }
 

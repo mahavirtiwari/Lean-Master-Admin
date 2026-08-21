@@ -147,16 +147,30 @@ export class SectorsComponent {
     });
   }
 
+  readonly reason = signal('');
+  readonly reasonError = signal<string | null>(null);
+
+  closeConfirm(): void {
+    this.confirming.set(null);
+    this.reason.set('');
+    this.reasonError.set(null);
+  }
+
   confirmToggle(): void {
     const row = this.confirming();
     if (!row) return;
 
-    this.api.setSectorStatus(row.sectorId, !row.isActive).subscribe({
+    if (this.reason().trim().length === 0) {
+      this.reasonError.set('Give a reason for this change. It is recorded against the sector.');
+      return;
+    }
+
+    this.api.setSectorStatus(row.sectorId, !row.isActive, this.reason().trim()).subscribe({
       next: () => {
-        this.confirming.set(null);
+        this.closeConfirm();
         this.load();
       },
-      error: () => this.confirming.set(null),
+      error: () => this.closeConfirm(),
     });
   }
 

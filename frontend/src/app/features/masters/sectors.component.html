@@ -30,11 +30,13 @@
             id="name"
             class="input"
             type="text"
+            maxlength="250"
             placeholder="e.g. Manufacture of fabricated metal products"
             name="name"
             [ngModel]="form().name"
             (ngModelChange)="form.set({ ...form(), name: $event })"
           />
+          <div class="char-count">{{ form().name.length }} / 250</div>
         </div>
 
         <div class="form-actions">
@@ -171,6 +173,25 @@
     [confirmLabel]="row.isActive ? 'Disable Sector' : 'Enable Sector'"
     [tone]="row.isActive ? 'danger' : 'primary'"
     (confirmed)="confirmToggle()"
-    (cancelled)="confirming.set(null)"
-  />
+    (cancelled)="closeConfirm()"
+  >
+    <!-- Required, not optional. Six months on, a flag that went from true to
+         false does not say whether the sector was withdrawn from the scheme,
+         merged into another, or switched off by mistake. -->
+    <label class="field-label" for="reason">REASON<span class="req">*</span></label>
+    <textarea
+      id="reason"
+      class="input"
+      rows="3"
+      maxlength="500"
+      placeholder="Why is this being changed? Recorded against the sector."
+      [ngModel]="reason()"
+      (ngModelChange)="reason.set($event)"
+    ></textarea>
+    <div class="char-count">{{ reason().length }} / 500</div>
+
+    @if (reasonError(); as message) {
+      <p class="field-error">{{ message }}</p>
+    }
+  </app-confirm>
 }

@@ -110,8 +110,9 @@ export class ApiService {
     return this.http.put<void>(`${this.base}/sectors/${id}`, body);
   }
 
-  setSectorStatus(id: number, isActive: boolean): Observable<void> {
-    return this.http.post<void>(`${this.base}/sectors/${id}/status`, { isActive });
+  /** The reason is required: the server refuses the change without one. */
+  setSectorStatus(id: number, isActive: boolean, reason: string): Observable<void> {
+    return this.http.post<void>(`${this.base}/sectors/${id}/status`, { isActive, reason });
   }
 
   // ----------------------------------------------------------- parameters ---
@@ -130,8 +131,9 @@ export class ApiService {
     return this.http.put<void>(`${this.base}/parameters/${id}`, body);
   }
 
-  setParameterStatus(id: number, isActive: boolean): Observable<void> {
-    return this.http.post<void>(`${this.base}/parameters/${id}/status`, { isActive });
+  /** The reason is required: the server refuses the change without one. */
+  setParameterStatus(id: number, isActive: boolean, reason: string): Observable<void> {
+    return this.http.post<void>(`${this.base}/parameters/${id}/status`, { isActive, reason });
   }
 
   // --------------------------------------------------------- technologies ---
@@ -168,8 +170,9 @@ export class ApiService {
     return this.http.put<void>(`${this.base}/technologies/${id}`, body);
   }
 
-  setTechnologyStatus(id: number, isActive: boolean): Observable<void> {
-    return this.http.post<void>(`${this.base}/technologies/${id}/status`, { isActive });
+  /** The reason is required: the server refuses the change without one. */
+  setTechnologyStatus(id: number, isActive: boolean, reason: string): Observable<void> {
+    return this.http.post<void>(`${this.base}/technologies/${id}/status`, { isActive, reason });
   }
 
   // -------------------------------------------------------- fee structure ---

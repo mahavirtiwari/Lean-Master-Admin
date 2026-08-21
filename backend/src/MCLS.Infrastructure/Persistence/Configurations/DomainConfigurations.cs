@@ -943,6 +943,7 @@ internal sealed class AwarenessProgramConfiguration : IEntityTypeConfiguration<A
         b.ToTable("AwarenessProgram", "master");
         b.HasKey(x => x.AwarenessProgramId);
         b.Property(x => x.Name).HasMaxLength(250).IsRequired();
+        b.Property(x => x.Source).HasMaxLength(10).IsUnicode(false).IsRequired();
         b.Property(x => x.Venue).HasMaxLength(250);
     }
 }

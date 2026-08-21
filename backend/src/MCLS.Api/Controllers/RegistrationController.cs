@@ -50,6 +50,7 @@ public sealed class RegistrationController(
     IDateTimeProvider clock,
     IEmailQueue email,
     UserManager<ApplicationUser> userManager,
+    IAwarenessProgramSource awarenessPrograms,
     IConfiguration configuration,
     ILogger<RegistrationController> logger) : ControllerBase
 {
@@ -132,20 +133,24 @@ public sealed class RegistrationController(
     /// <summary>The programmes behind R5's "Select program".</summary>
     [HttpGet("awareness-programs")]
     public async Task<IActionResult> GetAwarenessPrograms(CancellationToken ct)
-        => Ok(await db.AwarenessPrograms.AsNoTracking()
-            .Where(p => p.IsActive)
-            .OrderByDescending(p => p.HeldOn)
-            .Select(p => new
-            {
-                p.AwarenessProgramId,
-                // The readable code the applicant sees on their attendance
-                // record; the surrogate key means nothing to them.
-                p.ProgramCode,
-                p.Name,
-                p.HeldOn,
-                p.Venue,
-            })
-            .ToListAsync(ct));
+    {
+        // Asked of the source rather than the table: the programmes are
+        // published by the scheme's own service where one is configured, and by
+        // the master table where it is not. Either way they arrive here already
+        // stored, so the id below is one a registration can point at.
+        var programs = await awarenessPrograms.GetProgramsAsync(ct);
+
+        return Ok(programs.Select(p => new
+        {
+            p.AwarenessProgramId,
+            // The readable code the applicant sees on their attendance record;
+            // the surrogate key means nothing to them.
+            p.ProgramCode,
+            p.Name,
+            p.HeldOn,
+            p.Venue,
+        }));
+    }
 
     // ------------------------------------------------ R2: Udyam validation ---
 

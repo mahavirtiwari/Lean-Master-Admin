@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using MCLS.Domain.Entities.Msme;
 
 namespace MCLS.Application.Common.Interfaces;
 
@@ -117,6 +118,18 @@ public interface IEmailQueue
 /// Reads and writes uploaded files. Implementations store outside the web root
 /// so no upload is ever directly reachable over HTTP.
 /// </summary>
+/// <summary>
+/// Where the LEAN awareness programmes come from.
+///
+/// An interface rather than a direct query because the list is moving to the
+/// scheme's own programme service: the caller asks for the programmes and does
+/// not care whether they arrived over HTTP or came from the master table.
+/// </summary>
+public interface IAwarenessProgramSource
+{
+    Task<IReadOnlyList<AwarenessProgram>> GetProgramsAsync(CancellationToken ct = default);
+}
+
 public interface IFileStorage
 {
     /// <summary>

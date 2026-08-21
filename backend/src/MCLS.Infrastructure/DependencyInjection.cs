@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using MCLS.Infrastructure.Awareness;
 using MCLS.Infrastructure.Udyam;
 
 namespace MCLS.Infrastructure;
@@ -78,6 +79,34 @@ public static class DependencyInjection
             client.Timeout = TimeSpan.FromSeconds(udyam.TimeoutSeconds);
             client.DefaultRequestHeaders.Accept.ParseAdd("application/xml");
         });
+
+        // The awareness programmes an applicant claims attendance at. They are
+        // published by the scheme's programme service where one is configured;
+        // where it is not, the master table an administrator maintains is the
+        // source, and the caller cannot tell the difference.
+        services.Configure<AwarenessProgramOptions>(
+            configuration.GetSection(AwarenessProgramOptions.SectionName));
+
+        var awareness = configuration.GetSection(AwarenessProgramOptions.SectionName)
+            .Get<AwarenessProgramOptions>() ?? new AwarenessProgramOptions();
+
+        if (awareness.Enabled && !string.IsNullOrWhiteSpace(awareness.BaseUrl))
+        {
+            services.AddHttpClient<IAwarenessProgramSource, AwarenessProgramClient>((provider, client) =>
+            {
+                var settings = provider.GetRequiredService<IOptions<AwarenessProgramOptions>>().Value;
+
+                // The trailing slash matters: without it BaseAddress drops its
+                // last segment when a relative path is appended.
+                client.BaseAddress = new Uri(settings.BaseUrl.TrimEnd('/') + "/");
+                client.Timeout = TimeSpan.FromSeconds(settings.TimeoutSeconds);
+                client.DefaultRequestHeaders.Accept.ParseAdd("application/json");
+            });
+        }
+        else
+        {
+            services.AddScoped<IAwarenessProgramSource, LocalAwarenessPrograms>();
+        }
 
         return services;
     }

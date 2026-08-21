@@ -389,4 +389,13 @@ public class AwarenessProgram
     public string? Venue { get; set; }
     public short? StateId { get; set; }
     public bool IsActive { get; set; } = true;
+
+    /// <summary>
+    /// Local or Service.
+    ///
+    /// A refresh retires programmes the service has withdrawn, and must not
+    /// touch the ones an administrator entered by hand — without this it cannot
+    /// tell them apart.
+    /// </summary>
+    public string Source { get; set; } = "Local";
 }

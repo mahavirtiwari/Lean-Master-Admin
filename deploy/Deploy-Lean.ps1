@@ -417,28 +417,47 @@ Write-Good "At commit $commit on $Branch"
 # ---------------------------------------------------------------------------
 Write-Step 'Database'
 
-# How much of the deployment the database needs depends on whether it is new.
-# On an existing database the table-creation scripts are skipped: they are not
-# written to run twice, and every change since the schema was cut is carried by
-# a migration anyway.
-# sqlcmd prints a header and a separator around the value, so the result is
-# several lines, not one number. Join them and take the first run of digits -
-# robust whether or not a header is emitted.
-$countText  = (Invoke-Sql -Query 'SET NOCOUNT ON; SELECT COUNT(*) FROM sys.tables') -join ' '
-$tableCount = [int]([regex]::Match($countText, '\d+').Value)
-
-if ($tableCount -eq 0) {
-    # Fresh database: schema, then the reference/seed data, then migrations.
-    Write-Note 'Empty database - creating the schema and seeding reference data'
-    $folders = @('02-schema', '03-programmability', '04-seed', '07-migrations')
+# Reads a single number out of sqlcmd's decorated output (header, separator,
+# value across several lines).
+function Get-SqlCount {
+    param([Parameter(Mandatory = $true)][string] $Query)
+    $text = (Invoke-Sql -Query "SET NOCOUNT ON; $Query") -join ' '
+    return [int]([regex]::Match($text, '\d+').Value)
 }
-else {
-    # Existing database: refresh the views and procedures (written as CREATE OR
-    # ALTER, so re-running is safe), then apply migrations (idempotent). The
-    # seed folder is deliberately left out - it plain-INSERTs the reference
-    # data, which is already present, and is not written to run twice.
-    Write-Note "$tableCount tables already present - refreshing code and applying migrations"
-    $folders = @('03-programmability', '07-migrations')
+
+$tableCount = Get-SqlCount 'SELECT COUNT(*) FROM sys.tables'
+
+# The migrations are a one-time ordered sequence, not scripts written to run
+# twice: some assert the exact state they expected when first written (001
+# checks the menu is 15 parents and 30 children, which later migrations then
+# add to). Re-running them from the top therefore fails. A ledger records which
+# have run, so each is applied once and once only - the standard way to manage
+# an evolving schema.
+Invoke-Sql -Query @'
+IF SCHEMA_ID('deploy') IS NULL EXEC('CREATE SCHEMA deploy');
+IF OBJECT_ID('deploy.SchemaMigration') IS NULL
+    CREATE TABLE deploy.SchemaMigration (
+        FileName     nvarchar(260) NOT NULL PRIMARY KEY,
+        AppliedOnUtc datetime2(0)  NOT NULL
+            CONSTRAINT DF_SchemaMigration_AppliedOnUtc DEFAULT sysutcdatetime()
+    );
+'@ | Out-Null
+
+$migrationFiles = Get-ChildItem (Join-Path $SourceRoot 'database\07-migrations') -Filter '*.sql' |
+                  Sort-Object Name
+
+$ledgerCount = Get-SqlCount 'SELECT COUNT(*) FROM deploy.SchemaMigration'
+
+# Baseline: a database that already has tables but no ledger is taken to be at
+# the current migration level - this deployment brought it there - so the
+# existing migrations are recorded as applied rather than re-run. A genuinely
+# fresh database has its ledger filled as each migration actually runs, below.
+if ($ledgerCount -eq 0 -and $tableCount -gt 0) {
+    Write-Note "$tableCount tables present, no ledger - baselining as fully migrated"
+    foreach ($migration in $migrationFiles) {
+        $safeName = $migration.Name.Replace("'", "''")
+        Invoke-Sql -Query "INSERT INTO deploy.SchemaMigration (FileName) VALUES (N'$safeName')" | Out-Null
+    }
 }
 
 # 05-security and 06-maintenance are deliberately not run. The first creates
@@ -447,21 +466,50 @@ else {
 
 $applied = 0
 
-foreach ($folder in $folders) {
-    $scripts = Get-ChildItem (Join-Path $SourceRoot "database\$folder") -Filter '*.sql' | Sort-Object Name
+# On a fresh database, lay down the schema and the reference/seed data first.
+# On an existing one, skip both - the tables are there and the seed scripts
+# plain-INSERT data that is already present.
+if ($tableCount -eq 0) {
+    Write-Note 'Empty database - creating the schema and seeding reference data'
+    $createFolders = @('02-schema', '03-programmability', '04-seed')
+}
+else {
+    Write-Note "$tableCount tables present - refreshing views and procedures"
+    # CREATE OR ALTER, so re-running is safe and ships updated code.
+    $createFolders = @('03-programmability')
+}
 
-    foreach ($script in $scripts) {
+foreach ($folder in $createFolders) {
+    foreach ($script in (Get-ChildItem (Join-Path $SourceRoot "database\$folder") -Filter '*.sql' | Sort-Object Name)) {
         $result = Invoke-SqlFile -Path $script.FullName
-
-        if ($result.ExitCode -ne 0) {
-            throw "$folder/$($script.Name) failed:`n$($result.Output)"
-        }
-
+        if ($result.ExitCode -ne 0) { throw "$folder/$($script.Name) failed:`n$($result.Output)" }
         $applied++
     }
 }
 
-Write-Good "$applied database scripts applied"
+# Migrations: only the ones the ledger has not seen. Each is recorded the moment
+# it succeeds, so an interrupted run resumes rather than repeating.
+$appliedNames = @{}
+foreach ($row in (Invoke-Sql -Query 'SET NOCOUNT ON; SELECT FileName FROM deploy.SchemaMigration')) {
+    $name = "$row".Trim()
+    if ($name) { $appliedNames[$name] = $true }
+}
+
+$migrationsRun = 0
+foreach ($migration in $migrationFiles) {
+    if ($appliedNames.ContainsKey($migration.Name)) { continue }
+
+    Write-Note "Migration $($migration.Name)"
+    $result = Invoke-SqlFile -Path $migration.FullName
+    if ($result.ExitCode -ne 0) { throw "07-migrations/$($migration.Name) failed:`n$($result.Output)" }
+
+    $safeName = $migration.Name.Replace("'", "''")
+    Invoke-Sql -Query "INSERT INTO deploy.SchemaMigration (FileName) VALUES (N'$safeName')" | Out-Null
+    $applied++
+    $migrationsRun++
+}
+
+Write-Good "$applied database scripts applied ($migrationsRun new migration$(if ($migrationsRun -ne 1) {'s'}))"
 
 # ---------------------------------------------------------------------------
 Write-Step 'Build'

@@ -62,18 +62,20 @@
 .head-sep { color: #c6d3cb; }
 .head-lang { font-size: 12.4px; font-weight: 600; color: #1b4f8a; }
 
+// Blue, like the action buttons inside the wizard: signing in is a way through
+// the page, not a note on it, and the outlined version read as neither.
 .head-signin {
   height: 34px;
   padding: 0 18px;
   border-radius: 6px;
-  border: 1px solid #c6d3cb;
-  background: #fff;
+  border: 1px solid #1b4f8a;
+  background: #1b4f8a;
   font-size: 13.4px;
   font-weight: 600;
-  color: #16211a;
+  color: #fff;
   cursor: pointer;
 
-  &:hover { background: #f7faf8; }
+  &:hover { background: #163f6f; border-color: #163f6f; }
 }
 
 // -------------------------------------------------------------- step rail ---
@@ -283,12 +285,6 @@
   transition: background 0.12s ease;
 
   &:hover { background: #163f6f; }
-}
-
-.r1-note {
-  margin: 20px 0 0;
-  font-size: 11.6px;
-  color: #5d6b62;
 }
 
 .need-title {

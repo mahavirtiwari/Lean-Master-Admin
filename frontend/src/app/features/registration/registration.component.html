@@ -81,11 +81,8 @@
 
             <h2 class="r1-title">New Registration</h2>
             <p class="r1-line">Start a fresh application using your Udyam Registration Number.</p>
-            <p class="r1-line">Takes about 10 minutes. Available on web and the mobile app.</p>
 
             <button class="r1-start" type="button" (click)="start()">Start New Registration</button>
-
-            <p class="r1-note">Registration is common for LEAN Bronze, Silver and Gold.</p>
           </div>
         </section>
 
@@ -152,7 +149,7 @@
         <div class="already-text">
           <div class="already-label">ALREADY REGISTERED?</div>
           <p class="already-line">
-            Sign in with your LEAN ID to apply for a certification level or track your application.
+            Sign in using your LEAN ID and the password shared to your registered SPOC email address.
           </p>
         </div>
 
@@ -227,14 +224,16 @@
 
         <label class="check pledge-check">
           <input type="checkbox" [checked]="authorised()" (change)="authorised.set($any($event.target).checked)" />
-          <span><strong>I confirm I am authorised to register this enterprise for the LEAN Scheme</strong></span>
+          <span>
+            <strong>I confirm that I am authorised to register this enterprise under the LEAN Scheme.</strong>
+          </span>
         </label>
 
         <div class="actions">
           <div class="spacer"></div>
           <button class="btn-ghost" type="button" (click)="back()">Cancel</button>
           <button class="btn-primary" type="button" [disabled]="busy()" (click)="verifyUdyam()">
-            {{ busy() ? 'Validating…' : 'Validate with Udyam' }}
+            {{ busy() ? 'Validating…' : 'Validate' }}
           </button>
         </div>
       </section>

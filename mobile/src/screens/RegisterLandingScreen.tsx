@@ -56,7 +56,6 @@ export default function RegisterLandingScreen({ navigation }: Props): React.JSX.
           <Text style={styles.cardLine}>
             Start a fresh application using your Udyam Registration Number.
           </Text>
-          <Text style={styles.cardLine}>Takes about 10 minutes.</Text>
 
           <PrimaryButton
             label={resuming ? 'Resume your registration' : 'Start New Registration'}
@@ -64,13 +63,13 @@ export default function RegisterLandingScreen({ navigation }: Props): React.JSX.
             style={styles.cta}
           />
 
+          {/* The draft notice stays: it says something about this device that
+              the applicant cannot see anywhere else. */}
           {resuming ? (
             <Text style={styles.resume}>
               A saved draft from this device will be continued. Nothing has been submitted yet.
             </Text>
-          ) : (
-            <Text style={styles.note}>Registration is common for LEAN Bronze, Silver and Gold.</Text>
-          )}
+          ) : null}
         </Card>
 
         <Card>
@@ -146,7 +145,6 @@ const styles = StyleSheet.create({
   cardTitle: { fontSize: type.title, fontWeight: '700', color: colour.text, marginBottom: space(2) },
   cardLine: { fontSize: type.small, color: colour.muted, lineHeight: 21, marginBottom: space(2) },
   cta: { marginTop: space(3) },
-  note: { fontSize: type.tiny, color: colour.muted, marginTop: space(4) },
   resume: { fontSize: type.tiny, color: colour.blue, fontWeight: '600', marginTop: space(4), lineHeight: 17 },
 
   sectionTitle: { fontSize: type.section, fontWeight: '700', color: colour.text, marginBottom: space(3) },

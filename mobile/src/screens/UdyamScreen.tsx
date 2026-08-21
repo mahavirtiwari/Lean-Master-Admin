@@ -129,11 +129,11 @@ export default function UdyamScreen({ navigation }: Props): React.JSX.Element {
               {authorised ? <Text style={styles.tick}>✓</Text> : null}
             </View>
             <Text style={styles.checkText}>
-              I am authorised to register this enterprise for the LEAN Scheme.
+              I confirm that I am authorised to register this enterprise under the LEAN Scheme.
             </Text>
           </Pressable>
 
-          <PrimaryButton label="Validate with Udyam" onPress={validate} busy={busy} />
+          <PrimaryButton label="Validate" onPress={validate} busy={busy} />
         </Card>
       </ScrollView>
 

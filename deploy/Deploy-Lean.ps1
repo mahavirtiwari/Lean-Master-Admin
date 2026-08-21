@@ -294,24 +294,70 @@ Write-Good "Node: $((& node --version))"
 # The ASP.NET Core Module, which is how IIS hands a request to the API. Without
 # it the site returns 500.19 and nothing else works, so this is checked by
 # looking for the module rather than by trusting an installer's exit code.
-$ancmInstalled = Test-Path 'C:\Windows\System32\inetsrv\aspnetcorev2.dll'
+#
+# The bundle registers that module only when IIS is already present AND no
+# reboot is pending. The IIS feature install a moment ago can leave a reboot
+# flag set, and then the bundle installs its runtime but silently skips the
+# module - the "installed, but the DLL is missing" case seen on the first run.
+# So: refuse to guess past a pending reboot, install with a log, and if the
+# module still is not there, hand over the log rather than a bare failure.
+$ancmPath = 'C:\Windows\System32\inetsrv\aspnetcorev2.dll'
 
-if (-not $ancmInstalled) {
-    Install-FromWebInstaller `
-        -Url 'https://aka.ms/dotnet/10.0/dotnet-hosting-win.exe' `
-        -FileName 'dotnet-hosting-win.exe' `
-        -Arguments @('/quiet', '/norestart', 'OPT_NO_RUNTIME=0')
+if (-not (Test-Path $ancmPath)) {
+    $pendingReboot =
+        (Test-Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Component Based Servicing\RebootPending') -or
+        (Test-Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Auto Update\RebootRequired') -or
+        [bool](Get-ItemProperty 'HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager' `
+            -Name PendingFileRenameOperations -ErrorAction SilentlyContinue)
 
+    if ($pendingReboot) {
+        throw @'
+A reboot is pending from the IIS install, and the ASP.NET Core Hosting Bundle
+will not register its IIS module until it clears.
+
+Reboot the server, sign back in, and run this script again. It is idempotent:
+it skips everything already done and resumes here.
+'@
+    }
+
+    $bundleExe = Join-Path $env:TEMP 'dotnet-hosting-win.exe'
+    $bundleLog = Join-Path $env:TEMP 'dotnet-hosting-install.log'
+
+    Write-Note 'Downloading the ASP.NET Core Hosting Bundle (about 115 MB)'
+    Invoke-WebRequest -Uri 'https://aka.ms/dotnet/10.0/dotnet-hosting-win.exe' `
+        -OutFile $bundleExe -UseBasicParsing
+
+    # A truncated download is a real failure mode on a slow link; the bundle is
+    # ~115 MB, so anything much smaller is an error page, not an installer.
+    if ((Get-Item $bundleExe).Length -lt 50MB) {
+        throw "The Hosting Bundle download was incomplete ($((Get-Item $bundleExe).Length) bytes). Re-run to retry."
+    }
+
+    Write-Note 'Installing the Hosting Bundle'
+    $bundle = Start-Process -FilePath $bundleExe `
+        -ArgumentList '/install', '/quiet', '/norestart', '/log', "`"$bundleLog`"" `
+        -Wait -PassThru
+
+    if ($bundle.ExitCode -notin @(0, 1638, 3010)) {
+        $tail = if (Test-Path $bundleLog) { (Get-Content $bundleLog -Tail 15) -join [Environment]::NewLine } else { '(no log written)' }
+        throw "The Hosting Bundle installer exited with code $($bundle.ExitCode).$([Environment]::NewLine)Last lines of ${bundleLog}:$([Environment]::NewLine)$tail"
+    }
+
+    # The module is registered against the running IIS; bounce it so the shim
+    # is in place before anything is asked of it.
     net stop was /y  2>&1 | Out-Null
     net start w3svc  2>&1 | Out-Null
+
+    Remove-Item $bundleExe -Force -ErrorAction SilentlyContinue
 }
 
-if (-not (Test-Path 'C:\Windows\System32\inetsrv\aspnetcorev2.dll')) {
+if (-not (Test-Path $ancmPath)) {
     throw @'
-The ASP.NET Core Hosting Bundle did not install.
+The Hosting Bundle ran but its IIS module is still missing.
 
-Download it by hand from https://dotnet.microsoft.com/download/dotnet/10.0
-("Hosting Bundle", under Windows), install it, then run this script again.
+This almost always means a reboot is needed. Reboot the server, sign back in,
+and run this script again - it resumes from here. If it still fails after a
+reboot, the installer log at %TEMP%\dotnet-hosting-install.log says why.
 '@
 }
 Write-Good 'ASP.NET Core Hosting Bundle present'

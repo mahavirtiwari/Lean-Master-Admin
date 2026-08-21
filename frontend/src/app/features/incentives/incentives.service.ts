@@ -46,7 +46,10 @@ export interface IncentiveRow {
   beneficiaries: number;
   valueDisbursed: number;
   status: string;
-  resourceCount: number;
+  videoCount: number;
+  linkCount: number;
+  documentCount: number;
+  createdOnUtc: string;
 }
 
 export interface IncentiveResource {

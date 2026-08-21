@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 
 import { AuthService } from '../../core/auth.service';
-import { EmptyComponent, PageIntroComponent } from '../../shared/ui';
+import { EmptyComponent } from '../../shared/ui';
 import {
   IncentiveRow,
   IncentiveTotals,
@@ -24,7 +24,7 @@ import {
  */
 @Component({
   selector: 'app-incentives-list',
-  imports: [FormsModule, DecimalPipe, PageIntroComponent, EmptyComponent],
+  imports: [FormsModule, DecimalPipe, EmptyComponent],
   templateUrl: './incentives-list.component.html',
   styleUrl: './incentives.scss',
 })
@@ -42,7 +42,6 @@ export class IncentivesListComponent {
   readonly message = signal<string | null>(null);
 
   readonly tab = signal<'All' | 'Active' | 'Draft'>('All');
-  readonly search = signal('');
   readonly categoryId = signal<number | ''>('');
 
   readonly canCreate = this.auth.can('INCENTIVES', 'create');
@@ -70,7 +69,6 @@ export class IncentivesListComponent {
       .list({
         providerCode: this.profile().code,
         status: this.tab() === 'All' ? undefined : this.tab(),
-        search: this.search() || undefined,
         categoryId: this.categoryId() === '' ? undefined : Number(this.categoryId()),
         pageSize: 100,
       })

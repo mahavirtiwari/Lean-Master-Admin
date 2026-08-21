@@ -1,10 +1,10 @@
-import { DecimalPipe } from '@angular/common';
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 
 import { AuthService } from '../../core/auth.service';
-import { EmptyComponent, PageIntroComponent } from '../../shared/ui';
+import { EmptyComponent } from '../../shared/ui';
 import {
   IncentiveCategory,
   IncentiveRow,
@@ -26,7 +26,7 @@ import {
  */
 @Component({
   selector: 'app-incentives-overview',
-  imports: [FormsModule, DecimalPipe, PageIntroComponent, EmptyComponent],
+  imports: [FormsModule, EmptyComponent],
   templateUrl: './incentives-overview.component.html',
   styleUrl: './incentives.scss',
 })
@@ -34,6 +34,7 @@ export class IncentivesOverviewComponent {
   private readonly api = inject(IncentivesService);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly sanitizer = inject(DomSanitizer);
 
   readonly categories = signal<IncentiveCategory[]>([]);
   readonly rows = signal<IncentiveRow[]>([]);
@@ -47,11 +48,70 @@ export class IncentivesOverviewComponent {
   readonly providerCode = signal('');
 
   readonly canCreate = this.auth.can('INCENTIVES', 'create');
+  readonly canEdit = this.auth.can('INCENTIVES', 'edit');
+  readonly noteOpen = signal(true);
 
   readonly providers = Object.values(PROVIDER_PROFILES);
 
-  /** Which sub-menu a category card leads to when there is no obvious one. */
-  readonly manageRoute = computed(() => (category: IncentiveCategory) => this.routeFor(category));
+  /**
+   * A mark for each of the five boxes.
+   *
+   * Drawn here rather than pulled from an icon set: five glyphs used in one
+   * place do not earn a dependency, and each one has to say what its category
+   * is about — a spanner for upgradation, a flask for testing, a pin for state
+   * benefits, a bank for lending, a parcel for the rest.
+   */
+  private static readonly ICONS: Record<string, string> = {
+    TECH_UPGRAD:
+      '<svg viewBox="0 0 20 20"><path d="M12.4 3.6a3.6 3.6 0 0 0-4.9 4.4l-4 4a1.4 1.4 0 0 0 2 2l4-4a3.6 3.6 0 0 0 4.4-4.9l-2 2-1.5-1.5z" fill="none" stroke="#0F7B45" stroke-width="1.4" stroke-linejoin="round"/></svg>',
+    TESTING_CERT:
+      '<svg viewBox="0 0 20 20"><path d="M8.4 3v4.2L4.8 14a1.6 1.6 0 0 0 1.4 2.4h7.6A1.6 1.6 0 0 0 15.2 14l-3.6-6.8V3z" fill="none" stroke="#0F7B45" stroke-width="1.4" stroke-linejoin="round"/><path d="M7.4 3h5.2" stroke="#0F7B45" stroke-width="1.4" stroke-linecap="round"/></svg>',
+    STATE_BENEFIT:
+      '<svg viewBox="0 0 20 20"><path d="M10 17s5.2-4.6 5.2-8.2a5.2 5.2 0 1 0-10.4 0C4.8 12.4 10 17 10 17z" fill="none" stroke="#0F7B45" stroke-width="1.4" stroke-linejoin="round"/><circle cx="10" cy="8.6" r="1.9" fill="none" stroke="#0F7B45" stroke-width="1.4"/></svg>',
+    FI_BENEFIT:
+      '<svg viewBox="0 0 20 20"><path d="M3.4 8 10 4.2 16.6 8z" fill="none" stroke="#0F7B45" stroke-width="1.4" stroke-linejoin="round"/><path d="M5.4 8.6v5.2M9 8.6v5.2M12.6 8.6v5.2M3.2 15.4h13.6" stroke="#0F7B45" stroke-width="1.4" stroke-linecap="round"/></svg>',
+    OTHERS:
+      '<svg viewBox="0 0 20 20"><path d="M3.6 7.4h12.8v8.2H3.6z" fill="none" stroke="#0F7B45" stroke-width="1.4" stroke-linejoin="round"/><path d="M3.6 7.4 10 4l6.4 3.4M10 7.4v8.2" stroke="#0F7B45" stroke-width="1.4" stroke-linejoin="round"/></svg>',
+  };
+
+  /**
+   * The icons are ours, written above — not markup from a request, which is
+   * why binding them as HTML is safe here and would not be anywhere else.
+   */
+  iconFor(code: string): SafeHtml {
+    return this.sanitizer.bypassSecurityTrustHtml(
+      IncentivesOverviewComponent.ICONS[code] ?? IncentivesOverviewComponent.ICONS['OTHERS'],
+    );
+  }
+
+  /** The segmented control has no room for a category's full name. */
+  shortName(category: IncentiveCategory): string {
+    return category.name
+      .replace('Financial Support for ', '')
+      .replace('Financial Institution Benefits', 'Financial Institution')
+      .replace('State Specific Benefits', 'State Benefits')
+      .replace(' & Product Certification', ' & Certification');
+  }
+
+  pickCategory(id: number | ''): void {
+    this.categoryId.set(id);
+    this.load();
+  }
+
+  formatDate(value: string): string {
+    const date = new Date(value);
+
+    return Number.isNaN(date.getTime())
+      ? '—'
+      : date.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+  }
+
+  toggle(row: IncentiveRow): void {
+    this.api.setStatus(row.incentiveId, row.status !== 'Active').subscribe({
+      next: () => this.load(),
+      error: () => this.error.set('That change could not be saved.'),
+    });
+  }
 
   constructor() {
     this.api.overview().subscribe({
@@ -132,11 +192,4 @@ export class IncentivesOverviewComponent {
     return row.categoryName === 'Others' ? 'others' : 'ministry';
   }
 
-  clearFilters(): void {
-    this.search.set('');
-    this.categoryId.set('');
-    this.activation.set('All');
-    this.providerCode.set('');
-    this.load();
-  }
 }

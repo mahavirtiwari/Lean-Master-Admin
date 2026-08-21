@@ -125,7 +125,10 @@ public sealed class IncentivesController(
                 i.Disbursements.Select(d => d.EnterpriseId).Distinct().Count(),
                 i.Disbursements.Where(d => d.Status == "Disbursed").Sum(d => (decimal?)d.Amount) ?? 0m,
                 i.Status,
-                i.Resources.Count))
+                i.Resources.Count(r => r.Kind == "Video"),
+                i.Resources.Count(r => r.Kind == "Link"),
+                i.Resources.Count(r => r.Kind == "Document"),
+                i.CreatedOnUtc))
             .ToListAsync(ct);
 
         return Ok(new
@@ -615,7 +618,13 @@ public sealed record IncentiveListItemDto(
     int Beneficiaries,
     decimal ValueDisbursed,
     string Status,
-    int ResourceCount);
+
+    // Counted by kind rather than totalled: the list draws one icon per kind
+    // with its own count, which a single total cannot be split back into.
+    int VideoCount,
+    int LinkCount,
+    int DocumentCount,
+    DateTime CreatedOnUtc);
 
 public sealed record IncentiveResourceDto(
     int ResourceId,

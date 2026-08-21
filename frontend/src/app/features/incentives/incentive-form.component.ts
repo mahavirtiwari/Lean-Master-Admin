@@ -4,7 +4,6 @@ import { ActivatedRoute, Router } from '@angular/router';
 
 import { ApiService } from '../../core/api.service';
 import { StateRef } from '../../core/models';
-import { PageIntroComponent } from '../../shared/ui';
 import {
   IncentiveCategory,
   IncentiveDetail,
@@ -88,7 +87,7 @@ const EMPTY: FormState = {
  */
 @Component({
   selector: 'app-incentive-form',
-  imports: [FormsModule, PageIntroComponent],
+  imports: [FormsModule],
   templateUrl: './incentive-form.component.html',
   styleUrl: './incentives.scss',
 })

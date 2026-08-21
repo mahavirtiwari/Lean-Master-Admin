@@ -1,62 +1,103 @@
-<app-page-intro [title]="profile().listTitle" [subtitle]="profile().listSubtitle" />
+<!-- ============================================== page head (29-32-green) -->
+<header class="inc-head">
+  <div>
+    <h2 class="inc-head-title">{{ profile().listTitle }}</h2>
+    <p class="inc-head-sub">{{ profile().listSubtitle }}</p>
+  </div>
+
+  <div class="spacer"></div>
+
+  <button class="inc-ghost" type="button" (click)="exportList()">
+    <svg viewBox="0 0 16 16" aria-hidden="true">
+      <path d="M8 2.4v7.2M5 6.8 8 9.8l3-3" fill="none" stroke="#16211A" stroke-width="1.5"
+            stroke-linecap="round" stroke-linejoin="round" />
+      <path d="M3 11.4v1.2A1.4 1.4 0 0 0 4.4 14h7.2a1.4 1.4 0 0 0 1.4-1.4v-1.2" fill="none"
+            stroke="#16211A" stroke-width="1.5" stroke-linecap="round" />
+    </svg>
+    Export List
+  </button>
+
+  @if (canCreate) {
+    <button class="inc-primary" type="button" (click)="create()">
+      <span class="inc-plus">+</span> Create New Incentive
+    </button>
+  }
+</header>
 
 <div class="stack">
-  <!-- ------------------------------------------------------ the tiles --- -->
+  <!-- ---------------------------------------------------------- the tiles -->
   @if (totals(); as t) {
     <div class="inc-tiles">
       <div class="card inc-tile">
+        <span class="inc-tile-mark tile-green">
+          <svg viewBox="0 0 18 18" aria-hidden="true">
+            <path d="M3 6.6h12v8.2H3z" fill="none" stroke="#0F7B45" stroke-width="1.4" />
+            <path d="M3 6.6 9 3.4l6 3.2M9 6.6v8.2" fill="none" stroke="#0F7B45" stroke-width="1.4" />
+          </svg>
+        </span>
         <div class="inc-tile-key">ACTIVE INCENTIVES</div>
         <div class="inc-tile-val">{{ t.active }}</div>
       </div>
+
       <div class="card inc-tile">
+        <span class="inc-tile-mark tile-amber">
+          <svg viewBox="0 0 18 18" aria-hidden="true">
+            <path d="M4.4 2.6h5.4l3.8 3.8v9H4.4z" fill="none" stroke="#A16207" stroke-width="1.4" />
+            <path d="M9.8 2.6v3.8h3.8" fill="none" stroke="#A16207" stroke-width="1.4" />
+          </svg>
+        </span>
         <div class="inc-tile-key">DRAFT</div>
         <div class="inc-tile-val">{{ t.draft }}</div>
       </div>
+
       <div class="card inc-tile">
+        <span class="inc-tile-mark tile-green">
+          <svg viewBox="0 0 18 18" aria-hidden="true">
+            <circle cx="7" cy="6.4" r="2.6" fill="none" stroke="#0F7B45" stroke-width="1.4" />
+            <path d="M2.6 14.4c0-2.4 2-4 4.4-4s4.4 1.6 4.4 4M12.4 5.2a2.2 2.2 0 0 1 0 4.2M13.6 14.4c0-1.6-.5-2.7-1.3-3.4"
+                  fill="none" stroke="#0F7B45" stroke-width="1.4" stroke-linecap="round" />
+          </svg>
+        </span>
         <div class="inc-tile-key">BENEFICIARY MSMEs</div>
         <div class="inc-tile-val">{{ t.beneficiaries | number }}</div>
       </div>
+
       <div class="card inc-tile">
+        <span class="inc-tile-mark tile-blue">
+          <svg viewBox="0 0 18 18" aria-hidden="true">
+            <rect x="2.4" y="4.4" width="13.2" height="9.2" rx="1.6" fill="none" stroke="#1B4F8A" stroke-width="1.4" />
+            <path d="M2.4 7.6h13.2" stroke="#1B4F8A" stroke-width="1.4" />
+          </svg>
+        </span>
         <div class="inc-tile-key">VALUE DISBURSED</div>
-        <div class="inc-tile-val">₹{{ disbursedCrore() | number: '1.0-2' }} Cr</div>
+        <div class="inc-tile-val">₹{{ disbursedCrore() | number: '1.0-1' }} Cr</div>
       </div>
     </div>
   }
 
-  <p class="inc-note">{{ profile().note }}</p>
+  <div class="inc-note inc-note-slim">
+    <span class="inc-note-mark">
+      <svg viewBox="0 0 18 18" aria-hidden="true">
+        <circle cx="9" cy="9" r="8" fill="none" stroke="#1B4F8A" stroke-width="1.5" />
+        <path d="M9 8v5M9 5.2v.1" stroke="#1B4F8A" stroke-width="1.7" stroke-linecap="round" />
+      </svg>
+    </span>
+    <div>{{ profile().note }}</div>
+  </div>
 
-  <!-- ---------------------------------------------- tabs and toolbar --- -->
-  <section class="card inc-filters">
-    <div class="inc-tabs">
-      <button type="button" [class.is-on]="tab() === 'All'" (click)="setTab('All')">All</button>
-      <button type="button" [class.is-on]="tab() === 'Active'" (click)="setTab('Active')">Active</button>
-      <button type="button" [class.is-on]="tab() === 'Draft'" (click)="setTab('Draft')">Draft</button>
-    </div>
-
-    <input
-      class="input inc-search"
-      type="search"
-      name="search"
-      placeholder="Search incentives..."
-      [ngModel]="search()"
-      (ngModelChange)="search.set($event)"
-      (keyup.enter)="load()"
-    />
-
-    <div class="spacer"></div>
-
-    <button class="btn btn-secondary" type="button" (click)="exportList()">Export List</button>
-
-    @if (canCreate) {
-      <button class="btn btn-primary" type="button" (click)="create()">Create New Incentive</button>
-    }
-  </section>
-
-  <!-- ------------------------------------------------------- the list --- -->
+  <!-- ----------------------------------------------------------- the list -->
   <section class="card">
     <header class="inc-table-head">
-      <h3 class="card-title">{{ profile().name }} Incentive Schemes</h3>
-      <span class="chip chip-blue">{{ rows().length }} incentives</span>
+      <h3 class="inc-table-title">{{ profile().name }} Incentive Schemes</h3>
+      <span class="chip chip-blue">{{ totals()?.total || 0 }} incentives</span>
+
+      <div class="spacer"></div>
+
+      <div class="inc-seg">
+        <button type="button" [class.is-on]="tab() === 'All'" (click)="setTab('All')">All</button>
+        <button type="button" [class.is-on]="tab() === 'Active'" (click)="setTab('Active')">Active</button>
+        <button type="button" [class.is-on]="tab() === 'Draft'" (click)="setTab('Draft')">Draft</button>
+      </div>
     </header>
 
     @if (loading()) {
@@ -68,7 +109,7 @@
       />
     } @else {
       <div class="table-wrap">
-        <table class="table">
+        <table class="inc-table">
           <thead>
             <tr>
               <th class="w-narrow">S.No</th>
@@ -85,15 +126,7 @@
             @for (row of rows(); track row.incentiveId; let i = $index) {
               <tr>
                 <td class="muted">{{ i + 1 }}</td>
-                <td class="strong">
-                  {{ row.name }}
-                  @if (row.categoryName) {
-                    <div class="inc-cat-partners">
-                      <span class="inc-dot" [style.background]="row.categoryAccent || '#5D6B62'"></span>
-                      {{ row.categoryName }}
-                    </div>
-                  }
-                </td>
+                <td class="strong">{{ row.name }}</td>
                 <td>
                   <span class="badge" [class.badge-gold]="row.activationLevel === 'Gold'">
                     {{ row.activationLevel }}
@@ -101,16 +134,18 @@
                 </td>
                 <td>{{ row.stakeholder }}</td>
                 <td class="num">{{ row.beneficiaries | number }}</td>
-                <td class="num">₹{{ row.valueDisbursed / 10000000 | number: '1.0-2' }} Cr</td>
+                <td class="num">₹{{ row.valueDisbursed / 10000000 | number: '1.0-1' }} Cr</td>
                 <td>
-                  <span class="pill" [class.pill-on]="row.status === 'Active'">{{ row.status }}</span>
+                  <span class="pill" [class.pill-on]="row.status === 'Active'"
+                        [class.pill-draft]="row.status === 'Draft'">{{ row.status }}</span>
                 </td>
                 @if (canEdit) {
                   <td class="nowrap">
                     <button class="link-btn" type="button" (click)="edit(row)">Edit</button>
                     <span class="sep">|</span>
-                    <button class="link-btn link-danger" type="button" (click)="toggle(row)">
-                      {{ row.status === 'Active' ? 'Disable' : 'Enable' }}
+                    <button class="link-btn" [class.link-danger]="row.status === 'Active'"
+                            [class.link-go]="row.status !== 'Active'" type="button" (click)="toggle(row)">
+                      {{ row.status === 'Active' ? 'Disable' : 'Publish' }}
                     </button>
                   </td>
                 }
@@ -120,7 +155,11 @@
         </table>
       </div>
 
-      <p class="inc-state">Showing {{ rows().length }} of {{ totals()?.total || rows().length }} incentives</p>
+      <footer class="inc-table-foot">
+        <span class="inc-showing">
+          Showing 1-{{ rows().length }} of {{ totals()?.total || rows().length }} incentives
+        </span>
+      </footer>
     }
 
     @if (message(); as note) { <p class="inc-state">{{ note }}</p> }

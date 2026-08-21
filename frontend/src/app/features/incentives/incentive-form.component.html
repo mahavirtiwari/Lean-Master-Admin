@@ -1,28 +1,50 @@
-<app-page-intro
-  [title]="editing() ? 'Edit Incentive' : 'Create New Incentive'"
-  [subtitle]="profile().createSubtitle"
-/>
+<!-- ============================================== page head (37-40-green) -->
+<header class="inc-head">
+  <div>
+    <div class="inc-head-row">
+      <h2 class="inc-head-title">{{ editing() ? 'Edit Incentive' : 'Create New Incentive' }}</h2>
+      <span class="chip chip-blue">{{ profile().name }}</span>
+    </div>
+    <p class="inc-head-sub">{{ profile().createSubtitle }}</p>
+  </div>
+
+  <div class="spacer"></div>
+
+  <button class="inc-ghost" type="button" [disabled]="saving()" (click)="save('Draft')">Save as Draft</button>
+  <button class="inc-primary" type="button" [disabled]="saving()" (click)="save('Active')">
+    {{ saving() ? 'Saving…' : 'Save Incentive' }}
+  </button>
+</header>
 
 <div class="stack">
-  <p class="inc-note">{{ profile().note }}</p>
+  <div class="inc-note inc-note-slim">
+    <span class="inc-note-mark">
+      <svg viewBox="0 0 18 18" aria-hidden="true">
+        <circle cx="9" cy="9" r="8" fill="none" stroke="#1B4F8A" stroke-width="1.5" />
+        <path d="M9 8v5M9 5.2v.1" stroke="#1B4F8A" stroke-width="1.7" stroke-linecap="round" />
+      </svg>
+    </span>
+    <div>{{ profile().note }}</div>
+  </div>
 
-  <div class="inc-form">
-    <!-- ================================================ left: the scheme -->
-    <div class="stack">
-      <section class="card card-pad">
+  <!-- One card, two columns, a rule between them — as the artboards draw it. -->
+  <section class="card inc-form-card">
+    <div class="inc-form">
+      <!-- ------------------------------------------- left: the scheme --- -->
+      <div>
         <h3 class="inc-section">INCENTIVE DETAILS</h3>
 
         <div class="inc-fields">
           <div class="field inc-span">
             <label class="field-label" for="name">INCENTIVE TITLE<span class="req">*</span></label>
             <input id="name" class="input" type="text" name="name"
-                   [placeholder]="'e.g. ' + profile().ownerPlaceholder"
+                   placeholder="e.g. CLCS-TUS Capital Subsidy Scheme"
                    [ngModel]="form().name" (ngModelChange)="patch('name', $event)" />
           </div>
 
           <div class="field inc-span">
             <label class="field-label" for="description">DESCRIPTION<span class="req">*</span></label>
-            <textarea id="description" class="input" rows="4" name="description"
+            <textarea id="description" class="input" rows="3" name="description"
                       placeholder="Describe eligibility, quantum of assistance, application route and fiscal scope of this scheme."
                       [ngModel]="form().description"
                       (ngModelChange)="patch('description', $event)"></textarea>
@@ -48,16 +70,24 @@
 
           <div class="field inc-span">
             <label class="field-label">ACTIVATION LEVEL<span class="req">*</span></label>
-            <div class="inc-levels">
-              <button class="inc-level" type="button" disabled>Bronze</button>
+
+            <div class="inc-radios">
+              <label class="inc-radio is-off">
+                <input type="radio" name="activation" disabled />
+                <span>Bronze</span>
+              </label>
+
               @for (level of levels; track level) {
-                <button class="inc-level" type="button"
-                        [class.is-on]="form().activationLevel === level"
-                        (click)="patch('activationLevel', level)">
-                  {{ level === 'Both' ? 'Both (Silver & Gold)' : level }}
-                </button>
+                <label class="inc-radio">
+                  <input type="radio" name="activation" [checked]="form().activationLevel === level"
+                         (change)="patch('activationLevel', level)" />
+                  <span [class.is-picked]="form().activationLevel === level">
+                    {{ level === 'Both' ? 'Both (Silver & Gold)' : level }}
+                  </span>
+                </label>
               }
             </div>
+
             <p class="inc-hint">
               Bronze is disabled: the scheme activates incentives on Silver or Gold only.
             </p>
@@ -136,45 +166,8 @@
             }
           }
         </div>
-      </section>
 
-      <section class="card card-pad">
-        <h3 class="inc-section">PUBLICATION &amp; ELIGIBILITY</h3>
-
-        <div class="inc-fields">
-          <div class="field">
-            <label class="field-label" for="from">EFFECTIVE FROM</label>
-            <input id="from" class="input" type="date" name="from"
-                   [ngModel]="form().validFrom" (ngModelChange)="patch('validFrom', $event)" />
-          </div>
-          <div class="field">
-            <label class="field-label" for="till">EFFECTIVE TILL</label>
-            <input id="till" class="input" type="date" name="till"
-                   [ngModel]="form().validTo" (ngModelChange)="patch('validTo', $event)" />
-          </div>
-        </div>
-
-        <div class="inc-switches">
-          <label class="inc-switch">
-            <input type="checkbox" [checked]="form().visibleBeforeUnlock"
-                   (change)="patch('visibleBeforeUnlock', $any($event.target).checked)" />
-            Visible to MSMEs before unlock
-          </label>
-          <label class="inc-switch">
-            <input type="checkbox" [checked]="form().notifyOnPublish"
-                   (change)="patch('notifyOnPublish', $any($event.target).checked)" />
-            Notify eligible MSMEs on publish
-          </label>
-          <label class="inc-switch">
-            <input type="checkbox" [checked]="form().requireClaimDocument"
-                   (change)="patch('requireClaimDocument', $any($event.target).checked)" />
-            Require document upload on claim
-          </label>
-        </div>
-      </section>
-
-      <section class="card card-pad">
-        <h3 class="inc-section">NODAL CONTACT</h3>
+        <h3 class="inc-section inc-section-gap">NODAL CONTACT</h3>
 
         <div class="inc-fields">
           <div class="field">
@@ -193,7 +186,7 @@
           <div class="field">
             <label class="field-label" for="mobile">MOBILE NUMBER<span class="req">*</span></label>
             <input id="mobile" class="input" type="tel" maxlength="10" inputmode="numeric"
-                   name="mobile" placeholder="10-digit mobile number"
+                   name="mobile" placeholder="+91 Enter mobile number"
                    [ngModel]="form().contactMobile" (ngModelChange)="patch('contactMobile', $event)" />
           </div>
           <div class="field">
@@ -203,12 +196,10 @@
                    [ngModel]="form().contactEmail" (ngModelChange)="patch('contactEmail', $event)" />
           </div>
         </div>
-      </section>
-    </div>
+      </div>
 
-    <!-- ============================================ right: the resources -->
-    <div class="stack">
-      <section class="card card-pad">
+      <!-- --------------------------------------- right: what is attached -->
+      <div class="inc-form-side">
         <h3 class="inc-section">ATTACH RESOURCES</h3>
 
         <div class="field">
@@ -227,50 +218,102 @@
 
         <label class="field-label" for="file">UPLOAD DOCUMENT (GUIDELINES / GAZETTE)</label>
         <label class="inc-drop" for="file">
-          <div class="inc-drop-title">Drag &amp; drop or click to upload</div>
-          <div class="inc-drop-sub">PDF, DOCX · Max 10 MB per file</div>
+          <span class="inc-drop-mark">
+            <svg viewBox="0 0 20 20" aria-hidden="true">
+              <path d="M5.6 13.4a3 3 0 0 1 .5-6 4.2 4.2 0 0 1 8 .8 2.7 2.7 0 0 1-.4 5.2"
+                    fill="none" stroke="#1B4F8A" stroke-width="1.4" stroke-linecap="round" />
+              <path d="M10 9.4v6M7.6 11.6 10 9.2l2.4 2.4" fill="none" stroke="#1B4F8A"
+                    stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </span>
+          <span>
+            <span class="inc-drop-title">Drag &amp; drop or click to upload</span>
+            <span class="inc-drop-sub">PDF, DOCX · Max 10 MB per file</span>
+          </span>
         </label>
         <input id="file" type="file" hidden accept=".pdf,.doc,.docx" (change)="chooseFile($event)" />
 
         @if (resources().length > 0) {
-          <label class="field-label">ATTACHED RESOURCES ({{ resources().length }})</label>
+          <div class="inc-res-box">
+            <div class="field-label">ATTACHED RESOURCES ({{ resources().length }})</div>
 
-          @for (resource of resources(); track resource.resourceId) {
-            <div class="inc-res">
-              <span class="badge">{{ resource.kind }}</span>
-              <span class="inc-res-title">{{ resource.title }}</span>
+            @for (resource of resources(); track resource.resourceId) {
+              <div class="inc-res">
+                <span class="inc-res-kind">{{ resource.kind }}</span>
 
-              @if (resource.kind === 'Document') {
-                <a class="link-btn" [href]="downloadUrl(resource)" target="_blank" rel="noopener">Open</a>
-              } @else if (resource.url) {
-                <a class="link-btn" [href]="resource.url" target="_blank" rel="noopener">Open</a>
-              }
+                @if (resource.kind === 'Document') {
+                  <a class="inc-res-title" [href]="downloadUrl(resource)" target="_blank" rel="noopener">
+                    {{ resource.title }}
+                  </a>
+                } @else {
+                  <a class="inc-res-title" [href]="resource.url" target="_blank" rel="noopener">
+                    {{ resource.url }}
+                  </a>
+                }
 
-              <button class="link-btn link-danger" type="button" (click)="removeResource(resource)">
-                Remove
-              </button>
-            </div>
-          }
+                <button class="inc-res-del" type="button" title="Remove"
+                        (click)="removeResource(resource)">×</button>
+              </div>
+            }
+          </div>
         }
-      </section>
+
+        <h3 class="inc-section inc-section-gap">PUBLICATION &amp; ELIGIBILITY</h3>
+
+        <div class="inc-fields">
+          <div class="field">
+            <label class="field-label" for="from">EFFECTIVE FROM</label>
+            <input id="from" class="input" type="date" name="from"
+                   [ngModel]="form().validFrom" (ngModelChange)="patch('validFrom', $event)" />
+          </div>
+          <div class="field">
+            <label class="field-label" for="till">EFFECTIVE TILL</label>
+            <input id="till" class="input" type="date" name="till"
+                   [ngModel]="form().validTo" (ngModelChange)="patch('validTo', $event)" />
+          </div>
+        </div>
+
+        <div class="inc-switches">
+          <label class="inc-switch">
+            <span>Visible to MSMEs before unlock</span>
+            <span class="inc-switch-state">{{ form().visibleBeforeUnlock ? 'Yes' : 'No' }}</span>
+            <input type="checkbox" [checked]="form().visibleBeforeUnlock"
+                   (change)="patch('visibleBeforeUnlock', $any($event.target).checked)" />
+            <span class="inc-toggle"></span>
+          </label>
+
+          <label class="inc-switch">
+            <span>Notify eligible MSMEs on publish</span>
+            <span class="inc-switch-state">{{ form().notifyOnPublish ? 'Yes' : 'No' }}</span>
+            <input type="checkbox" [checked]="form().notifyOnPublish"
+                   (change)="patch('notifyOnPublish', $any($event.target).checked)" />
+            <span class="inc-toggle"></span>
+          </label>
+
+          <label class="inc-switch">
+            <span>Require document upload on claim</span>
+            <span class="inc-switch-state">{{ form().requireClaimDocument ? 'Yes' : 'No' }}</span>
+            <input type="checkbox" [checked]="form().requireClaimDocument"
+                   (change)="patch('requireClaimDocument', $any($event.target).checked)" />
+            <span class="inc-toggle"></span>
+          </label>
+        </div>
+      </div>
     </div>
-  </div>
 
-  <div class="inc-form-foot">
-    <span class="inc-required">
-      All fields marked * are mandatory. Saved drafts are visible only to Master Administrators.
-    </span>
+    <footer class="inc-form-foot">
+      <span class="inc-required">
+        All fields marked * are mandatory. Saved drafts are visible only to Master Administrators.
+      </span>
 
-    <div class="spacer"></div>
+      <div class="spacer"></div>
 
-    <button class="btn btn-secondary" type="button" (click)="cancel()">Cancel</button>
-    <button class="btn btn-secondary" type="button" [disabled]="saving()" (click)="save('Draft')">
-      Save as Draft
-    </button>
-    <button class="btn btn-primary" type="button" [disabled]="saving()" (click)="save('Active')">
-      {{ saving() ? 'Saving…' : 'Save Incentive' }}
-    </button>
-  </div>
+      <button class="inc-ghost" type="button" (click)="cancel()">Cancel</button>
+      <button class="inc-primary" type="button" [disabled]="saving()" (click)="save('Active')">
+        {{ saving() ? 'Saving…' : 'Save Incentive' }}
+      </button>
+    </footer>
+  </section>
 
   @if (message(); as note) { <p class="inc-state">{{ note }}</p> }
   @if (error(); as bad) { <p class="inc-error">{{ bad }}</p> }

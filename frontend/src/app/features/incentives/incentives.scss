@@ -1,11 +1,73 @@
-// Incentives — shared by the overview, the four provider lists and the form.
+// Incentives — the overview, the four provider lists and the create form.
 //
 // One stylesheet for the module because the three screens are the same screen
-// in three depths: the same cards, the same table, the same badges. Splitting
-// it would mean maintaining the category accent in three places.
+// at three depths: the same cards, the same table, the same badges. Sizes and
+// colours are read off the artboards (12, 29-32, 37-40) rather than guessed.
+
+// ------------------------------------------------------------- page head ---
+// The list and the form carry their own heading inside the content area, above
+// the cards and below the shell's breadcrumb bar — that is where the artboards
+// put the title, its subtitle and the actions.
+.inc-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 20px;
+
+  .spacer { flex: 1; }
+}
+
+.inc-head-row { display: flex; align-items: center; gap: 12px; }
+
+.inc-head-title {
+  margin: 0;
+  font-size: 21px;
+  font-weight: 700;
+  color: #16211a;
+}
+
+.inc-head-sub { margin: 6px 0 0; font-size: 11.6px; color: #5d6b62; }
+
+// ---------------------------------------------------------------- buttons ---
+.inc-primary,
+.inc-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 38px;
+  padding: 0 18px;
+  border-radius: 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+
+  svg { width: 15px; height: 15px; flex: none; }
+
+  &:disabled { opacity: 0.55; cursor: default; }
+}
+
+.inc-primary {
+  background: #1b4f8a;
+  border: 1px solid #1b4f8a;
+  color: #fff;
+
+  &:hover:not(:disabled) { background: #163f6f; }
+}
+
+.inc-ghost {
+  background: #fff;
+  border: 1px solid #c6d3cb;
+  color: #16211a;
+
+  &:hover:not(:disabled) { background: #f7faf8; }
+}
+
+.inc-plus { font-size: 15px; line-height: 1; font-weight: 700; }
 
 // ------------------------------------------------------------- filter bar ---
-.inc-filters {
+// 1132 x 62 white bar: search, three selects, then the create button.
+.inc-bar {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -13,24 +75,95 @@
   padding: 13px 16px;
 
   .spacer { flex: 1; }
-
-  .input { height: 36px; }
 }
 
-.inc-search { min-width: 210px; flex: 1 1 210px; max-width: 320px; }
+.inc-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1 1 190px;
+  max-width: 240px;
 
-// The rule the whole module turns on, in the blue the artboards use for it.
+  svg {
+    position: absolute;
+    left: 11px;
+    width: 15px;
+    height: 15px;
+    pointer-events: none;
+  }
+
+  input {
+    width: 100%;
+    height: 36px;
+    padding: 0 12px 0 33px;
+    border: 1px solid #c6d3cb;
+    border-radius: 6px;
+    background: #fff;
+    font: inherit;
+    font-size: 12px;
+    color: #16211a;
+
+    &::placeholder { color: #93a29a; }
+    &:focus { outline: 2px solid #c3d8ee; outline-offset: -1px; }
+  }
+}
+
+// The artboard's select: a hairline box with its own chevron, sized to content.
+.inc-select {
+  height: 36px;
+  padding: 0 34px 0 13px;
+  border: 1px solid #c6d3cb;
+  border-radius: 6px;
+  background: #fff
+    url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 6 6.5l5-5' fill='none' stroke='%235D6B62' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")
+    no-repeat right 12px center / 11px;
+  appearance: none;
+  font: inherit;
+  font-size: 12px;
+  color: #47554c;
+  cursor: pointer;
+
+  &:focus { outline: 2px solid #c3d8ee; outline-offset: -1px; }
+}
+
+// ------------------------------------------------------------ note banner ---
 .inc-note {
-  margin: 0;
-  padding: 14px 18px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
   background: #eff4fa;
   border: 1px solid #c3d8ee;
   border-radius: 7px;
   font-size: 11.6px;
-  line-height: 1.6;
+  line-height: 1.55;
   color: #47554c;
 
   strong { color: #16211a; }
+}
+
+.inc-note-slim { align-items: center; }
+
+.inc-note-mark {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+
+  svg { width: 16px; height: 16px; }
+}
+
+.inc-note-close {
+  margin-left: auto;
+  border: 0;
+  background: none;
+  font-size: 17px;
+  line-height: 1;
+  color: #8a9a92;
+  cursor: pointer;
+
+  &:hover { color: #47554c; }
 }
 
 // --------------------------------------------------------- category cards ---
@@ -43,12 +176,12 @@
   @media (max-width: 760px) { grid-template-columns: minmax(0, 1fr); }
 }
 
-// 366 x 118 on the artboard, with a 3.4px bar of the category's own colour
-// down the left edge — the one thing that identifies a category at a glance,
-// here and on the MSME dashboard.
+// 366 x 118, with a 3.4px bar of the category's own colour down the left edge —
+// the one thing that identifies a category at a glance, here and on the MSME
+// dashboard.
 .inc-cat {
   position: relative;
-  padding: 16px 18px 14px 22px;
+  padding: 16px 18px 12px 22px;
   overflow: hidden;
 
   &::before {
@@ -63,15 +196,20 @@
 .inc-cat-head {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
+
+  .badge { margin-left: auto; }
 }
 
 .inc-cat-mark {
+  display: grid;
+  place-items: center;
   width: 28px;
   height: 28px;
   border-radius: 7px;
   background: #edf2ef;
+
+  svg { width: 17px; height: 17px; }
 }
 
 .inc-cat-title {
@@ -80,6 +218,7 @@
   font-weight: 700;
   color: #16211a;
   line-height: 1.35;
+  min-height: 34px;
 }
 
 .inc-cat-count { margin: 6px 0 0; font-size: 10.4px; color: #5d6b62; }
@@ -88,12 +227,14 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-top: 12px;
-
-  .link-btn { margin-left: auto; }
+  margin-top: 11px;
+  padding-top: 10px;
+  border-top: 1px solid #edf2ef;
 }
 
 .inc-cat-partners {
+  flex: 1;
+  min-width: 0;
   font-size: 10px;
   color: #5d6b62;
   overflow: hidden;
@@ -101,7 +242,21 @@
   white-space: nowrap;
 }
 
-// ---------------------------------------------------------------- badges ---
+// Carries the card's accent, so the five boxes stay distinguishable.
+.inc-manage {
+  flex: none;
+  border: 0;
+  background: none;
+  padding: 0;
+  font-size: 10.8px;
+  font-weight: 600;
+  color: var(--accent, #5d6b62);
+  cursor: pointer;
+
+  &:hover { text-decoration: underline; }
+}
+
+// ----------------------------------------------------------------- badges ---
 .badge {
   display: inline-block;
   padding: 2px 10px;
@@ -122,7 +277,7 @@
 
 .chip {
   display: inline-block;
-  padding: 3px 10px;
+  padding: 3px 11px;
   border-radius: 999px;
   font-size: 10.5px;
   font-weight: 600;
@@ -132,7 +287,7 @@
 
 .pill {
   display: inline-block;
-  padding: 2px 10px;
+  padding: 2px 11px;
   border-radius: 999px;
   background: #f0f2f1;
   border: 1px solid #dee7e1;
@@ -142,53 +297,22 @@
 }
 
 .pill-on { background: #e6f5ec; border-color: #bfe3cd; color: #0f7b45; }
+.pill-draft { background: #fefce8; border-color: #fde68a; color: #a16207; }
 
-.inc-dot {
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  margin-right: 7px;
-  vertical-align: middle;
-}
-
-// ----------------------------------------------------------------- table ---
-.inc-table-head {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 16px 18px 12px;
-
-  .card-title { margin: 0; }
-  .spacer { flex: 1; }
-}
-
-.inc-stat {
-  font-size: 11px;
-  color: #5d6b62;
-
-  b { color: #16211a; font-weight: 700; }
-}
-
-.is-clickable { cursor: pointer; }
-.is-clickable:hover { background: #f7faf8; }
-
-.inc-state { margin: 0; padding: 24px 18px; font-size: 12px; color: #5d6b62; }
-.inc-error { margin: 0; padding: 12px 18px 18px; font-size: 11.6px; color: #b91c1c; }
-
-// ------------------------------------------------------- list stat tiles ---
+// ------------------------------------------------------------ stat tiles ---
 .inc-tiles {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 16px;
 
-  @media (max-width: 900px) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  @media (max-width: 980px) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 .inc-tile {
   padding: 16px 18px;
 
   .inc-tile-key {
+    margin-top: 12px;
     font-size: 10.2px;
     font-weight: 600;
     letter-spacing: 0.4px;
@@ -196,31 +320,45 @@
   }
 
   .inc-tile-val {
-    margin-top: 8px;
+    margin-top: 6px;
     font-size: 21px;
     font-weight: 700;
     color: #16211a;
   }
 }
 
-// ------------------------------------------------------------------ tabs ---
-.inc-tabs {
+.inc-tile-mark {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+
+  svg { width: 17px; height: 17px; }
+}
+
+.tile-green { background: #e6f5ec; }
+.tile-amber { background: #fefce8; }
+.tile-blue { background: #eff4fa; }
+
+// ------------------------------------------------------- segmented tabs ---
+.inc-seg {
   display: flex;
-  gap: 4px;
-  padding: 4px;
+  gap: 2px;
+  padding: 3px;
   background: #edf2ef;
   border: 1px solid #dee7e1;
   border-radius: 7px;
-  width: fit-content;
 
   button {
-    padding: 5px 16px;
+    padding: 5px 14px;
     border: 0;
     border-radius: 5px;
     background: transparent;
     font-size: 11.2px;
     font-weight: 500;
     color: #5d6b62;
+    white-space: nowrap;
     cursor: pointer;
   }
 
@@ -232,115 +370,321 @@
   }
 }
 
-// ------------------------------------------------------------------ form ---
-.inc-form {
-  display: grid;
-  grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
-  gap: 20px;
-  align-items: start;
+// ------------------------------------------------------------------ table ---
+.inc-table-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 18px;
 
-  @media (max-width: 1080px) { grid-template-columns: minmax(0, 1fr); }
+  .spacer { flex: 1; }
 }
 
+.inc-table-title { margin: 0; font-size: 14.5px; font-weight: 700; color: #16211a; }
+
+.inc-table {
+  width: 100%;
+  border-collapse: collapse;
+
+  th {
+    padding: 9px 14px;
+    background: #f7faf8;
+    border-top: 1px solid #edf2ef;
+    border-bottom: 1px solid #edf2ef;
+    font-size: 10.4px;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+    color: #5d6b62;
+    text-align: left;
+    white-space: nowrap;
+  }
+
+  td {
+    padding: 11px 14px;
+    border-bottom: 1px solid #f2f6f4;
+    font-size: 11.4px;
+    color: #47554c;
+    vertical-align: middle;
+  }
+
+  tbody tr:last-child td { border-bottom: 0; }
+  tbody tr:hover { background: #fafcfb; }
+
+  .strong { font-size: 11.5px; font-weight: 600; color: #16211a; }
+  .muted { color: #5d6b62; }
+  .num { text-align: right; }
+  .nowrap { white-space: nowrap; }
+  .w-narrow { width: 52px; }
+}
+
+.inc-res-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.inc-res-tick {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: #5d6b62;
+
+  svg { width: 13px; height: 13px; }
+}
+
+.link-btn {
+  border: 0;
+  background: none;
+  padding: 0;
+  font-size: 11.2px;
+  font-weight: 600;
+  color: #1b4f8a;
+  cursor: pointer;
+
+  &:hover { text-decoration: underline; }
+}
+
+.link-danger { color: #b91c1c; }
+.link-go { color: #0f7b45; }
+.sep { margin: 0 7px; color: #c6d3cb; }
+
+.inc-table-foot {
+  display: flex;
+  align-items: center;
+  padding: 14px 18px;
+}
+
+.inc-showing { font-size: 11.4px; color: #5d6b62; }
+
+.inc-state { margin: 0; padding: 22px 18px; font-size: 12px; color: #5d6b62; }
+.inc-error { margin: 0; padding: 12px 18px 18px; font-size: 11.6px; color: #b91c1c; }
+
+// ------------------------------------------------------------------- form ---
+.inc-form-card { padding: 0; }
+
+// Two columns with a rule between them, as the artboards draw it.
+.inc-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  align-items: start;
+
+  > div { padding: 20px 22px; }
+
+  @media (max-width: 1080px) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.inc-form-side {
+  border-left: 1px solid #edf2ef;
+
+  @media (max-width: 1080px) {
+    border-left: 0;
+    border-top: 1px solid #edf2ef;
+  }
+}
+
+// A short green bar, then the section's name — the artboards' section mark.
 .inc-section {
-  margin: 0 0 16px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0 0 15px;
   font-size: 10.4px;
   font-weight: 700;
   letter-spacing: 0.5px;
   color: #0f7b45;
+
+  &::before {
+    content: '';
+    width: 3px;
+    height: 12px;
+    border-radius: 2px;
+    background: #0f7b45;
+  }
 }
+
+.inc-section-gap { margin-top: 26px; padding-top: 20px; border-top: 1px solid #edf2ef; }
 
 .inc-fields {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px 18px;
+  gap: 15px 18px;
 
   @media (max-width: 700px) { grid-template-columns: minmax(0, 1fr); }
 }
 
 .inc-span { grid-column: 1 / -1; }
 
-.inc-levels {
+// ------------------------------------------------------- activation level ---
+.inc-radios {
   display: flex;
-  gap: 10px;
   flex-wrap: wrap;
+  gap: 22px;
+  padding: 4px 0 2px;
 }
 
-.inc-level {
-  padding: 7px 16px;
-  border: 1px solid #c6d3cb;
-  border-radius: 6px;
-  background: #fff;
+.inc-radio {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   font-size: 11.4px;
   color: #47554c;
   cursor: pointer;
 
-  &.is-on {
-    border-color: #1b4f8a;
-    background: #eff4fa;
-    font-weight: 600;
-    color: #16211a;
-  }
+  input { width: 15px; height: 15px; accent-color: #1b4f8a; }
 
-  &:disabled {
-    color: #c6d3cb;
-    cursor: not-allowed;
-    background: #fafcfb;
-  }
+  .is-picked { font-weight: 600; color: #16211a; }
+
+  &.is-off { color: #c6d3cb; cursor: not-allowed; }
 }
 
 .inc-hint { margin: 8px 0 0; font-size: 10px; color: #5d6b62; }
 
+// ----------------------------------------------------------- attachments ---
 .inc-drop {
-  padding: 22px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
   border: 1.5px dashed #c6d3cb;
   border-radius: 8px;
   background: #fafcfb;
-  text-align: center;
   cursor: pointer;
 
   &:hover { border-color: #1b4f8a; background: #f7faff; }
+}
 
-  .inc-drop-title { font-size: 11.4px; font-weight: 600; color: #16211a; }
-  .inc-drop-sub { margin-top: 5px; font-size: 9.6px; color: #5d6b62; }
+.inc-drop-mark {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: #eff4fa;
+
+  svg { width: 18px; height: 18px; }
+}
+
+.inc-drop-title { display: block; font-size: 11.4px; font-weight: 600; color: #16211a; }
+.inc-drop-sub { display: block; margin-top: 3px; font-size: 9.6px; color: #5d6b62; }
+
+.inc-res-box {
+  padding: 14px 16px;
+  border: 1px solid #dee7e1;
+  border-radius: 8px;
+  background: #fafcfb;
 }
 
 .inc-res {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 9px 0;
-  border-bottom: 1px solid #edf2ef;
+  padding: 8px 0 0;
   font-size: 10.8px;
   color: #47554c;
-
-  &:last-child { border-bottom: 0; }
-
-  .inc-res-title { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 }
 
+.inc-res-kind {
+  flex: none;
+  padding: 1px 8px;
+  border-radius: 4px;
+  background: #edf2ef;
+  font-size: 9.4px;
+  font-weight: 600;
+  color: #5d6b62;
+}
+
+.inc-res-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #47554c;
+  text-decoration: none;
+
+  &:hover { text-decoration: underline; }
+}
+
+.inc-res-del {
+  flex: none;
+  border: 0;
+  background: none;
+  font-size: 15px;
+  line-height: 1;
+  color: #b91c1c;
+  cursor: pointer;
+}
+
+// ------------------------------------------------------- publication rows ---
 .inc-switches {
   display: grid;
-  gap: 12px;
-  margin-top: 14px;
+  gap: 4px;
+  margin-top: 16px;
 }
 
+// Label, then Yes/No, then the switch — the artboard's row.
 .inc-switch {
   display: flex;
   align-items: center;
   gap: 10px;
+  padding: 9px 0;
+  border-bottom: 1px solid #f2f6f4;
   font-size: 11.4px;
   color: #47554c;
   cursor: pointer;
 
-  input { width: 16px; height: 16px; accent-color: #1b4f8a; }
+  &:last-child { border-bottom: 0; }
+
+  > span:first-child { flex: 1; }
+
+  input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
+}
+
+.inc-switch-state { font-size: 10.6px; font-weight: 600; color: #0f7b45; }
+
+.inc-toggle {
+  position: relative;
+  flex: none;
+  width: 34px;
+  height: 19px;
+  border-radius: 999px;
+  background: #c6d3cb;
+  transition: background 0.15s ease;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 2.5px;
+    left: 2.5px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #fff;
+    transition: transform 0.15s ease;
+  }
+}
+
+input:checked ~ .inc-toggle {
+  background: #1b4f8a;
+
+  &::after { transform: translateX(15px); }
 }
 
 .inc-form-foot {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-top: 18px;
+  padding: 16px 22px;
+  border-top: 1px solid #edf2ef;
 
   .spacer { flex: 1; }
 }

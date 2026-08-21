@@ -1,22 +1,22 @@
-<app-page-intro
-  title="Incentives Management"
-  subtitle="Benefits an MSME unlocks on LEAN Silver or Gold certification"
-/>
-
+<!-- ================================================== filter bar (12-green) -->
 <div class="stack">
-  <!-- ---------------------------------------------------- filter bar --- -->
-  <section class="card inc-filters">
-    <input
-      class="input inc-search"
-      type="search"
-      name="search"
-      placeholder="Search incentives..."
-      [ngModel]="search()"
-      (ngModelChange)="search.set($event)"
-      (keyup.enter)="load()"
-    />
+  <section class="card inc-bar">
+    <label class="inc-search">
+      <svg viewBox="0 0 16 16" aria-hidden="true">
+        <circle cx="7" cy="7" r="4.6" fill="none" stroke="#93A29A" stroke-width="1.6" />
+        <path d="M10.4 10.4 14 14" stroke="#93A29A" stroke-width="1.6" stroke-linecap="round" />
+      </svg>
+      <input
+        type="search"
+        name="search"
+        placeholder="Search incentive..."
+        [ngModel]="search()"
+        (ngModelChange)="search.set($event)"
+        (keyup.enter)="load()"
+      />
+    </label>
 
-    <select class="input" name="category" [ngModel]="categoryId()"
+    <select class="inc-select" name="category" [ngModel]="categoryId()"
             (ngModelChange)="categoryId.set($event); load()">
       <option value="">All Categories</option>
       @for (category of categories(); track category.categoryId) {
@@ -24,14 +24,14 @@
       }
     </select>
 
-    <select class="input" name="activation" [ngModel]="activation()"
+    <select class="inc-select" name="activation" [ngModel]="activation()"
             (ngModelChange)="activation.set($event); load()">
       <option value="All">Activation: Both</option>
       <option value="Silver">Activation: Silver</option>
       <option value="Gold">Activation: Gold</option>
     </select>
 
-    <select class="input" name="provider" [ngModel]="providerCode()"
+    <select class="inc-select" name="provider" [ngModel]="providerCode()"
             (ngModelChange)="providerCode.set($event); load()">
       <option value="">All Stakeholders</option>
       @for (provider of providers; track provider.code) {
@@ -41,26 +41,42 @@
 
     <div class="spacer"></div>
 
-    <button class="btn btn-secondary" type="button" (click)="clearFilters()">Clear</button>
-
     @if (canCreate) {
-      <button class="btn btn-primary" type="button" (click)="create()">Create New Incentive</button>
+      <button class="inc-primary" type="button" (click)="create()">
+        <span class="inc-plus">+</span> Create New Incentive
+      </button>
     }
   </section>
 
-  <!-- The rule that governs the whole module, stated where it is first read. -->
-  <p class="inc-note">
-    <strong>Note:</strong> Incentives are activated only upon Silver or Gold certification. LEAN
-    Bronze does not activate them. All five incentive boxes remain visible to MSMEs but stay locked
-    until the Silver or Gold milestone is reached.
-  </p>
+  <!-- The rule the whole module turns on, stated where it is first read. -->
+  @if (noteOpen()) {
+    <div class="inc-note">
+      <span class="inc-note-mark">
+        <svg viewBox="0 0 18 18" aria-hidden="true">
+          <circle cx="9" cy="9" r="8" fill="none" stroke="#1B4F8A" stroke-width="1.5" />
+          <path d="M9 8v5M9 5.2v.1" stroke="#1B4F8A" stroke-width="1.7" stroke-linecap="round" />
+        </svg>
+      </span>
+      <div>
+        <div>
+          <strong>Note:</strong> Incentives are activated only upon Silver or Gold certification.
+          LEAN Bronze does NOT activate incentives.
+        </div>
+        <div>
+          All 5 incentive boxes remain visible to MSMEs but locked until Silver/Gold milestones are
+          verified.
+        </div>
+      </div>
+      <button class="inc-note-close" type="button" (click)="noteOpen.set(false)" aria-label="Dismiss">×</button>
+    </div>
+  }
 
-  <!-- --------------------------------------------- the five categories --- -->
+  <!-- ------------------------------------------------- the five categories -->
   <div class="inc-grid">
     @for (category of categories(); track category.categoryId) {
       <article class="card inc-cat" [style.--accent]="category.accentHex">
         <div class="inc-cat-head">
-          <span class="inc-cat-mark"></span>
+          <span class="inc-cat-mark" [innerHTML]="iconFor(category.code)"></span>
           <span class="badge" [class.badge-gold]="category.activationBadge === 'Gold'">
             {{ category.activationBadge }}
           </span>
@@ -71,25 +87,30 @@
 
         <div class="inc-cat-foot">
           <span class="inc-cat-partners">{{ category.typicalPartners || '—' }}</span>
-          <button class="link-btn" type="button" (click)="manage(category)">Manage →</button>
+          <button class="inc-manage" type="button" (click)="manage(category)">Manage ›</button>
         </div>
       </article>
     }
   </div>
 
-  <!-- ----------------------------------------------- every incentive --- -->
+  <!-- ------------------------------------------------------ every incentive -->
   <section class="card">
     <header class="inc-table-head">
-      <h3 class="card-title">All Incentives</h3>
+      <h3 class="inc-table-title">All Incentives</h3>
       <span class="chip chip-blue">{{ totals()?.total || 0 }} incentives</span>
 
       <div class="spacer"></div>
 
-      @if (totals(); as t) {
-        <span class="inc-stat"><b>{{ t.active }}</b> active</span>
-        <span class="inc-stat"><b>{{ t.draft }}</b> draft</span>
-        <span class="inc-stat"><b>{{ t.beneficiaries | number }}</b> beneficiaries</span>
-      }
+      <!-- The artboard's segmented control: the categories again, as a filter. -->
+      <div class="inc-seg">
+        <button type="button" [class.is-on]="categoryId() === ''" (click)="pickCategory('')">All</button>
+        @for (category of categories(); track category.categoryId) {
+          <button type="button" [class.is-on]="categoryId() === category.categoryId"
+                  (click)="pickCategory(category.categoryId)">
+            {{ shortName(category) }}
+          </button>
+        }
+      </div>
     </header>
 
     @if (loading()) {
@@ -101,7 +122,7 @@
       />
     } @else {
       <div class="table-wrap">
-        <table class="table">
+        <table class="inc-table">
           <thead>
             <tr>
               <th class="w-narrow">S.No</th>
@@ -109,34 +130,79 @@
               <th>Category</th>
               <th>Activation</th>
               <th>Stakeholder</th>
-              <th class="num">Resources</th>
+              <th>Resources</th>
               <th>Status</th>
+              <th>Created</th>
+              @if (canEdit) { <th>Actions</th> }
             </tr>
           </thead>
           <tbody>
             @for (row of rows(); track row.incentiveId; let i = $index) {
-              <tr class="is-clickable" (click)="open(row)">
+              <tr>
                 <td class="muted">{{ i + 1 }}</td>
                 <td class="strong">{{ row.name }}</td>
-                <td>
-                  <span class="inc-dot" [style.background]="row.categoryAccent || '#5D6B62'"></span>
-                  {{ row.categoryName || '—' }}
-                </td>
+                <td>{{ row.categoryName || '—' }}</td>
                 <td>
                   <span class="badge" [class.badge-gold]="row.activationLevel === 'Gold'">
                     {{ row.activationLevel }}
                   </span>
                 </td>
                 <td>{{ row.stakeholder }}</td>
-                <td class="num">{{ row.resourceCount }}</td>
-                <td>
-                  <span class="pill" [class.pill-on]="row.status === 'Active'">{{ row.status }}</span>
+                <td class="inc-res-cell">
+                  @if (row.videoCount) {
+                    <span class="inc-res-tick" title="Video guides">
+                      <svg viewBox="0 0 14 14" aria-hidden="true">
+                        <circle cx="7" cy="7" r="6" fill="none" stroke="#5D6B62" stroke-width="1.3" />
+                        <path d="M5.8 4.6 9.6 7l-3.8 2.4z" fill="#5D6B62" />
+                      </svg>{{ row.videoCount }}
+                    </span>
+                  }
+                  @if (row.linkCount) {
+                    <span class="inc-res-tick" title="Links">
+                      <svg viewBox="0 0 14 14" aria-hidden="true">
+                        <path d="M5.8 8.2a2.6 2.6 0 0 1 0-3.7l1.6-1.6a2.6 2.6 0 1 1 3.7 3.7l-.8.8"
+                              fill="none" stroke="#5D6B62" stroke-width="1.3" stroke-linecap="round" />
+                        <path d="M8.2 5.8a2.6 2.6 0 0 1 0 3.7l-1.6 1.6a2.6 2.6 0 1 1-3.7-3.7l.8-.8"
+                              fill="none" stroke="#5D6B62" stroke-width="1.3" stroke-linecap="round" />
+                      </svg>{{ row.linkCount }}
+                    </span>
+                  }
+                  @if (row.documentCount) {
+                    <span class="inc-res-tick" title="Documents">
+                      <svg viewBox="0 0 14 14" aria-hidden="true">
+                        <path d="M3.6 1.8h4.2L10.4 4.4v7.8H3.6z" fill="none" stroke="#5D6B62" stroke-width="1.3" />
+                        <path d="M7.8 1.8v2.6h2.6" fill="none" stroke="#5D6B62" stroke-width="1.3" />
+                      </svg>{{ row.documentCount }}
+                    </span>
+                  }
+                  @if (!row.videoCount && !row.linkCount && !row.documentCount) {
+                    <span class="muted">—</span>
+                  }
                 </td>
+                <td>
+                  <span class="pill" [class.pill-on]="row.status === 'Active'"
+                        [class.pill-draft]="row.status === 'Draft'">{{ row.status }}</span>
+                </td>
+                <td class="muted">{{ formatDate(row.createdOnUtc) }}</td>
+                @if (canEdit) {
+                  <td class="nowrap">
+                    <button class="link-btn" type="button" (click)="open(row)">Edit</button>
+                    <span class="sep">|</span>
+                    <button class="link-btn" [class.link-danger]="row.status === 'Active'"
+                            [class.link-go]="row.status !== 'Active'" type="button" (click)="toggle(row)">
+                      {{ row.status === 'Active' ? 'Disable' : 'Publish' }}
+                    </button>
+                  </td>
+                }
               </tr>
             }
           </tbody>
         </table>
       </div>
+
+      <footer class="inc-table-foot">
+        <span class="inc-showing">Showing 1-{{ rows().length }} of {{ totals()?.total || rows().length }}</span>
+      </footer>
     }
 
     @if (error(); as message) {

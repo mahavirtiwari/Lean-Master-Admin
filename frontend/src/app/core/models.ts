@@ -362,6 +362,9 @@ export interface DocumentRow {
   versionCount: number;
   uploadedByName: string | null;
   accountTypeIds: number[];
+
+  /** Set when the row is a hosted video rather than an uploaded file. */
+  videoUrl: string | null;
 }
 
 /** One of the ten columns in the document role matrix. */

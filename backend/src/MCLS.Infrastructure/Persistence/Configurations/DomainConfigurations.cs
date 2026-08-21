@@ -151,6 +151,7 @@ internal sealed class DocumentConfiguration : IEntityTypeConfiguration<Document>
     {
         b.ToTable("Document", "master");
         b.HasKey(x => x.DocumentId);
+        b.Property(x => x.VideoUrl).HasMaxLength(1000);
         b.Property(x => x.Title).HasMaxLength(250).IsRequired();
         b.Property(x => x.Description).HasMaxLength(1000);
 

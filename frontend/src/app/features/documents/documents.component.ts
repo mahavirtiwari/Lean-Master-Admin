@@ -57,6 +57,10 @@ export class DocumentsComponent {
   readonly dragging = signal(false);
   readonly selectedAudiences = signal<Set<number>>(new Set());
   readonly saving = signal(false);
+
+  /** A document is either an uploaded file or a video hosted elsewhere. */
+  readonly kind = signal<'file' | 'video'>('file');
+  readonly videoUrl = signal('');
   readonly formError = signal<string | null>(null);
 
   readonly deleting = signal<DocumentRow | null>(null);
@@ -150,7 +154,7 @@ export class DocumentsComponent {
       return;
     }
 
-    if (!this.file()) {
+    if (this.kind() === 'file' && !this.file()) {
       this.formError.set('Choose a file to upload.');
       return;
     }
@@ -160,11 +164,22 @@ export class DocumentsComponent {
       return;
     }
 
+    if (this.kind() === 'video' && this.videoUrl().trim().length === 0) {
+      this.formError.set('Paste the video link, or switch to uploading a file.');
+      return;
+    }
+
     // Multipart, because the file travels with the metadata in one request.
+    // A video carries no file — just its address.
     const form = new FormData();
     form.append('title', this.title().trim());
     form.append('description', this.description().trim());
-    form.append('file', this.file()!);
+
+    if (this.kind() === 'video') {
+      form.append('videoUrl', this.videoUrl().trim());
+    } else {
+      form.append('file', this.file()!);
+    }
     for (const id of this.selectedAudiences()) {
       form.append('accountTypeIds', String(id));
     }
@@ -188,6 +203,8 @@ export class DocumentsComponent {
   }
 
   private resetForm(): void {
+    this.kind.set('file');
+    this.videoUrl.set('');
     this.title.set('');
     this.description.set('');
     this.file.set(null);

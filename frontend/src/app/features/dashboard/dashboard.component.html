@@ -233,10 +233,10 @@
 
           <div class="rank-tools">
             <div class="rank-toggle">
-              <button type="button" [class.is-on]="rankBy() === 'certified'"
-                      (click)="rankBy.set('certified')">Certified</button>
               <button type="button" [class.is-on]="rankBy() === 'registered'"
                       (click)="rankBy.set('registered')">Registered</button>
+              <button type="button" [class.is-on]="rankBy() === 'certified'"
+                      (click)="rankBy.set('certified')">Certified</button>
             </div>
             <button class="icon-btn" type="button" title="Export as image"
                     (click)="exportPlaces('State-wise LEAN Adoption', 'State', rankedStates())">
@@ -246,13 +246,68 @@
         </div>
 
         <div class="geo-body">
-          <img
-            class="geo-map"
-            src="assets/india-lean-adoption.png"
-            alt="Map of India shaded by LEAN certification density"
-            width="400"
-            height="248"
-          />
+          <!-- Drawn from the Survey of India's boundaries and shaded from the
+               same rows the list prints, so pointing at a state answers the
+               question the list answers by scrolling. -->
+          <figure class="geo-map" (mouseleave)="clearState()">
+            <svg [attr.viewBox]="mapViewBox" role="img"
+                 aria-label="Map of India shaded by LEAN adoption, by state and union territory">
+              @for (place of mapStates; track place.name) {
+                <path
+                  class="map-state"
+                  [attr.d]="place.d"
+                  [attr.fill]="mapFill(place.name)"
+                  [class.is-on]="hovered()?.name === place.name"
+                  tabindex="0"
+                  (mouseenter)="showState(place, $event)"
+                  (mousemove)="showState(place, $event)"
+                  (focus)="showState(place, $any($event))"
+                  (blur)="clearState()"
+                ></path>
+              }
+
+              <!-- Chandigarh, Delhi, Lakshadweep and the like are a few pixels
+                   across; without a marker they cannot be pointed at. -->
+              @for (place of mapStates; track place.name) {
+                @if (place.small) {
+                  <circle
+                    class="map-pin"
+                    [attr.cx]="place.cx"
+                    [attr.cy]="place.cy"
+                    r="9"
+                    [attr.fill]="mapFill(place.name)"
+                    (mouseenter)="showState(place, $event)"
+                    (mousemove)="showState(place, $event)"
+                  ></circle>
+                }
+              }
+            </svg>
+
+            @if (hovered(); as spot) {
+              <div class="map-tip" [style.left.px]="spot.x" [style.top.px]="spot.y">
+                <div class="tip-name">{{ spot.name }}</div>
+                <div class="tip-row">
+                  <span>Registered</span><span class="tip-num">{{ spot.registered | number }}</span>
+                </div>
+                <div class="tip-row">
+                  <span>Certified</span>
+                  <span class="tip-num is-green">{{ spot.certified | number }}</span>
+                </div>
+              </div>
+            }
+
+            <figcaption class="map-legend">
+              <span class="legend-cap">{{ rankBy() === 'certified' ? 'Certified' : 'Registered' }} MSMEs</span>
+              <span class="legend-scale">
+                <span class="legend-min">0</span>
+                @for (band of mapLegend(); track band.shade) {
+                  <span class="legend-band" [style.background]="band.shade"
+                        [title]="'up to ' + band.upper"></span>
+                }
+                <span class="legend-max">{{ mapLegend()[mapLegend().length - 1].upper | number }}</span>
+              </span>
+            </figcaption>
+          </figure>
 
           <div class="place-list">
             <div class="place-head">
@@ -292,10 +347,10 @@
 
           <div class="rank-tools">
             <div class="rank-toggle">
-              <button type="button" [class.is-on]="rankBy() === 'certified'"
-                      (click)="rankBy.set('certified')">Certified</button>
               <button type="button" [class.is-on]="rankBy() === 'registered'"
                       (click)="rankBy.set('registered')">Registered</button>
+              <button type="button" [class.is-on]="rankBy() === 'certified'"
+                      (click)="rankBy.set('certified')">Certified</button>
             </div>
             <button class="icon-btn" type="button" title="Export as image"
                     (click)="exportPlaces('District-wise LEAN Adoption', 'District', rankedDistricts())">

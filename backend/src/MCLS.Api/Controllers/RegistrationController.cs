@@ -76,7 +76,7 @@ public sealed class RegistrationController(
         // administrator controls it by what they name the upload.
         var rows = await db.Documents.AsNoTracking()
             .Where(d => d.IsActive && !d.IsDeleted
-                        && d.CurrentVersionId != null
+                        && (d.CurrentVersionId != null || d.VideoUrl != null)
                         && d.Audiences.Any(a => a.AccountTypeId == msmeEnterprise)
                         && EF.Functions.Like(d.Title, "%registration%"))
             .OrderBy(d => d.Title)
@@ -85,14 +85,17 @@ public sealed class RegistrationController(
                 d.DocumentId,
                 d.Title,
                 d.Description,
-                VersionId = d.CurrentVersionId!.Value,
-                ContentType = d.CurrentVersion!.ContentType,
-                FileName = d.CurrentVersion.OriginalFileName,
+                d.VideoUrl,
+                VersionId = d.CurrentVersionId,
+                ContentType = d.CurrentVersion != null ? d.CurrentVersion.ContentType : null,
+                FileName = d.CurrentVersion != null ? d.CurrentVersion.OriginalFileName : null,
             })
             .ToListAsync(ct);
 
         // Split by media type so R1 can label one "manual" and one "video"
-        // without the wording depending on how the file was named.
+        // without the wording depending on how the file was named. A video link
+        // is a video whatever it is called, and points at wherever it is hosted
+        // rather than at a stream of ours.
         return Ok(rows.Select(r => new
         {
             r.DocumentId,
@@ -100,10 +103,11 @@ public sealed class RegistrationController(
             r.Description,
             r.VersionId,
             r.FileName,
-            Kind = r.ContentType.StartsWith("video/", StringComparison.OrdinalIgnoreCase)
+            Kind = r.VideoUrl != null
+                   || (r.ContentType?.StartsWith("video/", StringComparison.OrdinalIgnoreCase) ?? false)
                 ? "video"
                 : "document",
-            Url = $"/api/registration/applicant-documents/{r.DocumentId}/{r.VersionId}",
+            Url = r.VideoUrl ?? $"/api/registration/applicant-documents/{r.DocumentId}/{r.VersionId}",
         }));
     }
 

@@ -72,7 +72,8 @@ public sealed class DocumentsController(
                 d.CurrentVersion != null ? d.CurrentVersion.UploadedOnUtc : null,
                 d.Versions.Count,
                 d.CurrentVersion != null ? d.CurrentVersion.UploadedBy.FullName : null,
-                d.Audiences.Select(a => a.AccountTypeId).ToList()))
+                d.Audiences.Select(a => a.AccountTypeId).ToList(),
+                d.VideoUrl))
             .ToListAsync(ct);
 
         return Ok(PagedResult<DocumentDto>.Create(items, total, pageNumber, pageSize));
@@ -146,26 +147,29 @@ public sealed class DocumentsController(
     [RequestSizeLimit(26_214_400)]
     public async Task<IActionResult> CreateDocument([FromForm] DocumentUploadRequest request, CancellationToken ct)
     {
-        if (request.File is null || request.File.Length == 0)
+        // A document is either an uploaded file or a hosted video. One of the
+        // two is required: a row with neither is a title nobody can open.
+        var videoUrl = string.IsNullOrWhiteSpace(request.VideoUrl) ? null : request.VideoUrl.Trim();
+        var hasFile = request.File is { Length: > 0 };
+
+        if (!hasFile && videoUrl is null)
         {
-            ModelState.AddModelError(nameof(request.File), "Choose a file to upload.");
+            ModelState.AddModelError(nameof(request.File), "Choose a file to upload, or give a video link.");
             return ValidationProblem(ModelState);
         }
 
-        if (!files.IsExtensionAllowed(request.File.FileName))
+        if (hasFile && !files.IsExtensionAllowed(request.File!.FileName))
         {
             ModelState.AddModelError(nameof(request.File), "That file type is not accepted.");
             return ValidationProblem(ModelState);
         }
-
-        await using var upload = request.File.OpenReadStream();
-        var stored = await files.SaveAsync(upload, request.File.FileName, "documents", ct);
 
         var document = new Document
         {
             Title = request.Title.Trim(),
             Description = request.Description?.Trim(),
             CategoryLookupId = request.CategoryLookupId,
+            VideoUrl = videoUrl,
             IsActive = true,
         };
 
@@ -174,29 +178,40 @@ public sealed class DocumentsController(
             document.Audiences.Add(new DocumentAudience { AccountTypeId = accountTypeId });
         }
 
-        var version = new DocumentVersion
-        {
-            VersionLabel = string.IsNullOrWhiteSpace(request.VersionLabel) ? "v1.0" : request.VersionLabel.Trim(),
-            OriginalFileName = request.File.FileName,
-            StoredFileName = stored.StoredFileName,
-            RelativePath = stored.RelativePath,
-            ContentType = request.File.ContentType,
-            FileSizeBytes = stored.SizeBytes,
-            Sha256Hash = stored.Sha256,
-            IsLive = true,
-            UploadedByUserId = currentUser.UserId ?? 0,
-            UploadedOnUtc = clock.UtcNow,
-        };
+        DocumentVersion? version = null;
 
-        document.Versions.Add(version);
+        if (hasFile)
+        {
+            await using var upload = request.File!.OpenReadStream();
+            var stored = await files.SaveAsync(upload, request.File.FileName, "documents", ct);
+
+            version = new DocumentVersion
+            {
+                VersionLabel = string.IsNullOrWhiteSpace(request.VersionLabel) ? "v1.0" : request.VersionLabel.Trim(),
+                OriginalFileName = request.File.FileName,
+                StoredFileName = stored.StoredFileName,
+                RelativePath = stored.RelativePath,
+                ContentType = request.File.ContentType,
+                FileSizeBytes = stored.SizeBytes,
+                Sha256Hash = stored.Sha256,
+                IsLive = true,
+                UploadedByUserId = currentUser.UserId ?? 0,
+                UploadedOnUtc = clock.UtcNow,
+            };
+
+            document.Versions.Add(version);
+        }
 
         db.Documents.Add(document);
         await db.SaveChangesAsync(ct);
 
-        // Set only after the insert, because the version's key does not exist
-        // until it has been written.
-        document.CurrentVersionId = version.DocumentVersionId;
-        await db.SaveChangesAsync(ct);
+        if (version is not null)
+        {
+            // Set only after the insert, because the version's key does not
+            // exist until it has been written.
+            document.CurrentVersionId = version.DocumentVersionId;
+            await db.SaveChangesAsync(ct);
+        }
 
         return CreatedAtAction(nameof(GetDocument), new { id = document.DocumentId }, null);
     }
@@ -277,7 +292,10 @@ public sealed record DocumentDto(
     DateTime? CurrentUploadedOnUtc,
     int VersionCount,
     string? UploadedByName,
-    IReadOnlyList<byte> AccountTypeIds);
+    IReadOnlyList<byte> AccountTypeIds,
+
+    // Set when the document is a hosted video rather than an uploaded file.
+    string? VideoUrl);
 
 public sealed record DocumentDetailDto(
     int DocumentId,
@@ -316,6 +334,13 @@ public sealed class DocumentUploadRequest
     public List<byte> AccountTypeIds { get; init; } = [];
 
     public IFormFile? File { get; init; }
+
+    /// <summary>
+    /// A hosted video instead of a file — YouTube, or wherever the Ministry
+    /// publishes. Given in place of File, not alongside it.
+    /// </summary>
+    [StringLength(1000)]
+    public string? VideoUrl { get; init; }
 }
 
 public sealed class DocumentSaveRequest

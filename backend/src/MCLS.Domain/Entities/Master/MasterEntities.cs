@@ -156,6 +156,13 @@ public class Document : IAuditable, ISoftDeletable, IConcurrencyAware
     public int? CurrentVersionId { get; set; }
     public DocumentVersion? CurrentVersion { get; set; }
 
+    /// <summary>
+    /// Set when the document is a hosted video rather than an uploaded file —
+    /// a YouTube walkthrough, say. Such a document has no file version, which
+    /// is why the version above has always been optional.
+    /// </summary>
+    public string? VideoUrl { get; set; }
+
     public bool IsActive { get; set; } = true;
     public DateTime CreatedOnUtc { get; set; }
     public int? CreatedByUserId { get; set; }

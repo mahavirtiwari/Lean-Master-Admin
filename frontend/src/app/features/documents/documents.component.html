@@ -82,6 +82,39 @@
           </div>
         </div>
 
+        <!-- A document is either an uploaded file or a video hosted elsewhere.
+             The switch decides which, because a row needs one of the two and
+             asking for both would leave the other half of the form dead. -->
+        <div class="field span-2">
+          <label class="field-label">WHAT ARE YOU ADDING?</label>
+          <div class="rank-toggle doc-kind">
+            <button type="button" [class.is-on]="kind() === 'file'" (click)="kind.set('file')">
+              Upload a file
+            </button>
+            <button type="button" [class.is-on]="kind() === 'video'" (click)="kind.set('video')">
+              Video link
+            </button>
+          </div>
+        </div>
+
+        @if (kind() === 'video') {
+          <div class="field span-2">
+            <label class="field-label" for="videoUrl">VIDEO LINK<span class="req">*</span></label>
+            <input
+              id="videoUrl"
+              class="input"
+              type="url"
+              maxlength="1000"
+              placeholder="Paste the YouTube or hosted video address"
+              name="videoUrl"
+              [ngModel]="videoUrl()"
+              (ngModelChange)="videoUrl.set($event)"
+            />
+            <span class="hint">
+              The video is played from where it is hosted. Nothing is uploaded or stored here.
+            </span>
+          </div>
+        } @else {
         <div class="field">
           <label class="field-label">FILE UPLOAD<span class="req">*</span></label>
 
@@ -136,6 +169,7 @@
             }
           </label>
         </div>
+        }
       </div>
 
       <!-- role assignment matrix -->
@@ -247,7 +281,11 @@
                 <td class="muted">{{ (page() - 1) * pageSize() + i + 1 }}</td>
                 <td>
                   <div class="strong">{{ row.title }}</div>
-                  @if (row.currentFileName) {
+                  @if (row.videoUrl) {
+                    <div class="small muted">
+                      <a [href]="row.videoUrl" target="_blank" rel="noopener">Video link</a>
+                    </div>
+                  } @else if (row.currentFileName) {
                     <div class="small muted">{{ row.currentFileName }}</div>
                   }
                 </td>

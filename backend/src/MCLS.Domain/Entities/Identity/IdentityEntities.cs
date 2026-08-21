@@ -235,6 +235,14 @@ public class Organisation : IAuditable, IConcurrencyAware
     public string? ContactEmail { get; set; }
     public string? ContactPhone { get; set; }
     public string? JurisdictionScope { get; set; }
+
+    /// <summary>
+    /// Where the organisation sits when several are listed together — which
+    /// implementing agency leads the dashboard's cards, for instance. Held
+    /// here so the scheme decides it, rather than the alphabet.
+    /// </summary>
+    public short DisplayOrder { get; set; } = 100;
+
     public bool IsActive { get; set; } = true;
 
     public DateTime CreatedOnUtc { get; set; }

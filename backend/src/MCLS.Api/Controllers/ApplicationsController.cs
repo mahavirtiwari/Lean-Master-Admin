@@ -296,6 +296,22 @@ public sealed class ApplicationsController(
         // Every figure on the dashboard is also split by delivery agency: the KPI
         // cards carry a "QCI: n | NPC: n" line and each level card an Agency
         // Breakdown panel. Counted here in one pass rather than per card.
+        // The agencies themselves, in the order the scheme keeps them — QCI
+        // ahead of NPC by DisplayOrder, not by spelling. Every agency line on
+        // the dashboard is ordered by this list, so the cards read alike.
+        var agencyOrder = await db.Organisations.AsNoTracking()
+            .Where(o => o.AccountTypeId == 1 && o.IsActive)
+            .OrderBy(o => o.DisplayOrder).ThenBy(o => o.Name)
+            .Select(o => new { o.OrganisationId, o.Name, o.DisplayOrder })
+            .ToListAsync(ct);
+
+        var agencyRank = agencyOrder
+            .Select((o, index) => new { o.OrganisationId, Index = index })
+            .ToDictionary(x => x.OrganisationId, x => x.Index);
+
+        int Rank(int? agencyId)
+            => agencyId is int id && agencyRank.TryGetValue(id, out var index) ? index : int.MaxValue;
+
         var byAgency = await query
             .Where(a => a.ImplementingAgencyId != null)
             .GroupBy(a => new { a.ImplementingAgencyId, a.ImplementingAgency!.Name })
@@ -312,6 +328,8 @@ public sealed class ApplicationsController(
             })
             .ToListAsync(ct);
 
+        byAgency = byAgency.OrderBy(a => Rank(a.ImplementingAgencyId)).ThenBy(a => a.Name).ToList();
+
         // The same split again, per certification level, for the three cards.
         var byLevelAgency = await query
             .Where(a => a.ImplementingAgencyId != null)
@@ -324,6 +342,7 @@ public sealed class ApplicationsController(
             .Select(g => new
             {
                 g.Key.CertificationLevelId,
+                g.Key.ImplementingAgencyId,
                 g.Key.AgencyName,
                 Applied = g.Count(),
                 Certified = g.Count(x => x.ApplicationStatusId == (byte)ApplicationStatusId.Certified),
@@ -332,6 +351,12 @@ public sealed class ApplicationsController(
                  || x.ApplicationStatusId == (byte)ApplicationStatusId.AssessmentInProgress),
             })
             .ToListAsync(ct);
+
+        byLevelAgency = byLevelAgency
+            .OrderBy(a => a.CertificationLevelId)
+            .ThenBy(a => Rank(a.ImplementingAgencyId))
+            .ThenBy(a => a.AgencyName)
+            .ToList();
 
         // The headline card is attributed by the awareness programme the MSME
         // attended — QCI, NPC, or Self where it attended none — not by the
@@ -355,13 +380,25 @@ public sealed class ApplicationsController(
             .Where(i => query.Any(a => a.ApplicationId == i.ApplicationId))
             .SumAsync(i => (decimal?)i.SubsidyAmount, ct) ?? 0m;
 
-        var registrationSplit = new
-        {
-            qci = Awareness("QCI"),
-            npc = Awareness("NPC"),
-            self = Awareness("Self"),
-            unattributed = byAwareness.FirstOrDefault(x => x.Agency == null)?.Count ?? 0,
-        };
+        // One entry per implementing agency the scheme has, in its own order,
+        // and Self last for the applicants who attended no programme. Built
+        // from the agency master rather than named here, so an agency added
+        // later appears without a code change. Enterprises registered before
+        // the question was asked carry no attribution and are simply not
+        // counted on this line — the card's own total already holds them.
+        var registrationSplit = agencyOrder
+            .Select(o => new
+            {
+                name = ShortAgencyName(o.Name),
+                count = Awareness(ShortAgencyName(o.Name)),
+                ordered = o.DisplayOrder < 100,
+            })
+            // An agency the scheme has placed is named even at zero; one that
+            // has never brought an MSME in and has no place is left off.
+            .Where(x => x.name != "Self" && (x.ordered || x.count > 0))
+            .Select(x => new { x.name, x.count })
+            .Append(new { name = "Self", count = Awareness("Self") })
+            .ToList();
 
         var tiles = new DashboardTilesDto(
             byStatus.Sum(x => x.Count),
@@ -445,7 +482,7 @@ public sealed class ApplicationsController(
             // Implementing agencies are organisations of that account type.
             implementingAgencies = await db.Organisations.AsNoTracking()
                 .Where(o => o.AccountTypeId == 1 && o.IsActive)
-                .OrderBy(o => o.Name)
+                .OrderBy(o => o.DisplayOrder).ThenBy(o => o.Name)
                 .Select(o => new { id = o.OrganisationId, name = o.Name })
                 .ToListAsync(ct),
         });
@@ -726,12 +763,14 @@ public sealed class ApplicationsController(
         [FromQuery] int? districtId,
         [FromQuery] byte? certificationLevelId,
         [FromQuery] int? implementingAgencyId,
-        [FromQuery] int topStates = 10,
         CancellationToken ct = default)
     {
         var applications = FilteredApplications(
             fromDate, toDate, stateId, districtId, certificationLevelId, implementingAgencyId);
 
+        // Every state and union territory with an application, not a top ten:
+        // the map shades all of them, and there are 36 at most. The panel
+        // beside it takes its own leaders from the same rows.
         var states = await applications
             .GroupBy(a => new { a.Enterprise.StateId, a.Enterprise.State.Name })
             .Select(g => new
@@ -743,7 +782,6 @@ public sealed class ApplicationsController(
             })
             .OrderByDescending(x => x.Certified)
             .ThenByDescending(x => x.Registered)
-            .Take(topStates)
             .ToListAsync(ct);
 
         // Districts are optional on an enterprise, so rows without one are

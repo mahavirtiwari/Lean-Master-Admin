@@ -63,7 +63,10 @@
   display: grid;
   grid-template-columns: 1.35fr 1fr;
   gap: 16px;
-  align-items: start;
+  /* Stretched, not top-aligned: the map fixes the left card's height, and the
+     district list beside it should use the same room rather than stopping
+     short and leaving the pair ragged. */
+  align-items: stretch;
 }
 
 @media (max-width: 1180px) {
@@ -87,10 +90,107 @@
 }
 
 .geo-map {
-  width: 260px;
-  height: auto;
-  object-fit: contain;
+  position: relative;   /* the tooltip is placed against this box */
+  width: 268px;
+  margin: 0;
 }
+
+.geo-map svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  overflow: visible;
+}
+
+.map-state {
+  /* Grey rather than white: a state with no MSMEs is nearly the colour of the
+     card, and a white border would leave the coastline invisible against it. */
+  stroke: #c9d8d0;
+  stroke-width: 1.6;
+  stroke-linejoin: round;
+  cursor: pointer;
+  transition: fill 120ms ease;
+  outline: none;
+}
+
+/* Pointed at, or tabbed to: the outline darkens rather than the fill
+   changing, so the shade the reader is comparing against the legend stays
+   the shade the state actually has. */
+.map-state:hover,
+.map-state:focus-visible,
+.map-state.is-on {
+  stroke: #16211a;
+  stroke-width: 2.4;
+}
+
+.map-pin {
+  stroke: #16211a;
+  stroke-width: 1.6;
+  cursor: pointer;
+}
+
+.map-tip {
+  position: absolute;
+  z-index: 4;
+  transform: translate(12px, -50%);
+  min-width: 148px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: #16211a;
+  color: #ffffff;
+  box-shadow: 0 6px 18px rgb(0 0 0 / 22%);
+  pointer-events: none;   /* never stands between the pointer and the map */
+}
+
+.tip-name {
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+.tip-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  font-size: 11px;
+  color: #cfdad3;
+  line-height: 1.7;
+}
+
+.tip-num { font-weight: 600; color: #ffffff; }
+.tip-num.is-green { color: #7fd7a8; }
+
+.map-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-top: 10px;
+}
+
+.legend-cap {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted, #5d6b62);
+}
+
+.legend-scale {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10px;
+  color: var(--text-muted, #5d6b62);
+}
+
+.legend-band {
+  width: 26px;
+  height: 8px;
+  border-radius: 2px;
+}
+
+.legend-min { margin-right: 3px; }
+.legend-max { margin-left: 3px; }
 
 .scale {
   display: flex;
@@ -567,6 +667,10 @@
 
 // Both geography panels are the same height, because they are read side by side.
 .geo-grid > .card { display: flex; flex-direction: column; min-height: 372px; }
+
+/* The map card is as tall as the map; its neighbour follows so the pair still
+   line up along the top and bottom. */
+.geo-grid > .card:first-child .geo-body { align-items: start; }
 
 .place-list { display: flex; flex-direction: column; flex: 1; min-height: 0; }
 

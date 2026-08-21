@@ -6,7 +6,17 @@ namespace MCLS.Domain.Entities.Master;
 public class State
 {
     public short StateId { get; set; }
+
+    /// <summary>The LGD/GST numeric code, e.g. 09 for Uttar Pradesh.</summary>
     public string Code { get; set; } = string.Empty;
+
+    /// <summary>
+    /// The two-letter code, e.g. UP. Printed in an applicant's LEAN ID, which
+    /// is why it is master data and not derived from the name: the identifier
+    /// is permanent and a rename must never change it.
+    /// </summary>
+    public string? AlphaCode { get; set; }
+
     public string Name { get; set; } = string.Empty;
     public bool IsUnionTerritory { get; set; }
 

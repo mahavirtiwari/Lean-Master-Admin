@@ -29,6 +29,7 @@ internal sealed class StateConfiguration : IEntityTypeConfiguration<State>
         b.ToTable("State", "master");
         b.HasKey(x => x.StateId);
         b.Property(x => x.Code).HasMaxLength(5).IsRequired().IsUnicode(false);
+        b.Property(x => x.AlphaCode).HasMaxLength(3).IsUnicode(false);
         b.Property(x => x.Name).HasMaxLength(100).IsRequired();
         b.HasIndex(x => x.Code).IsUnique();
         b.HasIndex(x => x.Name).IsUnique();

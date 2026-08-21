@@ -641,17 +641,45 @@ public sealed class RegistrationController(
             .Select(c => (byte?)c.SubsidyCategoryId)
             .SingleAsync(ct);
 
-        var serial = await sequences.NextAsync("LeanId", null, ct);
+        // ---- the applicant's identifier: LEAN-<PLANT STATE>-<YEAR>-000000 ----
+        //
+        // The state is the PLANT's, not the enterprise's. They differ often
+        // enough to matter — a Udyam registered in Uttar Pradesh may be
+        // registering a plant in Delhi — and it is the plant that is being
+        // brought under the scheme.
+        //
+        // The registry gives a plant's state as a name, so it is matched to the
+        // master, which carries the two-letter code. Where that fails the
+        // enterprise's own state answers, and the Udyam number's letters are the
+        // last resort: an identifier must be issued, and one from the right
+        // country beats none at all.
+        var chosenPlant = draft.SelectedPlantIdNo is not null
+            ? record.Plants.FirstOrDefault(p => p.PlantIdNo == draft.SelectedPlantIdNo)
+            : record.Plants.FirstOrDefault(p => p.UnitIdNo == draft.SelectedUnitIdNo);
 
-        // The two-letter state comes from the Udyam number itself
-        // (UDYAM-MH-26-0014582 -> MH). master.State.Code holds the LGD numeric
-        // code, which would render LEAN-27-... instead of the LEAN-MH-... the
-        // design specifies.
-        var stateLetters = draft.UdyamRegistrationNo.Split('-') is [_, var letters, ..]
-            ? letters
-            : "IN";
+        var plantState = chosenPlant?.StateName is null
+            ? null
+            : await db.States.AsNoTracking()
+                .Where(s => s.Name == chosenPlant.StateName)
+                .Select(s => s.AlphaCode)
+                .FirstOrDefaultAsync(ct);
 
-        var leanId = $"LEAN-{stateLetters}-{clock.UtcNow:yyyy}-{serial}";
+        var stateLetters = plantState
+            ?? state.AlphaCode
+            ?? (draft.UdyamRegistrationNo.Split('-') is [_, var letters, ..] ? letters : "IN");
+
+        var year = clock.UtcNow.ToString("yyyy", CultureInfo.InvariantCulture);
+
+        // The serial runs per state and per year. A single national counter
+        // would pass six digits at the volumes this scheme expects and start
+        // printing a seventh, which the format has no room for.
+        //
+        // Scoped by sequence NAME, as the user-code sequences are (User-IA,
+        // User-MIN), not by period key: the procedure prints the period key in
+        // front of the number, which would render LEAN-DL-2026-DL-2026/000001.
+        var serial = await sequences.NextAsync($"LeanId-{stateLetters}-{year}", null, ct);
+
+        var leanId = $"LEAN-{stateLetters}-{year}-{serial}";
 
         // The context is configured with connection resiliency, and a retrying
         // execution strategy refuses a hand-rolled transaction: on a retry it
@@ -717,6 +745,13 @@ public sealed class RegistrationController(
         db.Enterprises.Add(enterprise);
         await db.SaveChangesAsync(ct);
 
+        // The registry names a plant's state; the master is what the portal
+        // reports on, so the name is resolved once here rather than left as raw
+        // text for somebody to match later.
+        var statesByName = await db.States.AsNoTracking()
+            .Select(s => new { s.StateId, s.Name })
+            .ToDictionaryAsync(s => s.Name, s => s.StateId, StringComparer.OrdinalIgnoreCase, ct);
+
         // Plants and activities, then the two the applicant chose.
         foreach (var plant in record.Plants)
         {
@@ -731,6 +766,9 @@ public sealed class RegistrationController(
                 AddressLine = plant.Address,
                 Pincode = plant.Pincode,
                 LgDistrictCode = plant.DistrictCode,
+                StateId = plant.StateName is not null && statesByName.TryGetValue(plant.StateName, out var plantStateId)
+                    ? plantStateId
+                    : null,
                 StateNameRaw = plant.StateName,
                 DistrictNameRaw = plant.DistrictName,
                 CreatedOnUtc = clock.UtcNow,

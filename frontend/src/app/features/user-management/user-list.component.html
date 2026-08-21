@@ -163,11 +163,12 @@
 
         <app-pager
           [page]="page()"
-          [pageSize]="pageSize"
+          [pageSize]="pageSize()"
           [total]="total()"
           noun="user"
           nounPlural="users"
           (go)="goToPage($event)"
+        (sizeChange)="setPageSize($event)"
         />
       }
     </section>

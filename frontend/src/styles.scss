@@ -523,7 +523,40 @@ a:hover {
 
 .pager-btns {
   display: flex;
+  align-items: center;
   gap: 6px;
+}
+
+// Show [20] Entries — the size chooser at the left of the bar.
+.pager-size {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+
+  select {
+    height: 30px;
+    padding: 0 8px;
+    border: 1px solid var(--border-input);
+    border-radius: var(--r-sm);
+    background: var(--surface);
+    font-family: inherit;
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    color: var(--text-strong);
+    cursor: pointer;
+  }
+}
+
+.pager-count { flex: 1; }
+
+// The page chooser wears the same shape as the buttons beside it.
+.pg-page {
+  padding: 0 6px;
+  font-family: inherit;
+  color: var(--text-strong);
+  cursor: pointer;
 }
 
 .pg {

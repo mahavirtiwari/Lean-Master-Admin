@@ -1,0 +1,264 @@
+// Reports & Analytics (artboard 8).
+//
+// Three colours carry meaning here and nowhere else in the module: the Bronze,
+// Silver and Gold cards are ruled in their own metal, so a reader can tell the
+// three panels apart at a glance without reading their titles.
+
+.rep-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 18px;
+  padding: 16px 18px;
+
+  .field { min-width: 190px; }
+}
+
+.rep-range {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  .input { min-width: 0; }
+}
+
+.rep-dash { color: #8a9a92; }
+
+// --------------------------------------------------------------- MIS cards ---
+.rep-mis {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+
+  @media (max-width: 1080px) { grid-template-columns: minmax(0, 1fr); }
+}
+
+.rep-card {
+  position: relative;
+  padding: 16px 18px 14px;
+  overflow: hidden;
+
+  // The metal, as a rule across the top of the card.
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0 0 auto;
+    height: 3px;
+    background: #5d6b62;
+  }
+
+  &.accent-0::before { background: #b45309; }  // Bronze
+  &.accent-1::before { background: #64748b; }  // Silver
+  &.accent-2::before { background: #a16207; }  // Gold
+}
+
+.rep-card-head h3 {
+  margin: 0 0 12px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #16211a;
+}
+
+.rep-line {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding: 7px 0;
+  font-size: 11.6px;
+  color: #5d6b62;
+
+  span { flex: 1; }
+  b { font-size: 15px; font-weight: 700; color: #16211a; }
+}
+
+.rep-card-foot {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 10px;
+  padding-top: 11px;
+  border-top: 1px solid #edf2ef;
+  font-size: 11.6px;
+  color: #5d6b62;
+
+  span { flex: 1; }
+}
+
+.rep-rate { font-size: 15px; font-weight: 700; color: #0f7b45; }
+
+// ------------------------------------------------------------- two panels ---
+.rep-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+
+  @media (max-width: 1080px) { grid-template-columns: minmax(0, 1fr); }
+}
+
+.rep-title { margin: 0; font-size: 14.5px; font-weight: 700; color: #16211a; }
+.rep-sub { margin: 5px 0 16px; font-size: 11px; color: #5d6b62; }
+
+// ------------------------------------------------------------------- bars ---
+.rep-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 0;
+}
+
+.rep-bar-name {
+  width: 118px;
+  flex: none;
+  font-size: 11.4px;
+  color: #47554c;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rep-bar-track {
+  display: block;
+  flex: 1;
+  height: 9px;
+  border-radius: 999px;
+  background: #edf2ef;
+  overflow: hidden;
+}
+
+.rep-bar-fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: #0f7b45;
+
+  &.is-blue { background: #1b4f8a; }
+}
+
+.rep-bar-value {
+  width: 40px;
+  flex: none;
+  text-align: right;
+  font-size: 11.4px;
+  font-weight: 700;
+  color: #16211a;
+}
+
+// ------------------------------------------------------------ conversions ---
+.rep-conv { padding: 9px 0; }
+
+.rep-conv-head {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 7px;
+  font-size: 11.8px;
+  color: #47554c;
+
+  span { flex: 1; }
+  b { font-size: 12.4px; font-weight: 700; color: #1b4f8a; }
+}
+
+.rep-conv-note { margin: 6px 0 0; font-size: 10.4px; color: #8a9a92; }
+
+// ----------------------------------------------------------- empty panel ---
+.rep-empty {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 22px 18px;
+  background: #fafcfb;
+  border: 1px solid #dee7e1;
+  border-radius: 8px;
+
+  p { margin: 0; font-size: 11.6px; line-height: 1.6; color: #5d6b62; }
+}
+
+.rep-empty-mark svg { width: 20px; height: 20px; }
+
+// ---------------------------------------------------------------- builder ---
+.rep-build {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px 18px;
+
+  @media (max-width: 700px) { grid-template-columns: minmax(0, 1fr); }
+}
+
+.rep-checks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  padding-top: 6px;
+}
+
+.rep-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11.4px;
+  color: #47554c;
+  cursor: pointer;
+
+  input { width: 15px; height: 15px; accent-color: #1b4f8a; }
+}
+
+.rep-hint { margin: 8px 0 0; font-size: 10px; color: #8a9a92; }
+
+.rep-primary {
+  margin-top: 18px;
+  width: 100%;
+  height: 40px;
+  border: 1px solid #1b4f8a;
+  border-radius: 6px;
+  background: #1b4f8a;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #fff;
+  cursor: pointer;
+
+  &:hover:not(:disabled) { background: #163f6f; }
+  &:disabled { opacity: 0.55; cursor: default; }
+}
+
+// -------------------------------------------------------- the report list ---
+.rep-list-head { padding: 16px 18px 6px; }
+
+.rep-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 13px 18px;
+  border-top: 1px solid #f2f6f4;
+
+  &:hover { background: #fafcfb; }
+}
+
+.rep-row-mark {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: #e6f5ec;
+
+  svg { width: 17px; height: 17px; }
+}
+
+.rep-row-text { flex: 1; min-width: 0; }
+.rep-row-title { font-size: 12.4px; font-weight: 700; color: #16211a; }
+.rep-row-note { margin-top: 3px; font-size: 10.8px; color: #5d6b62; }
+
+.rep-format {
+  flex: none;
+  padding: 2px 9px;
+  border-radius: 5px;
+  background: #e6f5ec;
+  border: 1px solid #bfe3cd;
+  font-size: 9.6px;
+  font-weight: 700;
+  color: #0f7b45;
+}
+
+.rep-state { margin: 0; padding: 20px 18px; font-size: 12px; color: #5d6b62; }
+.rep-error { margin: 0; padding: 12px 2px; font-size: 11.6px; color: #b91c1c; }

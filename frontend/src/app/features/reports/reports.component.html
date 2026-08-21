@@ -1,0 +1,222 @@
+<app-page-intro
+  title="Reports &amp; Analytics Portal"
+  subtitle="Scheme performance, and every register the portal holds, as a workbook"
+/>
+
+<div class="stack">
+  <!-- ------------------------------------------------------- filter bar --- -->
+  <section class="card rep-filters">
+    <div class="field">
+      <label class="field-label" for="from">DATE RANGE</label>
+      <div class="rep-range">
+        <input id="from" class="input" type="date" name="from"
+               [ngModel]="fromDate()" (ngModelChange)="fromDate.set($event); load()" />
+        <span class="rep-dash">–</span>
+        <input class="input" type="date" name="to"
+               [ngModel]="toDate()" (ngModelChange)="toDate.set($event); load()" />
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="field-label" for="state">SELECT STATE</label>
+      <select id="state" class="input" name="state"
+              [ngModel]="stateId()" (ngModelChange)="stateId.set($event); load()">
+        <option value="">All States</option>
+        @for (state of states(); track state.stateId) {
+          <option [value]="state.stateId">{{ state.name }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="field">
+      <label class="field-label" for="level">SELECT CERTIFICATION LEVEL</label>
+      <select id="level" class="input" name="level"
+              [ngModel]="levelId()" (ngModelChange)="levelId.set($event); load()">
+        <option value="">All Levels</option>
+        @for (level of data()?.mis || []; track level.certificationLevelId) {
+          <option [value]="level.certificationLevelId">{{ level.name }}</option>
+        }
+      </select>
+    </div>
+  </section>
+
+  @if (loading()) {
+    <p class="rep-state">Loading the scheme's figures…</p>
+  } @else if (data(); as d) {
+    <!-- ------------------------------------------------------ MIS cards --- -->
+    <div class="rep-mis">
+      @for (level of d.mis; track level.certificationLevelId; let i = $index) {
+        <article class="card rep-card" [class]="'accent-' + i">
+          <header class="rep-card-head">
+            <h3>{{ level.name }} MIS</h3>
+          </header>
+
+          <div class="rep-line">
+            <span>Total Enrolled</span>
+            <b>{{ level.enrolled | number }}</b>
+          </div>
+          <div class="rep-line">
+            <span>In Handholding</span>
+            <b>{{ level.handholding | number }}</b>
+          </div>
+          <div class="rep-line">
+            <span>In Assessment</span>
+            <b>{{ level.assessing | number }}</b>
+          </div>
+          <div class="rep-line">
+            <span>Certified</span>
+            <b>{{ level.certified | number }}</b>
+          </div>
+
+          <footer class="rep-card-foot">
+            <span>Certification Rate</span>
+            <b class="rep-rate">{{ level.certificationRate }}%</b>
+          </footer>
+        </article>
+      }
+    </div>
+
+    <div class="rep-grid">
+      <!-- -------------------------------------------- state performance --- -->
+      <section class="card card-pad">
+        <h3 class="rep-title">State-wise Performance</h3>
+        <p class="rep-sub">Certification rate against applications received</p>
+
+        @for (row of d.statePerformance; track row.stateId) {
+          <div class="rep-bar-row">
+            <span class="rep-bar-name">{{ row.name }}</span>
+            <span class="rep-bar-track">
+              <span class="rep-bar-fill" [style.width]="barWidth(row)"></span>
+            </span>
+            <span class="rep-bar-value">{{ row.score }}</span>
+          </div>
+        } @empty {
+          <p class="rep-state">No applications in this range.</p>
+        }
+      </section>
+
+      <!-- ------------------------------------------ upgrade conversions --- -->
+      <section class="card card-pad">
+        <h3 class="rep-title">Level Upgrade Conversion Rates</h3>
+        <p class="rep-sub">Enterprises that went on to the next level</p>
+
+        @for (row of d.conversions; track row.from + row.to) {
+          <div class="rep-conv">
+            <div class="rep-conv-head">
+              <span>{{ row.from }} → {{ row.to }}</span>
+              <b>{{ row.rate }}%</b>
+            </div>
+            <span class="rep-bar-track">
+              <span class="rep-bar-fill is-blue" [style.width]="row.rate + '%'"></span>
+            </span>
+            <p class="rep-conv-note">
+              {{ row.moved | number }} of {{ row.holders | number }} enterprises
+            </p>
+          </div>
+        } @empty {
+          <p class="rep-state">Nothing to compare in this range.</p>
+        }
+      </section>
+    </div>
+
+    <div class="rep-grid">
+      <!-- ------------------------------------------- training analytics --- -->
+      <section class="card card-pad">
+        <h3 class="rep-title">Course Completion &amp; Exam Analytics</h3>
+        <p class="rep-sub">5S, Kaizen, TPM, VSM, Six Sigma and PDCA</p>
+
+        <!-- Stated rather than drawn empty: the portal does not record training
+             or examinations yet, and a chart of zeros would read as a result. -->
+        <div class="rep-empty">
+          <span class="rep-empty-mark">
+            <svg viewBox="0 0 20 20" aria-hidden="true">
+              <circle cx="10" cy="10" r="8.5" fill="none" stroke="#8A9A92" stroke-width="1.4" />
+              <path d="M10 9v5M10 6.2v.1" stroke="#8A9A92" stroke-width="1.6" stroke-linecap="round" />
+            </svg>
+          </span>
+          <p>{{ d.training.message }}</p>
+        </div>
+      </section>
+
+      <!-- ------------------------------------------------ report builder --- -->
+      <section class="card card-pad">
+        <h3 class="rep-title">Build Custom Reports</h3>
+        <p class="rep-sub">Choose the parameters; the workbook is generated on the spot</p>
+
+        <div class="rep-build">
+          <div class="field">
+            <label class="field-label" for="groupBy">GROUP BY</label>
+            <select id="groupBy" class="input" name="groupBy"
+                    [ngModel]="groupBy()" (ngModelChange)="groupBy.set($event)">
+              @for (group of groups; track group) {
+                <option [value]="group">{{ group }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="field">
+            <label class="field-label">LEVEL</label>
+            <div class="rep-checks">
+              @for (level of d.mis; track level.certificationLevelId) {
+                <label class="rep-check">
+                  <input type="checkbox"
+                         (change)="toggleLevel(level.certificationLevelId, $any($event.target).checked)" />
+                  {{ level.name }}
+                </label>
+              }
+            </div>
+            <p class="rep-hint">Leave all clear to include every level.</p>
+          </div>
+        </div>
+
+        @if (canExport) {
+          <button class="rep-primary" type="button" [disabled]="busy() !== null" (click)="generate()">
+            {{ busy() === 'custom' ? 'Generating…' : 'Generate Report' }}
+          </button>
+        }
+      </section>
+    </div>
+
+    <!-- ---------------------------------------------------- the workbooks --- -->
+    <section class="card">
+      <header class="rep-list-head">
+        <div>
+          <h3 class="rep-title">Excel Reports</h3>
+          <p class="rep-sub">Built when you ask for one, from the filters above — never a stored copy</p>
+        </div>
+      </header>
+
+      @for (report of d.catalogue; track report.key) {
+        <div class="rep-row">
+          <span class="rep-row-mark">
+            <svg viewBox="0 0 18 18" aria-hidden="true">
+              <path d="M4 1.8h6.4L14 5.4v10.8H4z" fill="none" stroke="#0F7B45" stroke-width="1.4"
+                    stroke-linejoin="round" />
+              <path d="M10.4 1.8v3.6H14" fill="none" stroke="#0F7B45" stroke-width="1.4" />
+              <path d="M6.4 9.2l5 4.4M11.4 9.2l-5 4.4" stroke="#0F7B45" stroke-width="1.3"
+                    stroke-linecap="round" />
+            </svg>
+          </span>
+
+          <div class="rep-row-text">
+            <div class="rep-row-title">{{ report.title }}</div>
+            <div class="rep-row-note">{{ report.description }}</div>
+          </div>
+
+          <span class="rep-format">XLSX</span>
+
+          @if (canExport) {
+            <button class="link-btn" type="button" [disabled]="busy() !== null"
+                    (click)="download(report)">
+              {{ busy() === report.key ? 'Preparing…' : 'Download' }}
+            </button>
+          }
+        </div>
+      }
+    </section>
+  }
+
+  @if (error(); as message) {
+    <p class="rep-error">{{ message }}</p>
+  }
+</div>

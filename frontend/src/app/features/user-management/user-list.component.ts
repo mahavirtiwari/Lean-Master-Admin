@@ -48,7 +48,8 @@ export class UserListComponent {
   readonly rows = signal<UserRow[]>([]);
   readonly total = signal(0);
   readonly page = signal(1);
-  readonly pageSize = 25;
+  /** Chosen from the pager; 20 is what the scheme's other portals open on. */
+  readonly pageSize = signal(20);
   readonly loading = signal(true);
 
   readonly types = signal<AccountTypeSummary[]>([]);
@@ -126,7 +127,7 @@ export class UserListComponent {
         roleId: this.roleId(),
         statusId: this.statusTab(),
         pageNumber: this.page(),
-        pageSize: this.pageSize,
+        pageSize: this.pageSize(),
       })
       .subscribe({
         next: (result) => {
@@ -196,4 +197,11 @@ export class UserListComponent {
         error: () => this.confirming.set(null),
       });
   }
+
+  setPageSize(size: number): void {
+    this.pageSize.set(size);
+    this.page.set(1);
+    this.load();
+  }
+
 }

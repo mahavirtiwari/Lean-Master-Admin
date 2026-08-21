@@ -43,7 +43,8 @@ export class DocumentsComponent {
   readonly audiences = signal<DocumentAudience[]>([]);
   readonly total = signal(0);
   readonly page = signal(1);
-  readonly pageSize = 25;
+  /** Chosen from the pager; 20 is what the scheme's other portals open on. */
+  readonly pageSize = signal(20);
   readonly loading = signal(true);
 
   readonly search = signal('');
@@ -80,7 +81,7 @@ export class DocumentsComponent {
         search: this.search(),
         accountTypeId: this.audienceFilter(),
         pageNumber: this.page(),
-        pageSize: this.pageSize,
+        pageSize: this.pageSize(),
       })
       .subscribe({
         next: (result) => {
@@ -217,4 +218,11 @@ export class DocumentsComponent {
     if (bytes < 1048576) return `${(bytes / 1024).toFixed(0)} KB`;
     return `${(bytes / 1048576).toFixed(1)} MB`;
   }
+
+  setPageSize(size: number): void {
+    this.pageSize.set(size);
+    this.page.set(1);
+    this.load();
+  }
+
 }

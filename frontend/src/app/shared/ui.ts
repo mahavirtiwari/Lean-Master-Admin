@@ -72,32 +72,53 @@ export class EmptyComponent {
   readonly text = input('Nothing matches the current filters. Adjust them, or add the first record.');
 }
 
-/** Row-count line plus page buttons, as drawn under every table. */
+/**
+ * The pager under every table.
+ *
+ * Shaped after the scheme's other portals: a page-size chooser on the left, and
+ * First / Prev / a page chooser / Next / Last on the right. The page number is a
+ * dropdown rather than a row of buttons because a list of five lakh
+ * registrations is twenty-five thousand pages, and no row of buttons survives
+ * that — a select does, and it also lets somebody jump straight to page 800.
+ */
 @Component({
   selector: 'app-pager',
   template: `
     @if (total() > 0) {
       <div class="pager">
-        <span>
-          Showing {{ from() }}–{{ to() }} of {{ total() | number }}
+        <label class="pager-size">
+          Show
+          <select
+            (change)="sizeChange.emit(+$any($event.target).value)"
+            aria-label="Rows per page"
+          >
+            @for (size of sizes; track size) {
+              <option [value]="size" [selected]="size === pageSize()">{{ size }}</option>
+            }
+          </select>
+          Entries
+        </label>
+
+        <span class="pager-count">
+          {{ from() | number }}–{{ to() | number }} of {{ total() | number }}
           {{ total() === 1 ? noun() : nounPlural() }}
         </span>
 
         <div class="pager-btns">
+          <button class="pg" type="button" [disabled]="page() <= 1" (click)="go.emit(1)">First</button>
           <button class="pg" type="button" [disabled]="page() <= 1" (click)="go.emit(page() - 1)">
             Prev
           </button>
 
-          @for (p of pages(); track p) {
-            <button
-              class="pg"
-              type="button"
-              [class.is-active]="p === page()"
-              (click)="go.emit(p)"
-            >
-              {{ p }}
-            </button>
-          }
+          <select
+            class="pg pg-page"
+            (change)="go.emit(+$any($event.target).value)"
+            aria-label="Page"
+          >
+            @for (p of pages(); track p) {
+              <option [value]="p" [selected]="p === page()">{{ p }}</option>
+            }
+          </select>
 
           <button
             class="pg"
@@ -106,6 +127,14 @@ export class EmptyComponent {
             (click)="go.emit(page() + 1)"
           >
             Next
+          </button>
+          <button
+            class="pg"
+            type="button"
+            [disabled]="page() >= totalPages()"
+            (click)="go.emit(totalPages())"
+          >
+            Last
           </button>
         </div>
       </div>
@@ -121,6 +150,9 @@ export class PagerComponent {
   readonly nounPlural = input('records');
 
   readonly go = output<number>();
+  readonly sizeChange = output<number>();
+
+  readonly sizes = [10, 20, 50, 100, 200] as const;
 
   totalPages(): number {
     return Math.max(1, Math.ceil(this.total() / this.pageSize()));
@@ -134,13 +166,9 @@ export class PagerComponent {
     return Math.min(this.page() * this.pageSize(), this.total());
   }
 
-  /** A five-page window, so a 40-page list does not print 40 buttons. */
+  /** Every page, for the chooser. */
   pages(): number[] {
-    const last = this.totalPages();
-    const start = Math.max(1, Math.min(this.page() - 2, last - 4));
-    const end = Math.min(last, start + 4);
-
-    return Array.from({ length: end - start + 1 }, (_, index) => start + index);
+    return Array.from({ length: this.totalPages() }, (_, index) => index + 1);
   }
 }
 

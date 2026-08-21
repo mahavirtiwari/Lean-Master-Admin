@@ -254,6 +254,14 @@ export const routes: Routes = [
           ),
       },
 
+      // -------------------------------------------------------------- reports ---
+      {
+        path: 'reports',
+        canActivate: [permissionGuard('REPORTS')],
+        loadComponent: () =>
+          import('./features/reports/reports.component').then((m) => m.ReportsComponent),
+      },
+
       // -------------------------------------------------------------- emailer ---
       // One menu, two halves: Campaign is a bulk send, Transactional is the
       // library of templates the portal fires by itself.

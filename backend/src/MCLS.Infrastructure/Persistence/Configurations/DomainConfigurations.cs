@@ -95,7 +95,9 @@ internal sealed class TechnologyCategoryConfiguration : IEntityTypeConfiguration
     {
         b.ToTable("TechnologyCategory", "master");
         b.HasKey(x => x.TechnologyCategoryId);
+        b.Property(x => x.Code).HasMaxLength(20).IsUnicode(false).IsRequired();
         b.Property(x => x.Name).HasMaxLength(120).IsRequired();
+        b.HasIndex(x => x.Code).IsUnique();
         b.HasIndex(x => x.Name).IsUnique();
     }
 }

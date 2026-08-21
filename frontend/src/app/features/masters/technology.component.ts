@@ -45,16 +45,16 @@ import {
             <div class="stat-value">{{ s.totalTechnologies | number }}</div>
           </div>
           <div class="stat">
-            <div class="stat-label">Active</div>
-            <div class="stat-value">{{ s.active | number }}</div>
-          </div>
-          <div class="stat">
             <div class="stat-label">Categories</div>
             <div class="stat-value">{{ s.categories | number }}</div>
           </div>
           <div class="stat">
-            <div class="stat-label">MSMEs Adopted</div>
-            <div class="stat-value">{{ s.msmesAdopted | number }}</div>
+            <div class="stat-label">Sectors</div>
+            <div class="stat-value">{{ s.sectors | number }}</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Active</div>
+            <div class="stat-value">{{ s.active | number }}</div>
           </div>
         </div>
       }
@@ -109,7 +109,7 @@ import {
               >
                 <option value="">Select category</option>
                 @for (category of categories(); track category.technologyCategoryId) {
-                  <option [value]="category.technologyCategoryId">{{ category.name }}</option>
+                  <option [value]="category.technologyCategoryId">{{ category.code }} — {{ category.name }}</option>
                 }
               </select>
             </div>
@@ -125,7 +125,7 @@ import {
               >
                 <option value="">Select sector</option>
                 @for (sector of sectors(); track sector.sectorId) {
-                  <option [value]="sector.sectorId">{{ sector.name }}</option>
+                  <option [value]="sector.sectorId">{{ sector.nicCode }} — {{ sector.name }}</option>
                 }
               </select>
             </div>
@@ -192,7 +192,7 @@ import {
             >
               <option value="">All Categories</option>
               @for (category of categories(); track category.technologyCategoryId) {
-                <option [value]="category.technologyCategoryId">{{ category.name }}</option>
+                <option [value]="category.technologyCategoryId">{{ category.code }} — {{ category.name }}</option>
               }
             </select>
 
@@ -324,7 +324,7 @@ export class TechnologyComponent {
     totalTechnologies: number;
     active: number;
     categories: number;
-    msmesAdopted: number;
+    sectors: number;
   } | null>(null);
 
   readonly total = signal(0);

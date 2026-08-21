@@ -175,6 +175,14 @@ export const routes: Routes = [
           import('./features/masters/parameters.component').then((m) => m.ParametersComponent),
       },
       {
+        path: 'technology-upgradation/categories',
+        canActivate: [permissionGuard('TECH_UPGRAD')],
+        loadComponent: () =>
+          import('./features/masters/technology-categories.component').then(
+            (m) => m.TechnologyCategoriesComponent,
+          ),
+      },
+      {
         path: 'technology-upgradation',
         canActivate: [permissionGuard('TECH_UPGRAD')],
         loadComponent: () =>

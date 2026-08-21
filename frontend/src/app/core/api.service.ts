@@ -148,18 +148,36 @@ export class ApiService {
     totalTechnologies: number;
     active: number;
     categories: number;
-    msmesAdopted: number;
+    sectors: number;
   }> {
     return this.http.get<{
       totalTechnologies: number;
       active: number;
       categories: number;
-      msmesAdopted: number;
+      sectors: number;
     }>(`${this.base}/technologies/summary`);
   }
 
-  technologyCategories(): Observable<M.TechnologyCategory[]> {
-    return this.http.get<M.TechnologyCategory[]>(`${this.base}/technologies/categories`);
+  /** `all` includes retired categories — the maintenance screen needs them. */
+  technologyCategories(all = false): Observable<M.TechnologyCategory[]> {
+    return this.http.get<M.TechnologyCategory[]>(`${this.base}/technologies/categories`, {
+      params: all ? { all: 'true' } : {},
+    });
+  }
+
+  createTechnologyCategory(body: { code: string; name: string }): Observable<unknown> {
+    return this.http.post(`${this.base}/technologies/categories`, body);
+  }
+
+  updateTechnologyCategory(id: number, body: { code: string; name: string }): Observable<void> {
+    return this.http.put<void>(`${this.base}/technologies/categories/${id}`, body);
+  }
+
+  setTechnologyCategoryStatus(id: number, isActive: boolean, reason: string): Observable<void> {
+    return this.http.post<void>(`${this.base}/technologies/categories/${id}/status`, {
+      isActive,
+      reason,
+    });
   }
 
   createTechnology(body: unknown): Observable<unknown> {

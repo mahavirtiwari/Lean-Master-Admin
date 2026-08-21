@@ -81,7 +81,10 @@ export interface Technology {
 
 export interface TechnologyCategory {
   technologyCategoryId: number;
+  code: string;
   name: string;
+  isActive: boolean;
+  technologyCount: number;
 }
 
 // ---------------------------------------------------------------- users ---

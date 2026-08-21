@@ -76,20 +76,123 @@ public sealed class TechnologiesController(MclsDbContext db, ICurrentUser curren
         => Ok(new
         {
             totalTechnologies = await db.Technologies.CountAsync(ct),
-            active = await db.Technologies.CountAsync(t => t.IsActive, ct),
             categories = await db.TechnologyCategories.CountAsync(c => c.IsActive, ct),
-            msmesAdopted = await db.Enterprises.CountAsync(ct),
+
+            // Sectors that actually have a technology mapped to them, not every
+            // sector in the master: the card is about this module's coverage.
+            sectors = await db.Technologies
+                .Where(t => t.SectorId != null)
+                .Select(t => t.SectorId)
+                .Distinct()
+                .CountAsync(ct),
+
+            active = await db.Technologies.CountAsync(t => t.IsActive, ct),
         });
 
-    /// <summary>Categories for the Add Technology form's dropdown.</summary>
+    /// <summary>
+    /// Categories, for the dropdown and for the Category screen that maintains
+    /// them.
+    ///
+    /// <paramref name="all"/> is what separates the two callers: the dropdown
+    /// offers only what can still be chosen, the maintenance screen has to show
+    /// the retired ones too or they cannot be brought back.
+    /// </summary>
     [HttpGet("categories")]
     [HasPermission(Permissions.TechnologyUpgradation, Permissions.View)]
-    public async Task<IActionResult> GetCategories(CancellationToken ct)
+    public async Task<IActionResult> GetCategories([FromQuery] bool all = false, CancellationToken ct = default)
         => Ok(await db.TechnologyCategories.AsNoTracking()
-            .Where(c => c.IsActive)
+            .Where(c => all || c.IsActive)
             .OrderBy(c => c.SortOrder)
-            .Select(c => new TechnologyCategoryDto(c.TechnologyCategoryId, c.Name))
+            .ThenBy(c => c.Code)
+            .Select(c => new TechnologyCategoryDto(
+                c.TechnologyCategoryId,
+                c.Code,
+                c.Name,
+                c.IsActive,
+                db.Technologies.Count(t => t.TechnologyCategoryId == c.TechnologyCategoryId && t.IsActive)))
             .ToListAsync(ct));
+
+    /// <summary>Adds a category, which then appears in the technology form.</summary>
+    [HttpPost("categories")]
+    [HasPermission(Permissions.TechnologyUpgradation, Permissions.Create)]
+    public async Task<IActionResult> CreateCategory(
+        [FromBody] TechnologyCategoryRequest request, CancellationToken ct)
+    {
+        var code = request.Code.Trim();
+
+        if (await db.TechnologyCategories.AnyAsync(c => c.Code == code, ct))
+        {
+            ModelState.AddModelError(nameof(request.Code), $"Category code {code} already exists.");
+            return ValidationProblem(ModelState);
+        }
+
+        var category = new TechnologyCategory
+        {
+            Code = code,
+            Name = request.Name.Trim(),
+            SortOrder = request.SortOrder ?? (short)(await db.TechnologyCategories.CountAsync(ct) + 1),
+            IsActive = true,
+        };
+
+        db.TechnologyCategories.Add(category);
+        await db.SaveChangesAsync(ct);
+
+        return Ok(new TechnologyCategoryDto(category.TechnologyCategoryId, category.Code, category.Name, true, 0));
+    }
+
+    [HttpPut("categories/{id:int}")]
+    [HasPermission(Permissions.TechnologyUpgradation, Permissions.Edit)]
+    public async Task<IActionResult> UpdateCategory(
+        short id, [FromBody] TechnologyCategoryRequest request, CancellationToken ct)
+    {
+        var category = await db.TechnologyCategories.AsTracking()
+            .SingleOrDefaultAsync(c => c.TechnologyCategoryId == id, ct);
+
+        if (category is null) return NotFound();
+
+        var code = request.Code.Trim();
+
+        if (await db.TechnologyCategories.AnyAsync(c => c.Code == code && c.TechnologyCategoryId != id, ct))
+        {
+            ModelState.AddModelError(nameof(request.Code), $"Category code {code} already exists.");
+            return ValidationProblem(ModelState);
+        }
+
+        category.Code = code;
+        category.Name = request.Name.Trim();
+        if (request.SortOrder is { } order) category.SortOrder = order;
+
+        await db.SaveChangesAsync(ct);
+
+        return NoContent();
+    }
+
+    /// <summary>Retires a category, or brings one back — with its reason.</summary>
+    [HttpPost("categories/{id:int}/status")]
+    [HasPermission(Permissions.TechnologyUpgradation, Permissions.Edit)]
+    public async Task<IActionResult> SetCategoryStatus(
+        short id, [FromBody] StatusChangeRequest request, CancellationToken ct)
+    {
+        var category = await db.TechnologyCategories.AsTracking()
+            .SingleOrDefaultAsync(c => c.TechnologyCategoryId == id, ct);
+
+        if (category is null) return NotFound();
+
+        if (string.IsNullOrWhiteSpace(request.Reason))
+        {
+            ModelState.AddModelError(nameof(request.Reason), StatusChanges.ReasonRequired);
+            return ValidationProblem(ModelState);
+        }
+
+        StatusChanges.Record(
+            db, "TechnologyCategory", id, category.Name,
+            category.IsActive, request.IsActive, request.Reason, currentUser.UserId);
+
+        category.IsActive = request.IsActive;
+        await db.SaveChangesAsync(ct);
+
+        return NoContent();
+    }
 
     /// <summary>One technology, for the Edit Technology screen.</summary>
     [HttpGet("{id:int}")]
@@ -198,7 +301,23 @@ public sealed record TechnologyDto(
     string? SectorName,
     bool IsActive);
 
-public sealed record TechnologyCategoryDto(short TechnologyCategoryId, string Name);
+public sealed record TechnologyCategoryDto(
+    short TechnologyCategoryId,
+    string Code,
+    string Name,
+    bool IsActive,
+    int TechnologyCount);
+
+public sealed class TechnologyCategoryRequest
+{
+    [Required, StringLength(20)]
+    public string Code { get; init; } = string.Empty;
+
+    [Required, StringLength(120)]
+    public string Name { get; init; } = string.Empty;
+
+    public short? SortOrder { get; init; }
+}
 
 public sealed class TechnologySaveRequest
 {

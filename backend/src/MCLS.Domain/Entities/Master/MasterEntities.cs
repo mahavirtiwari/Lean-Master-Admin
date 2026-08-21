@@ -91,6 +91,10 @@ public class SectorParameter
 public class TechnologyCategory
 {
     public short TechnologyCategoryId { get; set; }
+
+    /// <summary>The short code an administrator files it under, e.g. TC-01.</summary>
+    public string Code { get; set; } = string.Empty;
+
     public string Name { get; set; } = string.Empty;
     public short SortOrder { get; set; }
     public bool IsActive { get; set; } = true;

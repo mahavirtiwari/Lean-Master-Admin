@@ -1,8 +1,12 @@
 // Pledge certification details — the page a scanned certificate opens.
 //
-// Built mobile-first, unlike the rest of the portal: this page is reached by
-// pointing a phone camera at a piece of paper, so the phone is the design
-// target and the desktop is the adaptation.
+// Wears the registration portal's frame: the same header lockup, the same green
+// rule beneath it, the same footer. Somebody arriving here has pointed a camera
+// at a piece of paper and landed on a page they have never seen; looking like
+// the scheme's own portal is most of what tells them it is genuine.
+//
+// Built mobile-first, unlike the rest of the portal, because the phone is how
+// this page is reached.
 
 :host {
   display: block;
@@ -10,22 +14,41 @@
   background: #f4f7f5;
 }
 
-.ver-head {
+// ------------------------------------------------------------------ header ---
+.pub-head {
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 14px 18px;
+  padding: 12px 18px;
   background: #fff;
   border-bottom: 3px solid #0f7b45;
 
   .spacer { flex: 1; }
 }
 
-.ver-ministry { height: 42px; width: auto; object-fit: contain; }
-.ver-lean { height: 40px; width: auto; object-fit: contain; }
+.head-lean { height: 40px; width: auto; object-fit: contain; }
+.head-logo { height: 42px; width: auto; object-fit: contain; }
 
+.head-rule {
+  width: 1px;
+  height: 40px;
+  background: #c6d3cb;
+}
+
+.head-tag {
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: #f0f8f3;
+  border: 1px solid #d9ebe1;
+  font-size: 11px;
+  font-weight: 600;
+  color: #0f7b45;
+  white-space: nowrap;
+}
+
+// -------------------------------------------------------------------- body ---
 .ver-body {
-  padding: 18px 14px 30px;
+  padding: 20px 14px 30px;
   max-width: 620px;
   margin: 0 auto;
 }
@@ -38,7 +61,7 @@
   box-shadow: 0 2px 10px rgb(15 123 69 / 6%);
 }
 
-// The heading band, in the scheme green rather than the sample's teal.
+// The heading band, in the scheme green.
 .ver-band {
   padding: 22px 18px;
   background: linear-gradient(135deg, #0f7b45, #12945a);
@@ -47,7 +70,7 @@
 
 .ver-title {
   margin: 0;
-  font-size: 27px;
+  font-size: 26px;
   font-weight: 800;
   line-height: 1.18;
   color: #fff;
@@ -134,23 +157,58 @@
 }
 
 .ver-note {
-  margin: 16px 4px 0;
+  margin: 14px 4px 0;
   font-size: 11.4px;
   line-height: 1.6;
   color: #6c7a71;
   text-align: center;
 }
 
-.ver-foot {
-  padding: 16px;
-  text-align: center;
+// ------------------------------------------------------------------ footer ---
+.pub-foot {
+  border-top: 1px solid #dee7e1;
+  background: #fff;
+  padding: 18px;
+}
+
+.foot-inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 14px;
+  max-width: 1120px;
+  margin: 0 auto;
+
+  .spacer { flex: 1; }
+}
+
+.foot-a { font-size: 11.4px; color: #47554c; line-height: 1.6; }
+
+.foot-meta {
+  margin-top: 6px;
+  font-size: 10.6px;
+  color: #8a9a92;
+}
+
+.foot-dot { margin: 0 6px; }
+
+.foot-links {
+  display: flex;
+  gap: 18px;
+}
+
+.foot-link {
   font-size: 11.4px;
-  color: #6c7a71;
-  border-top: 1px solid #e4ece7;
+  font-weight: 600;
+  color: #1b4f8a;
+  text-decoration: none;
+
+  &:hover { text-decoration: underline; }
 }
 
 @media (min-width: 700px) {
-  .ver-head { padding: 16px 32px; }
+  .pub-head { padding: 14px 34px; }
   .ver-body { padding: 32px 16px 44px; }
-  .ver-title { font-size: 31px; }
+  .ver-title { font-size: 30px; }
+  .pub-foot { padding: 22px 34px; }
 }

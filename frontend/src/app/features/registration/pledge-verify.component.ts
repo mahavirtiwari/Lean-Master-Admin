@@ -39,6 +39,7 @@ export class PledgeVerifyComponent {
   readonly error = signal<string | null>(null);
 
   readonly year = new Date().getFullYear();
+  readonly appVersion = '1.0.0';
 
   constructor() {
     const reference = this.route.snapshot.paramMap.get('reference') ?? '';

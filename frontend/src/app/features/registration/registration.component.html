@@ -831,10 +831,10 @@
 
     <!-- ============================================ R9: registration done == -->
     @case (9) {
-      <section class="card">
+      <section class="card done-card">
         <div class="done-wrap">
           <div class="done-mark">✓</div>
-          <h2 class="done-title">Registration complete</h2>
+          <h2 class="done-title">Registration Successful</h2>
           <p class="done-sub">
             Your LEAN ID and password have been sent to the verified SPOC email address.
           </p>
@@ -853,13 +853,14 @@
             <div class="cred-box cred-pw">
               <span class="lbl">SYSTEM PASSWORD</span>
               <div class="cred-val">••••••••••••</div>
-              <span class="hint">Sent to {{ result()?.spocEmail }} · change is optional</span>
+              <span class="hint">Sent to {{ result()?.spocEmail }}</span>
             </div>
           </div>
 
           <p class="done-next">
-            Next: sign in and apply for LEAN Bronze, Silver or Gold from your dashboard.<br />
-            No email yet? Check your Spam or Junk folder before contacting the helpline.
+            Sign in to your account and apply for LEAN Bronze, Silver, or Gold certification from
+            your dashboard. If you have not received the email, please check your Spam or Junk
+            folder before contacting the helpline.
           </p>
 
           <div class="actions done-actions">

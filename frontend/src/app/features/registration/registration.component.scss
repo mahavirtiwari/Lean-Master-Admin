@@ -923,19 +923,14 @@
 
 // ----------------------------------------------------------------- success ---
 .done-wrap {
-  position: relative;
   text-align: center;
   padding: 20px 0 6px;
+}
 
-  // The 3px green rule the artboard runs along the top edge of the card.
-  &::before {
-    content: '';
-    position: absolute;
-    inset: -32px -34px auto;
-    height: 3px;
-    background: #0f7b45;
-    border-radius: 8px 8px 0 0;
-  }
+// The 3px green rule the artboard runs along the top edge of the card, drawn as
+// the card's own border so it cannot drift away from it.
+.done-card {
+  border-top: 3px solid #0f7b45;
 }
 
 .done-mark {

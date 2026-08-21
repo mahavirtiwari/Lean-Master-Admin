@@ -1,14 +1,19 @@
-<!-- ========================================= public header (verification) == -->
-<header class="ver-head">
+<!-- ========================================= public header (registration) == -->
+<!-- The same lockup as the registration portal: the scheme mark leads, the
+     Ministry emblem follows the rule. Somebody arriving here has scanned a
+     certificate and has no other way to tell whose page this is. -->
+<header class="pub-head">
+  <img class="head-lean" src="assets/mcls-logo.png"
+       alt="MSME Competitive (LEAN) Scheme — MCLS" />
+  <span class="head-rule"></span>
   <a href="https://www.msme.gov.in/" target="_blank" rel="noopener noreferrer" title="Ministry of MSME">
-    <img class="ver-ministry" src="assets/msme-logo.svg"
+    <img class="head-logo" src="assets/msme-logo.svg"
          alt="Ministry of Micro, Small &amp; Medium Enterprises" />
   </a>
 
-  <span class="spacer"></span>
+  <div class="spacer"></div>
 
-  <img class="ver-lean" src="assets/mcls-logo.png"
-       alt="MSME Competitive (LEAN) Scheme — MCLS" />
+  <span class="head-tag">Pledge verification</span>
 </header>
 
 <main class="ver-body">
@@ -50,16 +55,6 @@
           <dt>Certificate No.:</dt>
           <dd>{{ d.certificateNo }}</dd>
         </div>
-
-        <!-- The LEAN ID is the scheme's own identifier and only exists once the
-             registration has completed, so it is shown when there is one. -->
-        @if (d.leanId) {
-          <div class="ver-row">
-            <dt>LEAN ID:</dt>
-            <dd>{{ d.leanId }}</dd>
-          </div>
-        }
-
         <div class="ver-row">
           <dt>Status:</dt>
           <dd>
@@ -72,8 +67,29 @@
 
   <p class="ver-note">
     Verified against the MSME Competitive (LEAN) Scheme registry at the moment this page was
-    opened. Ministry of Micro, Small &amp; Medium Enterprises, Government of India.
+    opened.
   </p>
 </main>
 
-<footer class="ver-foot">© {{ year }} Ministry of MSME, Government of India</footer>
+<footer class="pub-foot">
+  <div class="foot-inner">
+    <div class="foot-left">
+      <div class="foot-a">
+        Ministry of Micro, Small and Medium Enterprises, Kartavya Bhawan - 03,
+        Kartavya Path, New Delhi - 110001, India
+      </div>
+      <div class="foot-meta">
+        <span>© {{ year }} MCLS. All Rights Reserved.</span>
+        <span class="foot-dot">·</span>
+        <span>Version {{ appVersion }}</span>
+      </div>
+    </div>
+
+    <div class="spacer"></div>
+
+    <nav class="foot-links" aria-label="Footer">
+      <a class="foot-link" href="https://lean.msme.gov.in/" target="_blank" rel="noopener">LEAN Scheme</a>
+      <a class="foot-link" href="https://ndie.qcin.org/contact-us/" target="_blank" rel="noopener">Help</a>
+    </nav>
+  </div>
+</footer>

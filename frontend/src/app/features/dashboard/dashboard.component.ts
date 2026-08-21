@@ -24,6 +24,24 @@ interface DashboardCounts {
   registeredLast30Days: number;
   agencies: AgencySplit[];
   levelAgencies: LevelAgencySplit[];
+
+  /** Who brought each MSME in, from the awareness programme it attended. */
+  registrationSplit: {
+    qci: number;
+    npc: number;
+    self: number;
+    unattributed: number;
+  };
+
+  subsidyDisbursed: number;
+}
+
+/** A state or a district, with both figures the panels can rank by. */
+interface PlaceRow {
+  name: string;
+  state?: string;
+  registered: number;
+  certified: number;
 }
 
 interface AgencySplit {
@@ -65,8 +83,16 @@ export class DashboardComponent {
 
   // The geography panel: certified MSMEs by state and by district, which the
   // API aggregates rather than the browser — there are 700-odd districts.
-  readonly topStates = signal<{ name: string; certified: number; percent: number }[]>([]);
-  readonly topDistricts = signal<{ name: string; state: string; certified: number }[]>([]);
+  // Named apart from the filter dropdowns' own states/districts: these are the
+  // panels' rows, with counts, not the reference lists.
+  readonly stateRows = signal<PlaceRow[]>([]);
+  readonly districtRows = signal<PlaceRow[]>([]);
+
+  /** Which figure the two geography panels are ranked by. */
+  readonly rankBy = signal<'certified' | 'registered'>('certified');
+
+  /** Whether the demographic panels count everyone, or only the certified. */
+  readonly demoBasis = signal<'registered' | 'certified'>('registered');
 
   readonly demographics = signal<Demographics | null>(null);
 
@@ -123,6 +149,178 @@ export class DashboardComponent {
   });
 
   /** "QCI: 11,250 | NPC: 8,770" under each KPI card. */
+  demoCaption(): string {
+    return this.demoBasis() === 'certified' ? 'Certified MSMEs' : 'Registered MSMEs';
+  }
+
+  setDemoBasis(basis: 'registered' | 'certified'): void {
+    this.demoBasis.set(basis);
+    this.load();
+  }
+
+  /** A donut or bar panel as a PNG: its slices, their counts and their share. */
+  exportSlices(title: string, slices: { label: string; count: number; percent: number }[]): void {
+    if (slices.length === 0) return;
+
+    this.paint(
+      title,
+      ['Category', 'MSMEs', 'Share'],
+      slices.map((s) => [s.label, s.count.toLocaleString('en-IN'), `${s.percent}%`]),
+      `${this.demoCaption()} · ${new Date().toLocaleDateString('en-IN')}`,
+    );
+  }
+
+  readonly rankedStates = computed(() => this.rank(this.stateRows()));
+  readonly rankedDistricts = computed(() => this.rank(this.districtRows()));
+
+  /** The state the districts are narrowed to, when one is chosen. */
+  districtScope(): string | null {
+    const chosen = this.states().find((s) => s.stateId === Number(this.stateId()));
+
+    return chosen?.name ?? null;
+  }
+
+  private rank(rows: PlaceRow[]): PlaceRow[] {
+    const key = this.rankBy();
+
+    return [...rows].sort((a, b) => b[key] - a[key] || b.certified - a.certified);
+  }
+
+  /**
+   * The panel as a PNG the reader can paste into a note.
+   *
+   * Painted from the data onto a canvas rather than screenshotting the DOM:
+   * capturing rendered HTML needs a library that ships a whole layout engine,
+   * and what is wanted here is a clean table of the same numbers — which the
+   * component already holds.
+   */
+  exportPlaces(title: string, firstColumn: string, rows: PlaceRow[]): void {
+    if (rows.length === 0) return;
+
+    this.paint(
+      title,
+      [firstColumn, 'Registered', 'Certified'],
+      rows.map((r) => [
+        r.state ? `${r.name}, ${r.state}` : r.name,
+        r.registered.toLocaleString('en-IN'),
+        r.certified.toLocaleString('en-IN'),
+      ]),
+      `Ranked by ${this.rankBy()} · ${new Date().toLocaleDateString('en-IN')}`,
+    );
+  }
+
+  /**
+   * Paints a titled table onto a canvas and hands it over as a PNG.
+   *
+   * Drawn from the data rather than screenshotting the DOM: capturing rendered
+   * HTML needs a library that ships a whole layout engine, and what is wanted
+   * is a clean table of numbers the component already holds.
+   */
+  private paint(title: string, headers: string[], rows: string[][], caption: string): void {
+    const rowHeight = 30;
+    const headerHeight = 96;
+    const width = 720;
+    const height = headerHeight + (rows.length + 1) * rowHeight + 34;
+
+    const canvas = document.createElement('canvas');
+    const scale = 2;  // so the text is not soft on a high-density screen
+
+    canvas.width = width * scale;
+    canvas.height = height * scale;
+
+    const ctx = canvas.getContext('2d');
+
+    if (!ctx) return;
+
+    ctx.scale(scale, scale);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, width, height);
+
+    ctx.fillStyle = '#0f7b45';
+    ctx.fillRect(0, 0, width, 4);
+
+    ctx.fillStyle = '#16211a';
+    ctx.font = '600 19px "Segoe UI", Inter, system-ui, sans-serif';
+    ctx.fillText(title, 28, 44);
+
+    ctx.fillStyle = '#5d6b62';
+    ctx.font = '12px "Segoe UI", Inter, system-ui, sans-serif';
+    ctx.fillText(`MSME Competitive (LEAN) Scheme · ${caption}`, 28, 66);
+
+    const columns = [28, 470, 600];
+
+    ctx.fillStyle = '#f7faf8';
+    ctx.fillRect(20, headerHeight - 20, width - 40, rowHeight);
+
+    ctx.fillStyle = '#5d6b62';
+    ctx.font = '600 12px "Segoe UI", Inter, system-ui, sans-serif';
+    headers.forEach((header, index) => ctx.fillText(header, columns[index], headerHeight));
+
+    rows.forEach((row, index) => {
+      const y = headerHeight + (index + 1) * rowHeight;
+
+      if (index % 2 === 1) {
+        ctx.fillStyle = '#fafcfb';
+        ctx.fillRect(20, y - 20, width - 40, rowHeight);
+      }
+
+      ctx.fillStyle = '#16211a';
+      ctx.font = '13px "Segoe UI", Inter, system-ui, sans-serif';
+      ctx.fillText(row[0], columns[0], y);
+
+      ctx.fillStyle = '#47554c';
+      ctx.fillText(row[1] ?? '', columns[1], y);
+
+      ctx.fillStyle = '#0f7b45';
+      ctx.font = '600 13px "Segoe UI", Inter, system-ui, sans-serif';
+      ctx.fillText(row[2] ?? '', columns[2], y);
+    });
+
+    canvas.toBlob((blob) => {
+      if (!blob) return;
+
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+
+      link.href = url;
+      link.download = `${title.toLowerCase().replace(/[^a-z]+/g, '-')}.png`;
+      link.click();
+
+      URL.revokeObjectURL(url);
+    });
+  }
+
+  /**
+   * The headline card's three-way split.
+   *
+   * QCI and NPC are the agencies whose awareness programmes brought the MSME
+   * in; Self is an applicant who attended none. Enterprises registered before
+   * the question was asked are counted in the total but named separately rather
+   * than folded into Self, which would say something untrue about them.
+   */
+  registrationLine(): string {
+    const split = this.counts()?.registrationSplit;
+
+    if (!split) return '';
+
+    const parts = [
+      `QCI: ${split.qci.toLocaleString('en-IN')}`,
+      `NPC: ${split.npc.toLocaleString('en-IN')}`,
+      `Self: ${split.self.toLocaleString('en-IN')}`,
+    ];
+
+    if (split.unattributed > 0) {
+      parts.push(`Not recorded: ${split.unattributed.toLocaleString('en-IN')}`);
+    }
+
+    return parts.join('  |  ');
+  }
+
+  /** Sanctioned support, in crore, as the card prints it. */
+  subsidyCrore(): number {
+    return (this.counts()?.subsidyDisbursed ?? 0) / 10_000_000;
+  }
+
   agencyLine(metric: 'registered' | 'certified' | 'paymentReceived' | 'inProgress'): string {
     const rows = this.counts()?.agencies ?? [];
     if (rows.length === 0) return '';
@@ -166,11 +364,13 @@ export class DashboardComponent {
     });
 
     this.api.geography(query).subscribe((geo) => {
-      this.topStates.set(geo.states);
-      this.topDistricts.set(geo.districts);
+      this.stateRows.set(geo.states);
+      this.districtRows.set(geo.districts);
     });
 
-    this.api.demographics(query).subscribe((d) => this.demographics.set(d));
+    this.api
+      .demographics({ ...query, basis: this.demoBasis() })
+      .subscribe((d) => this.demographics.set(d));
   }
 
   /**

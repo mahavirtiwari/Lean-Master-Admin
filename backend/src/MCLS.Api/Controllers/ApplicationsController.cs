@@ -333,6 +333,36 @@ public sealed class ApplicationsController(
             })
             .ToListAsync(ct);
 
+        // The headline card is attributed by the awareness programme the MSME
+        // attended — QCI, NPC, or Self where it attended none — not by the
+        // agency that delivers its handholding afterwards. Those are different
+        // questions, and this card asks the first.
+        var enterprises = query.Select(a => a.Enterprise).Distinct();
+
+        var byAwareness = await enterprises
+            .GroupBy(e => e.AwarenessAgency)
+            .Select(g => new { Agency = g.Key, Count = g.Count() })
+            .ToListAsync(ct);
+
+        int Awareness(string agency)
+            => byAwareness.FirstOrDefault(x => x.Agency == agency)?.Count ?? 0;
+
+        // Financial Support: the Government's share of the fee, across the
+        // invoices raised for the applications in view. Deliberately not split
+        // by agency — the support comes from the scheme, not from whoever
+        // delivers the handholding.
+        var subsidyDisbursed = await db.Invoices.AsNoTracking()
+            .Where(i => query.Any(a => a.ApplicationId == i.ApplicationId))
+            .SumAsync(i => (decimal?)i.SubsidyAmount, ct) ?? 0m;
+
+        var registrationSplit = new
+        {
+            qci = Awareness("QCI"),
+            npc = Awareness("NPC"),
+            self = Awareness("Self"),
+            unattributed = byAwareness.FirstOrDefault(x => x.Agency == null)?.Count ?? 0,
+        };
+
         var tiles = new DashboardTilesDto(
             byStatus.Sum(x => x.Count),
             Status(ApplicationStatusId.Registered),
@@ -358,6 +388,10 @@ public sealed class ApplicationsController(
             tiles.NcRaised, tiles.QualityCheck, tiles.Certified, tiles.Rejected,
             tiles.CertifiedBronze, tiles.CertifiedSilver, tiles.CertifiedGold,
             tiles.RegisteredLast30Days,
+
+            // Total Registered MSMEs splits three ways, by who brought them in.
+            registrationSplit,
+            subsidyDisbursed,
 
             // Short name is what the cards print: "QCI", "NPC".
             agencies = byAgency.Select(a => new
@@ -433,11 +467,24 @@ public sealed class ApplicationsController(
         [FromQuery] int? districtId,
         [FromQuery] byte? certificationLevelId,
         [FromQuery] int? implementingAgencyId,
+        [FromQuery] string? basis = null,
         CancellationToken ct = default)
     {
+        var applications = FilteredApplications(
+            fromDate, toDate, stateId, districtId, certificationLevelId, implementingAgencyId);
+
+        // The panels can be read two ways: every MSME that registered, or only
+        // those that went on to certify. They answer different questions — the
+        // first is who the scheme reaches, the second who it carries through —
+        // so the screen asks which one it wants.
+        if (string.Equals(basis, "certified", StringComparison.OrdinalIgnoreCase))
+        {
+            applications = applications
+                .Where(a => a.ApplicationStatusId == (byte)ApplicationStatusId.Certified);
+        }
+
         // Distinct enterprises behind the filtered applications.
-        var enterpriseIds = FilteredApplications(
-                fromDate, toDate, stateId, districtId, certificationLevelId, implementingAgencyId)
+        var enterpriseIds = applications
             .Select(a => a.EnterpriseId)
             .Distinct();
 
@@ -460,7 +507,9 @@ public sealed class ApplicationsController(
                 enterprises = g.Count(),
             })
             .OrderByDescending(x => x.enterprises)
-            .Take(10)
+            // Every division the filter allows, not the top ten: the panel
+            // scrolls, and a division missing from a list of ten is a division
+            // its own officers cannot find.
             .ToListAsync(ct);
 
         // Certified counts per division, so the NIC table can show the split the
@@ -656,11 +705,17 @@ public sealed class ApplicationsController(
     }
 
     /// <summary>
-    /// The geography panel on the dashboard: certified MSMEs by state and by
-    /// district.
+    /// The geography panels on the dashboard.
     ///
-    /// Ordered by certified count and capped, because the design shows a
-    /// leaderboard rather than all 36 states and 700-odd districts.
+    /// Both panels carry three columns — the place, its registered MSMEs and
+    /// its certified ones — because the screen lets the reader rank by either,
+    /// and a panel that only knows one of them cannot answer the other without
+    /// a second round trip.
+    ///
+    /// States are capped at ten, which is what the design lists. Districts are
+    /// not capped: the design scrolls them, and narrowing to a state is what
+    /// the filter above is for. The cap that remains is a guard against a
+    /// pathological filter, not a page size.
     /// </summary>
     [HttpGet("geography")]
     [HasPermission(Permissions.Dashboard, Permissions.View)]
@@ -671,45 +726,61 @@ public sealed class ApplicationsController(
         [FromQuery] int? districtId,
         [FromQuery] byte? certificationLevelId,
         [FromQuery] int? implementingAgencyId,
-        [FromQuery] int topStates = 6,
-        [FromQuery] int topDistricts = 8,
+        [FromQuery] int topStates = 10,
         CancellationToken ct = default)
     {
-        var certified = FilteredApplications(
-                fromDate, toDate, stateId, districtId, certificationLevelId, implementingAgencyId)
-            .Where(a => a.ApplicationStatusId == (byte)ApplicationStatusId.Certified);
+        var applications = FilteredApplications(
+            fromDate, toDate, stateId, districtId, certificationLevelId, implementingAgencyId);
 
-        var states = await certified
-            .GroupBy(a => a.Enterprise.State.Name)
-            .Select(g => new { Name = g.Key, Certified = g.Count() })
+        var states = await applications
+            .GroupBy(a => new { a.Enterprise.StateId, a.Enterprise.State.Name })
+            .Select(g => new
+            {
+                g.Key.StateId,
+                Name = g.Key.Name,
+                Registered = g.Select(a => a.EnterpriseId).Distinct().Count(),
+                Certified = g.Count(a => a.ApplicationStatusId == (byte)ApplicationStatusId.Certified),
+            })
             .OrderByDescending(x => x.Certified)
+            .ThenByDescending(x => x.Registered)
             .Take(topStates)
             .ToListAsync(ct);
 
         // Districts are optional on an enterprise, so rows without one are
         // dropped rather than bucketed under a blank name.
-        var districts = await certified
+        var districts = await applications
             .Where(a => a.Enterprise.DistrictId != null)
-            .GroupBy(a => new { District = a.Enterprise.District!.Name, State = a.Enterprise.State.Name })
-            .Select(g => new { g.Key.District, g.Key.State, Certified = g.Count() })
+            .GroupBy(a => new
+            {
+                District = a.Enterprise.District!.Name,
+                State = a.Enterprise.State.Name,
+            })
+            .Select(g => new
+            {
+                g.Key.District,
+                g.Key.State,
+                Registered = g.Select(a => a.EnterpriseId).Distinct().Count(),
+                Certified = g.Count(a => a.ApplicationStatusId == (byte)ApplicationStatusId.Certified),
+            })
             .OrderByDescending(x => x.Certified)
-            .Take(topDistricts)
+            .ThenByDescending(x => x.Registered)
+            .Take(800)
             .ToListAsync(ct);
-
-        var max = states.Count > 0 ? states.Max(s => s.Certified) : 0;
 
         return Ok(new
         {
             states = states.Select(s => new
             {
+                stateId = s.StateId,
                 name = s.Name,
+                registered = s.Registered,
                 certified = s.Certified,
-                percent = max > 0 ? (int)Math.Round(s.Certified * 100.0 / max) : 0,
             }),
             districts = districts.Select(d => new
             {
                 name = d.District,
                 state = d.State,
+                registered = d.Registered,
                 certified = d.Certified,
             }),
         });

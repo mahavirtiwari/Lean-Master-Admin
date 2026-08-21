@@ -29,6 +29,13 @@ public class Enterprise : IAuditable, IConcurrencyAware
     /// </summary>
     public string? RegisteredPlantIdNo { get; set; }
 
+    /// <summary>
+    /// QCI, NPC or Self — who brought this enterprise to the scheme, decided by
+    /// the awareness programme it selected at registration. Null for an
+    /// enterprise registered before the question was recorded.
+    /// </summary>
+    public string? AwarenessAgency { get; set; }
+
     /// <summary>The NIC activity chosen at registration; decides the questionnaire set.</summary>
     public int? SelectedActivityId { get; set; }
     public string UdyamRegistrationNo { get; set; } = string.Empty;
@@ -388,6 +395,16 @@ public class AwarenessProgram
     public DateOnly? HeldOn { get; set; }
     public string? Venue { get; set; }
     public short? StateId { get; set; }
+
+    /// <summary>
+    /// Which agency ran it — QCI or NPC.
+    ///
+    /// This is what decides how a registration is attributed on the dashboard,
+    /// and it is a property of the programme, not of whoever delivers the
+    /// handholding afterwards.
+    /// </summary>
+    public string? Agency { get; set; }
+
     public bool IsActive { get; set; } = true;
 
     /// <summary>

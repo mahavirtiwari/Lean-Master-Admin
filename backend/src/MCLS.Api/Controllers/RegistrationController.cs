@@ -700,9 +700,23 @@ public sealed class RegistrationController(
         {
             await using var tx = await db.Database.BeginTransactionAsync(ct);
 
+        // Who brought this enterprise to the scheme: the agency behind the
+        // awareness programme it attended, or Self when it attended none. Read
+        // now rather than derived later — the dashboard counts on it, and the
+        // answer cannot change after this point.
+        var awarenessAgency = draft.AttendedAwareness == false
+            ? "Self"
+            : draft.AwarenessProgramId is int programId
+                ? await db.AwarenessPrograms.AsNoTracking()
+                    .Where(p => p.AwarenessProgramId == programId)
+                    .Select(p => p.Agency)
+                    .FirstOrDefaultAsync(ct)
+                : null;
+
         enterprise = new Enterprise
         {
             LeanId = leanId,
+            AwarenessAgency = awarenessAgency,
             UdyamRegistrationNo = draft.UdyamRegistrationNo,
             Name = record.EnterpriseName ?? draft.UdyamRegistrationNo,
             SectorId = sector.SectorId,

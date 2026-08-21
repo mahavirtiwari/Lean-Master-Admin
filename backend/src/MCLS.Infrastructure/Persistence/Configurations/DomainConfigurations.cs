@@ -219,6 +219,7 @@ internal sealed class EnterpriseConfiguration : IEntityTypeConfiguration<Enterpr
         b.Property(x => x.ContactMobile).HasMaxLength(20).IsUnicode(false);
         b.Property(x => x.Gstin).HasMaxLength(15).IsUnicode(false);
         b.Property(x => x.Pan).HasMaxLength(10).IsUnicode(false);
+        b.Property(x => x.AwarenessAgency).HasMaxLength(4).IsUnicode(false);
         b.Property(x => x.LeanId).HasMaxLength(30).IsUnicode(false);
         b.HasIndex(x => x.UdyamRegistrationNo).IsUnique();
 
@@ -943,6 +944,7 @@ internal sealed class AwarenessProgramConfiguration : IEntityTypeConfiguration<A
         b.ToTable("AwarenessProgram", "master");
         b.HasKey(x => x.AwarenessProgramId);
         b.Property(x => x.Name).HasMaxLength(250).IsRequired();
+        b.Property(x => x.Agency).HasMaxLength(4).IsUnicode(false);
         b.Property(x => x.Source).HasMaxLength(10).IsUnicode(false).IsRequired();
         b.Property(x => x.Venue).HasMaxLength(250);
     }

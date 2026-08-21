@@ -456,12 +456,12 @@ export class ApiService {
   }
 
   geography(query: Record<string, unknown> = {}): Observable<{
-    states: { name: string; certified: number; percent: number }[];
-    districts: { name: string; state: string; certified: number }[];
+    states: { stateId: number; name: string; registered: number; certified: number }[];
+    districts: { name: string; state: string; registered: number; certified: number }[];
   }> {
     return this.http.get<{
-      states: { name: string; certified: number; percent: number }[];
-      districts: { name: string; state: string; certified: number }[];
+      states: { stateId: number; name: string; registered: number; certified: number }[];
+      districts: { name: string; state: string; registered: number; certified: number }[];
     }>(`${this.base}/applications/geography`, { params: params(query) });
   }
 

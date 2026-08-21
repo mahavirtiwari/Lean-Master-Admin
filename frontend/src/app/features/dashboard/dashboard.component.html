@@ -110,10 +110,12 @@
   <div class="stack">
     <!-- ------------------------------------------------------ KPI cards -->
     <div class="stat-grid">
+      <!-- Attributed by the awareness programme the MSME attended, so this
+           card carries three figures where the others carry two. -->
       <div class="stat kpi" style="--kpi: #1B4F8A">
         <div class="stat-label">Total Registered MSMEs</div>
         <div class="stat-value">{{ c.registered | number }}</div>
-        <div class="kpi-split">{{ agencyLine('registered') }}</div>
+        <div class="kpi-split">{{ registrationLine() }}</div>
       </div>
 
       <div class="stat kpi" style="--kpi: #0F7B45">
@@ -122,16 +124,17 @@
         <div class="kpi-split">{{ agencyLine('certified') }}</div>
       </div>
 
-      <div class="stat kpi" style="--kpi: #A16207">
-        <div class="stat-label">Applications In Progress</div>
-        <div class="stat-value">{{ c.handholdingInProgress + c.assessmentInProgress | number }}</div>
-        <div class="kpi-split">{{ agencyLine('inProgress') }}</div>
-      </div>
-
       <div class="stat kpi" style="--kpi: #B91C1C">
         <div class="stat-label">Pending Handholding</div>
         <div class="stat-value">{{ c.paymentReceived | number }}</div>
         <div class="kpi-split">{{ agencyLine('paymentReceived') }}</div>
+      </div>
+
+      <!-- No agency split here: financial support is not delivered by one. -->
+      <div class="stat kpi" style="--kpi: #A16207">
+        <div class="stat-label">Financial Support</div>
+        <div class="stat-value">₹{{ subsidyCrore() | number: '1.0-1' }} Cr</div>
+        <div class="kpi-split">Sanctioned across all levels</div>
       </div>
     </div>
 
@@ -218,22 +221,31 @@
     </div>
 
     <!-- ------------------------------------- state-wise adoption + map -->
+    <!-- The two panels are the same height by design: they are read side by
+         side, and a taller neighbour makes the shorter one look unfinished. -->
     <div class="geo-grid">
-      <section class="card">
+      <section class="card" #stateCard>
         <div class="card-head">
           <div>
             <h3 class="card-title">State-wise LEAN Adoption</h3>
-            <p class="card-sub">Top performing states by certified MSMEs</p>
+            <p class="card-sub">Top 10 states by {{ rankBy() === 'certified' ? 'certified' : 'registered' }} MSMEs</p>
           </div>
-          <div class="scale">
-            <span class="scale-label">Low</span>
-            <span class="scale-bar"></span>
-            <span class="scale-label">High</span>
+
+          <div class="rank-tools">
+            <div class="rank-toggle">
+              <button type="button" [class.is-on]="rankBy() === 'certified'"
+                      (click)="rankBy.set('certified')">Certified</button>
+              <button type="button" [class.is-on]="rankBy() === 'registered'"
+                      (click)="rankBy.set('registered')">Registered</button>
+            </div>
+            <button class="icon-btn" type="button" title="Export as image"
+                    (click)="exportPlaces('State-wise LEAN Adoption', 'State', rankedStates())">
+              Export
+            </button>
           </div>
         </div>
 
         <div class="geo-body">
-          <!-- The choropleth as exported with the deck, 400x248 on the artboard. -->
           <img
             class="geo-map"
             src="assets/india-lean-adoption.png"
@@ -242,17 +254,28 @@
             height="248"
           />
 
-          <div class="top-states">
-            <div class="top-states-head">Top States</div>
-            @for (state of topStates(); track state.name) {
-              <div class="top-state">
-                <span class="top-state-name">{{ state.name }}</span>
-                <span class="top-state-bar">
-                  <span class="top-state-fill" [style.width.%]="state.percent"></span>
-                </span>
-                <span class="top-state-value">{{ state.certified | number }}</span>
-              </div>
-            }
+          <div class="place-list">
+            <div class="place-head">
+              <span>State</span>
+              <span class="num">Registered</span>
+              <span class="num">Certified</span>
+            </div>
+
+            <div class="place-scroll">
+              @for (row of rankedStates(); track row.name) {
+                <!-- The title carries both figures, so hovering a row answers
+                     the question the columns already show — and keeps working
+                     when the panel is narrow enough to clip them. -->
+                <div class="place-row"
+                     [title]="row.name + ' — Registered ' + row.registered + ', Certified ' + row.certified">
+                  <span class="place-name">{{ row.name }}</span>
+                  <span class="num">{{ row.registered | number }}</span>
+                  <span class="num strong">{{ row.certified | number }}</span>
+                </div>
+              } @empty {
+                <p class="empty-text">No applications for the current filters.</p>
+              }
+            </div>
           </div>
         </div>
       </section>
@@ -260,41 +283,80 @@
       <section class="card">
         <div class="card-head">
           <div>
-            <h3 class="card-title">Top Districts by Certified MSMEs</h3>
-            <p class="card-sub">District-level performance across all implementing agencies</p>
+            <h3 class="card-title">District-wise LEAN Adoption</h3>
+            <p class="card-sub">
+              {{ districtRows().length | number }} districts
+              @if (districtScope(); as scope) { in {{ scope }} }
+            </p>
           </div>
-          <span class="count-chip">Top {{ topDistricts().length }}</span>
+
+          <div class="rank-tools">
+            <div class="rank-toggle">
+              <button type="button" [class.is-on]="rankBy() === 'certified'"
+                      (click)="rankBy.set('certified')">Certified</button>
+              <button type="button" [class.is-on]="rankBy() === 'registered'"
+                      (click)="rankBy.set('registered')">Registered</button>
+            </div>
+            <button class="icon-btn" type="button" title="Export as image"
+                    (click)="exportPlaces('District-wise LEAN Adoption', 'District', rankedDistricts())">
+              Export
+            </button>
+          </div>
         </div>
 
-        <div class="district-list">
-          @for (d of topDistricts(); track d.name; let i = $index) {
-            <div class="district-row">
-              <span class="rank">{{ i + 1 }}</span>
-              <span class="district-name">
-                <span class="district-title">{{ d.name }}</span>
-                <span class="district-state">{{ d.state }}</span>
-              </span>
-              <span class="district-bar">
-                <span
-                  class="district-fill"
-                  [style.width.%]="topDistricts()[0].certified > 0
-                    ? (d.certified / topDistricts()[0].certified) * 100
-                    : 0"
-                ></span>
-              </span>
-              <span class="district-value">{{ d.certified | number }}</span>
-            </div>
-          }
+        <div class="place-list">
+          <div class="place-head">
+            <span>District</span>
+            <span class="num">Registered</span>
+            <span class="num">Certified</span>
+          </div>
+
+          <!-- Every district the filter allows, scrolled rather than truncated:
+               a top-eight list cannot answer "how is my district doing". -->
+          <div class="place-scroll is-tall">
+            @for (row of rankedDistricts(); track row.name + row.state) {
+              <div class="place-row"
+                   [title]="row.name + ', ' + row.state + ' — Registered ' + row.registered + ', Certified ' + row.certified">
+                <span class="place-name">
+                  {{ row.name }}
+                  <small>{{ row.state }}</small>
+                </span>
+                <span class="num">{{ row.registered | number }}</span>
+                <span class="num strong">{{ row.certified | number }}</span>
+              </div>
+            } @empty {
+              <p class="empty-text">No districts recorded for the current filters.</p>
+            }
+          </div>
         </div>
       </section>
     </div>
 
     <!-- ------------------- gender / enterprise type / social category -->
     @if (demographics(); as demo) {
+      <!-- One switch for the three panels: they answer the same question about
+           the same population, and reading one by certified and its neighbour
+           by registered would invite a comparison that is not valid. -->
+      <div class="demo-bar">
+        <span class="demo-bar-label">Showing</span>
+        <div class="rank-toggle">
+          <button type="button" [class.is-on]="demoBasis() === 'registered'"
+                  (click)="setDemoBasis('registered')">Registered MSMEs</button>
+          <button type="button" [class.is-on]="demoBasis() === 'certified'"
+                  (click)="setDemoBasis('certified')">Certified MSMEs</button>
+        </div>
+      </div>
+
       <div class="demo-grid">
         <section class="card card-pad">
-          <h3 class="card-title">Gender</h3>
-          <p class="card-sub">Registered MSMEs by promoter gender</p>
+          <div class="panel-head">
+            <div>
+              <h3 class="card-title">Gender</h3>
+              <p class="card-sub">{{ demoCaption() }} by promoter gender</p>
+            </div>
+            <button class="icon-btn" type="button" title="Export as image"
+                    (click)="exportSlices('Gender', demo.gender)">Export</button>
+          </div>
           <div class="donut-row">
             <svg class="donut" viewBox="0 0 140 140" aria-hidden="true">
               <circle cx="70" cy="70" r="54" fill="none" stroke="var(--border-divider)" stroke-width="18" />
@@ -331,8 +393,14 @@
         </section>
 
         <section class="card card-pad">
-          <h3 class="card-title">Enterprise Type</h3>
-          <p class="card-sub">As per revised MSME investment/turnover criteria</p>
+          <div class="panel-head">
+            <div>
+              <h3 class="card-title">Enterprise Type</h3>
+              <p class="card-sub">As per revised MSME investment/turnover criteria</p>
+            </div>
+            <button class="icon-btn" type="button" title="Export as image"
+                    (click)="exportSlices('Enterprise Type', demo.enterpriseType)">Export</button>
+          </div>
           <div class="donut-row">
             <svg class="donut" viewBox="0 0 140 140" aria-hidden="true">
               <circle cx="70" cy="70" r="54" fill="none" stroke="var(--border-divider)" stroke-width="18" />
@@ -369,8 +437,14 @@
         </section>
 
         <section class="card card-pad">
-          <h3 class="card-title">Social Category</h3>
-          <p class="card-sub">Promoter social category of registered MSMEs</p>
+          <div class="panel-head">
+            <div>
+              <h3 class="card-title">Social Category</h3>
+              <p class="card-sub">Promoter social category, {{ demoCaption().toLowerCase() }}</p>
+            </div>
+            <button class="icon-btn" type="button" title="Export as image"
+                    (click)="exportSlices('Social Category', demo.socialCategory)">Export</button>
+          </div>
 
           <div class="social">
             @for (slice of demo.socialCategory; track slice.label; let i = $index) {
@@ -402,7 +476,7 @@
               Applications and certification split by NIC 2008 industrial division
             </p>
           </div>
-          <span class="count-chip">Top {{ demo.nic.length }} divisions</span>
+          <span class="count-chip">{{ demo.nic.length }} divisions</span>
         </div>
 
         @if (demo.nic.length === 0) {
@@ -410,7 +484,8 @@
             <div class="empty-text">No NIC activity recorded for the current filters.</div>
           </div>
         } @else {
-          <div class="tbl-wrap">
+          <!-- Scrolled rather than capped: every division is listed. -->
+          <div class="tbl-wrap is-scroll">
             <table class="tbl">
               <thead>
                 <tr>
@@ -443,53 +518,5 @@
         }
       </section>
     }
-
-    <!-- --------------------------------------------------- pipeline table -->
-    <section class="card">
-      <div class="card-head">
-        <div>
-          <h3 class="card-title">Scheme Pipeline</h3>
-          <p class="card-sub">Every application by its current stage</p>
-        </div>
-      </div>
-
-      <div class="tbl-wrap">
-        <table class="tbl">
-          <thead>
-            <tr>
-              <th>Stage</th>
-              <th class="num">Applications</th>
-              <th class="num">Share</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (stage of [
-              { label: 'Registered', value: c.registered },
-              { label: 'Payment Received', value: c.paymentReceived },
-              { label: 'Handholding in progress', value: c.handholdingInProgress },
-              { label: 'Handholding Completed', value: c.handholdingCompleted },
-              { label: 'Assessment Scheduled', value: c.assessmentScheduled },
-              { label: 'Assessment In progress', value: c.assessmentInProgress },
-              { label: 'NC Raised', value: c.ncRaised },
-              { label: 'Quality Check', value: c.qualityCheck },
-              { label: 'Certified', value: c.certified },
-              { label: 'Rejected', value: c.rejected }
-            ]; track stage.label) {
-              <tr>
-                <td class="strong">{{ stage.label }}</td>
-                <td class="num">{{ stage.value | number }}</td>
-                <td class="num muted">
-                  {{
-                    c.totalApplications > 0
-                      ? ((stage.value / c.totalApplications) * 100 | number: '1.0-1') + '%'
-                      : '—'
-                  }}
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
-    </section>
   </div>
 }

@@ -648,13 +648,18 @@ Write-Step 'Configuration'
 
 $productionSettings = Join-Path $apiRoot 'appsettings.Production.json'
 
+$existing = $null
 if (Test-Path $productionSettings) {
-    Write-Note 'Keeping the existing appsettings.Production.json (signing key and secrets preserved)'
+    # Reuse the signing key so existing sessions survive a redeploy - but only
+    # if the file still parses. A hand-edit can leave it malformed, and reading
+    # a broken file must not wedge the deploy: fall through to a fresh key.
+    try { $existing = Get-Content $productionSettings -Raw | ConvertFrom-Json } catch { $existing = $null }
+}
 
-    # The domain may still have changed since it was written.
-    $existing = Get-Content $productionSettings -Raw | ConvertFrom-Json
-    $signingKey     = $existing.Jwt.SigningKey
-    $adminPassword  = $null
+if ($existing -and $existing.Jwt -and $existing.Jwt.SigningKey) {
+    Write-Note 'Keeping the existing appsettings.Production.json signing key'
+    $signingKey    = $existing.Jwt.SigningKey
+    $adminPassword = $null
 }
 else {
     # 64 random bytes, base64. Anyone who can guess this key can mint a token

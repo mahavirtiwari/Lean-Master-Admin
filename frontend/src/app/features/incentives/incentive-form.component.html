@@ -1,0 +1,277 @@
+<app-page-intro
+  [title]="editing() ? 'Edit Incentive' : 'Create New Incentive'"
+  [subtitle]="profile().createSubtitle"
+/>
+
+<div class="stack">
+  <p class="inc-note">{{ profile().note }}</p>
+
+  <div class="inc-form">
+    <!-- ================================================ left: the scheme -->
+    <div class="stack">
+      <section class="card card-pad">
+        <h3 class="inc-section">INCENTIVE DETAILS</h3>
+
+        <div class="inc-fields">
+          <div class="field inc-span">
+            <label class="field-label" for="name">INCENTIVE TITLE<span class="req">*</span></label>
+            <input id="name" class="input" type="text" name="name"
+                   [placeholder]="'e.g. ' + profile().ownerPlaceholder"
+                   [ngModel]="form().name" (ngModelChange)="patch('name', $event)" />
+          </div>
+
+          <div class="field inc-span">
+            <label class="field-label" for="description">DESCRIPTION<span class="req">*</span></label>
+            <textarea id="description" class="input" rows="4" name="description"
+                      placeholder="Describe eligibility, quantum of assistance, application route and fiscal scope of this scheme."
+                      [ngModel]="form().description"
+                      (ngModelChange)="patch('description', $event)"></textarea>
+          </div>
+
+          <div class="field">
+            <label class="field-label" for="category">INCENTIVE CATEGORY</label>
+            <select id="category" class="input" name="category"
+                    [ngModel]="form().categoryId" (ngModelChange)="patch('categoryId', $event)">
+              <option value="">Not categorised</option>
+              @for (category of categories(); track category.categoryId) {
+                <option [value]="category.categoryId">{{ category.name }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="field">
+            <label class="field-label" for="schemeCode">SCHEME CODE</label>
+            <input id="schemeCode" class="input" type="text" name="schemeCode"
+                   placeholder="The department's own code"
+                   [ngModel]="form().schemeCode" (ngModelChange)="patch('schemeCode', $event)" />
+          </div>
+
+          <div class="field inc-span">
+            <label class="field-label">ACTIVATION LEVEL<span class="req">*</span></label>
+            <div class="inc-levels">
+              <button class="inc-level" type="button" disabled>Bronze</button>
+              @for (level of levels; track level) {
+                <button class="inc-level" type="button"
+                        [class.is-on]="form().activationLevel === level"
+                        (click)="patch('activationLevel', level)">
+                  {{ level === 'Both' ? 'Both (Silver & Gold)' : level }}
+                </button>
+              }
+            </div>
+            <p class="inc-hint">
+              Bronze is disabled: the scheme activates incentives on Silver or Gold only.
+            </p>
+          </div>
+
+          <!-- ---- what this provider needs beyond the shared fields ---- -->
+          <div class="field" [class.inc-span]="profile().code === 'MINISTRY'">
+            <label class="field-label" for="owner">
+              {{ profile().ownerLabel }}<span class="req">*</span>
+            </label>
+            <input id="owner" class="input" type="text" name="owner"
+                   [placeholder]="profile().ownerPlaceholder"
+                   [ngModel]="form().administeringBody"
+                   (ngModelChange)="patch('administeringBody', $event)" />
+          </div>
+
+          @switch (profile().code) {
+            @case ('MINISTRY') {
+              <div class="field">
+                <label class="field-label" for="budgetHead">BUDGET HEAD</label>
+                <input id="budgetHead" class="input" type="text" name="budgetHead"
+                       placeholder="e.g. 2851-00-102"
+                       [ngModel]="form().budgetHead" (ngModelChange)="patch('budgetHead', $event)" />
+              </div>
+              <div class="field">
+                <label class="field-label" for="outlay">SANCTIONED OUTLAY (₹ Cr)</label>
+                <input id="outlay" class="input" type="number" step="0.01" min="0" name="outlay"
+                       [ngModel]="form().outlayAmount" (ngModelChange)="patch('outlayAmount', $event)" />
+              </div>
+            }
+            @case ('STATE') {
+              <div class="field">
+                <label class="field-label" for="state">NOTIFYING STATE / UT<span class="req">*</span></label>
+                <select id="state" class="input" name="state"
+                        [ngModel]="form().stateId" (ngModelChange)="patch('stateId', $event)">
+                  <option value="">Select State / UT</option>
+                  @for (state of states(); track state.stateId) {
+                    <option [value]="state.stateId">{{ state.name }}</option>
+                  }
+                </select>
+              </div>
+              <div class="field">
+                <label class="field-label" for="gazette">GAZETTE NOTIFICATION NO.</label>
+                <input id="gazette" class="input" type="text" name="gazette"
+                       placeholder="e.g. IND-2026-114"
+                       [ngModel]="form().gazetteNo" (ngModelChange)="patch('gazetteNo', $event)" />
+              </div>
+            }
+            @case ('FINANCIAL') {
+              <div class="field">
+                <label class="field-label" for="product">PRODUCT TYPE<span class="req">*</span></label>
+                <input id="product" class="input" type="text" name="product"
+                       placeholder="e.g. Term loan, Working capital"
+                       [ngModel]="form().productType" (ngModelChange)="patch('productType', $event)" />
+              </div>
+              <div class="field">
+                <label class="field-label" for="bps">RATE CONCESSION (bps)</label>
+                <input id="bps" class="input" type="number" step="1" min="0" name="bps"
+                       [ngModel]="form().rateConcessionBps"
+                       (ngModelChange)="patch('rateConcessionBps', $event)" />
+              </div>
+            }
+            @case ('OTHERS') {
+              <div class="field">
+                <label class="field-label" for="agencyType">AGENCY TYPE<span class="req">*</span></label>
+                <input id="agencyType" class="input" type="text" name="agencyType"
+                       placeholder="e.g. Certification body, Industry association"
+                       [ngModel]="form().agencyType" (ngModelChange)="patch('agencyType', $event)" />
+              </div>
+              <div class="field">
+                <label class="field-label" for="externalId">EXTERNAL SCHEME ID</label>
+                <input id="externalId" class="input" type="text" name="externalId"
+                       [ngModel]="form().externalSchemeId"
+                       (ngModelChange)="patch('externalSchemeId', $event)" />
+              </div>
+            }
+          }
+        </div>
+      </section>
+
+      <section class="card card-pad">
+        <h3 class="inc-section">PUBLICATION &amp; ELIGIBILITY</h3>
+
+        <div class="inc-fields">
+          <div class="field">
+            <label class="field-label" for="from">EFFECTIVE FROM</label>
+            <input id="from" class="input" type="date" name="from"
+                   [ngModel]="form().validFrom" (ngModelChange)="patch('validFrom', $event)" />
+          </div>
+          <div class="field">
+            <label class="field-label" for="till">EFFECTIVE TILL</label>
+            <input id="till" class="input" type="date" name="till"
+                   [ngModel]="form().validTo" (ngModelChange)="patch('validTo', $event)" />
+          </div>
+        </div>
+
+        <div class="inc-switches">
+          <label class="inc-switch">
+            <input type="checkbox" [checked]="form().visibleBeforeUnlock"
+                   (change)="patch('visibleBeforeUnlock', $any($event.target).checked)" />
+            Visible to MSMEs before unlock
+          </label>
+          <label class="inc-switch">
+            <input type="checkbox" [checked]="form().notifyOnPublish"
+                   (change)="patch('notifyOnPublish', $any($event.target).checked)" />
+            Notify eligible MSMEs on publish
+          </label>
+          <label class="inc-switch">
+            <input type="checkbox" [checked]="form().requireClaimDocument"
+                   (change)="patch('requireClaimDocument', $any($event.target).checked)" />
+            Require document upload on claim
+          </label>
+        </div>
+      </section>
+
+      <section class="card card-pad">
+        <h3 class="inc-section">NODAL CONTACT</h3>
+
+        <div class="inc-fields">
+          <div class="field">
+            <label class="field-label" for="contactName">CONTACT PERSON NAME<span class="req">*</span></label>
+            <input id="contactName" class="input" type="text" name="contactName"
+                   placeholder="Enter contact person full name"
+                   [ngModel]="form().contactName" (ngModelChange)="patch('contactName', $event)" />
+          </div>
+          <div class="field">
+            <label class="field-label" for="designation">DESIGNATION</label>
+            <input id="designation" class="input" type="text" name="designation"
+                   placeholder="Enter designation / role"
+                   [ngModel]="form().contactDesignation"
+                   (ngModelChange)="patch('contactDesignation', $event)" />
+          </div>
+          <div class="field">
+            <label class="field-label" for="mobile">MOBILE NUMBER<span class="req">*</span></label>
+            <input id="mobile" class="input" type="tel" maxlength="10" inputmode="numeric"
+                   name="mobile" placeholder="10-digit mobile number"
+                   [ngModel]="form().contactMobile" (ngModelChange)="patch('contactMobile', $event)" />
+          </div>
+          <div class="field">
+            <label class="field-label" for="email">OFFICIAL EMAIL<span class="req">*</span></label>
+            <input id="email" class="input" type="email" name="email"
+                   placeholder="Enter email address"
+                   [ngModel]="form().contactEmail" (ngModelChange)="patch('contactEmail', $event)" />
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- ============================================ right: the resources -->
+    <div class="stack">
+      <section class="card card-pad">
+        <h3 class="inc-section">ATTACH RESOURCES</h3>
+
+        <div class="field">
+          <label class="field-label" for="video">VIDEO LINK (TUTORIAL / GUIDE)</label>
+          <input id="video" class="input" type="url" name="video"
+                 placeholder="Paste YouTube / video URL"
+                 [ngModel]="form().videoUrl" (ngModelChange)="patch('videoUrl', $event)" />
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="portal">PORTAL / SCHEME LINK</label>
+          <input id="portal" class="input" type="url" name="portal"
+                 placeholder="Paste portal or gazette URL"
+                 [ngModel]="form().externalUrl" (ngModelChange)="patch('externalUrl', $event)" />
+        </div>
+
+        <label class="field-label" for="file">UPLOAD DOCUMENT (GUIDELINES / GAZETTE)</label>
+        <label class="inc-drop" for="file">
+          <div class="inc-drop-title">Drag &amp; drop or click to upload</div>
+          <div class="inc-drop-sub">PDF, DOCX · Max 10 MB per file</div>
+        </label>
+        <input id="file" type="file" hidden accept=".pdf,.doc,.docx" (change)="chooseFile($event)" />
+
+        @if (resources().length > 0) {
+          <label class="field-label">ATTACHED RESOURCES ({{ resources().length }})</label>
+
+          @for (resource of resources(); track resource.resourceId) {
+            <div class="inc-res">
+              <span class="badge">{{ resource.kind }}</span>
+              <span class="inc-res-title">{{ resource.title }}</span>
+
+              @if (resource.kind === 'Document') {
+                <a class="link-btn" [href]="downloadUrl(resource)" target="_blank" rel="noopener">Open</a>
+              } @else if (resource.url) {
+                <a class="link-btn" [href]="resource.url" target="_blank" rel="noopener">Open</a>
+              }
+
+              <button class="link-btn link-danger" type="button" (click)="removeResource(resource)">
+                Remove
+              </button>
+            </div>
+          }
+        }
+      </section>
+    </div>
+  </div>
+
+  <div class="inc-form-foot">
+    <span class="inc-required">
+      All fields marked * are mandatory. Saved drafts are visible only to Master Administrators.
+    </span>
+
+    <div class="spacer"></div>
+
+    <button class="btn btn-secondary" type="button" (click)="cancel()">Cancel</button>
+    <button class="btn btn-secondary" type="button" [disabled]="saving()" (click)="save('Draft')">
+      Save as Draft
+    </button>
+    <button class="btn btn-primary" type="button" [disabled]="saving()" (click)="save('Active')">
+      {{ saving() ? 'Saving…' : 'Save Incentive' }}
+    </button>
+  </div>
+
+  @if (message(); as note) { <p class="inc-state">{{ note }}</p> }
+  @if (error(); as bad) { <p class="inc-error">{{ bad }}</p> }
+</div>

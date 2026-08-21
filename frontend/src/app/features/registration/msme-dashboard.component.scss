@@ -254,7 +254,69 @@
 .ben-note { margin-top: 4px; font-size: 11.2px; color: #8a9a92; }
 .ben-state { font-size: 10.8px; font-weight: 600; color: #5d6b62; flex: none; }
 
+// One of the five boxes: the card is the group, the rows inside it are the
+// incentives. The accent down the left edge is the category's own, the same
+// colour the administrator sees against it in Incentives Management.
+.ben-card {
+  position: relative;
+  padding: 16px 18px 8px 22px;
+  margin-bottom: 14px;
+  background: #fff;
+  border: 1px solid #dee7e1;
+  border-radius: 9px;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 3.4px;
+    background: var(--accent, #5d6b62);
+  }
+}
+
+.ben-card-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #eef3f0;
+
+  .ben-name { color: #16211a; }
+  .ben-state { margin-left: auto; }
+}
+
+.ben-state.is-on { color: #0f7b45; }
+
+.ben-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid #f2f6f4;
+
+  &:last-child { border-bottom: 0; }
+
+  // A locked incentive is shown, not hidden: knowing what is waiting is the
+  // point of the box being visible before it opens.
+  &.is-locked { opacity: 0.62; }
+}
+
+.ben-item-name { font-size: 12.4px; font-weight: 600; color: #16211a; }
+
+.ben-link {
+  font-size: 11.4px;
+  font-weight: 600;
+  color: #1b4f8a;
+  text-decoration: none;
+  flex: none;
+
+  &:hover { text-decoration: underline; }
+}
+
+.ben-empty { margin: 0; padding: 14px 0; font-size: 11.4px; color: #8a9a92; }
+
 @media (max-width: 620px) {
-  .ben { flex-wrap: wrap; }
+  .ben, .ben-item { flex-wrap: wrap; }
   .dash-head .btn-primary { width: 100%; }
 }

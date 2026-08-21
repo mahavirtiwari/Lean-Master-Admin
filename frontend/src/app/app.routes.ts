@@ -195,6 +195,44 @@ export const routes: Routes = [
           import('./features/fee/fee-level.component').then((m) => m.FeeLevelComponent),
       },
 
+      // ------------------------------------------------------- incentives ---
+      // One overview and four provider sub-menus, each with a create form. The
+      // provider is a route parameter rather than four sets of components: the
+      // screens differ in three fields and their wording, not in what they do.
+      {
+        path: 'incentives',
+        pathMatch: 'full',
+        canActivate: [permissionGuard('INCENTIVES')],
+        loadComponent: () =>
+          import('./features/incentives/incentives-overview.component').then(
+            (m) => m.IncentivesOverviewComponent,
+          ),
+      },
+      {
+        path: 'incentives/:provider/new',
+        canActivate: [permissionGuard('INCENTIVES', 'create')],
+        loadComponent: () =>
+          import('./features/incentives/incentive-form.component').then(
+            (m) => m.IncentiveFormComponent,
+          ),
+      },
+      {
+        path: 'incentives/:provider/:id',
+        canActivate: [permissionGuard('INCENTIVES', 'edit')],
+        loadComponent: () =>
+          import('./features/incentives/incentive-form.component').then(
+            (m) => m.IncentiveFormComponent,
+          ),
+      },
+      {
+        path: 'incentives/:provider',
+        canActivate: [permissionGuard('INCENTIVES')],
+        loadComponent: () =>
+          import('./features/incentives/incentives-list.component').then(
+            (m) => m.IncentivesListComponent,
+          ),
+      },
+
       // --------------------------------------------------- questionnaire ---
       // One menu, two levels. The parent lands on Silver rather than showing a
       // chooser, because the sub-menu already is the chooser.

@@ -24,6 +24,17 @@ public sealed class MsmeController(
     IConfiguration configuration) : ControllerBase
 {
     /// <summary>
+    /// The certificates that open an incentive marked "Both".
+    ///
+    /// Both spellings are held because the level's name is master data an
+    /// administrator can edit — it reads "Lean Silver" today and could read
+    /// "Silver" tomorrow, and an incentive must not silently lock itself
+    /// because somebody tidied a label.
+    /// </summary>
+    private static readonly string[] UnlockingLevels =
+        ["Lean Silver", "Lean Gold", "Silver", "Gold"];
+
+    /// <summary>
     /// The applicant's pledge certificate, generated and streamed.
     ///
     /// Same document as the one offered during registration, reachable from the
@@ -177,11 +188,87 @@ public sealed class MsmeController(
 
         var incentivesUnlocked = certified.Any(id => assessedLevelIds.Contains(id));
 
-        var incentiveGroups = await db.Incentives.AsNoTracking()
-            .GroupBy(i => i.AdministeringBody ?? "Others")
-            .Select(g => new { Name = g.Key, Count = g.Count() })
-            .OrderBy(g => g.Name)
+        // Which certificates this enterprise actually holds, by name, so an
+        // incentive that opens at Silver is shown open to a Silver holder even
+        // though Gold is still locked.
+        var certifiedLevels = levels
+            .Where(l => certified.Contains(l.CertificationLevelId))
+            .Select(l => l.Name)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        // The five boxes, each carrying its own incentives.
+        //
+        // Every box is listed whether or not this enterprise has earned it:
+        // the scheme's rule is that they are visible from the start and only
+        // the benefit behind them is locked. VisibleBeforeUnlock lets one
+        // incentive opt out of being advertised early; the box itself always
+        // stays.
+        var categories = await db.IncentiveCategories.AsNoTracking()
+            .Where(c => c.IsActive)
+            .OrderBy(c => c.SortOrder)
+            .Select(c => new
+            {
+                c.CategoryId,
+                c.Code,
+                c.Name,
+                c.Description,
+                c.TypicalPartners,
+                c.AccentHex,
+                Incentives = c.Incentives
+                    .Where(i => i.Status == "Active")
+                    .OrderBy(i => i.Name)
+                    .Select(i => new
+                    {
+                        i.IncentiveId,
+                        i.Name,
+                        i.Description,
+                        i.ActivationLevel,
+                        Provider = i.Provider.Name,
+                        Owner = i.AdministeringBody,
+                        i.VisibleBeforeUnlock,
+                        i.ExternalUrl,
+                        i.VideoUrl,
+                    })
+                    .ToList(),
+            })
             .ToListAsync(ct);
+
+        var incentiveGroups = categories.Select(c =>
+        {
+            var open = c.Incentives
+                .Select(i => new
+                {
+                    i.IncentiveId,
+                    i.Name,
+                    i.Description,
+                    activation = i.ActivationLevel ?? "Both",
+                    stakeholder = i.Owner ?? i.Provider,
+                    i.ExternalUrl,
+                    i.VideoUrl,
+
+                    // Unlocked when the enterprise holds a certificate this
+                    // incentive activates on. "Both" means either one does.
+                    unlocked = (i.ActivationLevel ?? "Both") == "Both"
+                        ? certifiedLevels.Overlaps(UnlockingLevels)
+                        : certifiedLevels.Contains(i.ActivationLevel!)
+                            || certifiedLevels.Contains($"Lean {i.ActivationLevel}"),
+                })
+                .Where(i => i.unlocked || c.Incentives.First(x => x.IncentiveId == i.IncentiveId).VisibleBeforeUnlock)
+                .ToList();
+
+            return new
+            {
+                c.CategoryId,
+                c.Code,
+                c.Name,
+                c.Description,
+                partners = c.TypicalPartners,
+                accent = c.AccentHex,
+                count = c.Incentives.Count,
+                unlockedCount = open.Count(i => i.unlocked),
+                items = open,
+            };
+        }).ToList();
 
         return Ok(new
         {

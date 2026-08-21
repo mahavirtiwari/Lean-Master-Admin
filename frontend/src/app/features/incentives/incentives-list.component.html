@@ -1,0 +1,129 @@
+<app-page-intro [title]="profile().listTitle" [subtitle]="profile().listSubtitle" />
+
+<div class="stack">
+  <!-- ------------------------------------------------------ the tiles --- -->
+  @if (totals(); as t) {
+    <div class="inc-tiles">
+      <div class="card inc-tile">
+        <div class="inc-tile-key">ACTIVE INCENTIVES</div>
+        <div class="inc-tile-val">{{ t.active }}</div>
+      </div>
+      <div class="card inc-tile">
+        <div class="inc-tile-key">DRAFT</div>
+        <div class="inc-tile-val">{{ t.draft }}</div>
+      </div>
+      <div class="card inc-tile">
+        <div class="inc-tile-key">BENEFICIARY MSMEs</div>
+        <div class="inc-tile-val">{{ t.beneficiaries | number }}</div>
+      </div>
+      <div class="card inc-tile">
+        <div class="inc-tile-key">VALUE DISBURSED</div>
+        <div class="inc-tile-val">₹{{ disbursedCrore() | number: '1.0-2' }} Cr</div>
+      </div>
+    </div>
+  }
+
+  <p class="inc-note">{{ profile().note }}</p>
+
+  <!-- ---------------------------------------------- tabs and toolbar --- -->
+  <section class="card inc-filters">
+    <div class="inc-tabs">
+      <button type="button" [class.is-on]="tab() === 'All'" (click)="setTab('All')">All</button>
+      <button type="button" [class.is-on]="tab() === 'Active'" (click)="setTab('Active')">Active</button>
+      <button type="button" [class.is-on]="tab() === 'Draft'" (click)="setTab('Draft')">Draft</button>
+    </div>
+
+    <input
+      class="input inc-search"
+      type="search"
+      name="search"
+      placeholder="Search incentives..."
+      [ngModel]="search()"
+      (ngModelChange)="search.set($event)"
+      (keyup.enter)="load()"
+    />
+
+    <div class="spacer"></div>
+
+    <button class="btn btn-secondary" type="button" (click)="exportList()">Export List</button>
+
+    @if (canCreate) {
+      <button class="btn btn-primary" type="button" (click)="create()">Create New Incentive</button>
+    }
+  </section>
+
+  <!-- ------------------------------------------------------- the list --- -->
+  <section class="card">
+    <header class="inc-table-head">
+      <h3 class="card-title">{{ profile().name }} Incentive Schemes</h3>
+      <span class="chip chip-blue">{{ rows().length }} incentives</span>
+    </header>
+
+    @if (loading()) {
+      <p class="inc-state">Loading incentives…</p>
+    } @else if (rows().length === 0) {
+      <app-empty
+        title="Nothing here yet"
+        message="No incentive has been added for this stakeholder. Create the first one to make it visible to certified MSMEs."
+      />
+    } @else {
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th class="w-narrow">S.No</th>
+              <th>INCENTIVE TITLE</th>
+              <th>ACTIVATION</th>
+              <th>STAKEHOLDER / SCHEME OWNER</th>
+              <th class="num">BENEFICIARIES</th>
+              <th class="num">VALUE DISBURSED</th>
+              <th>STATUS</th>
+              @if (canEdit) { <th>ACTIONS</th> }
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of rows(); track row.incentiveId; let i = $index) {
+              <tr>
+                <td class="muted">{{ i + 1 }}</td>
+                <td class="strong">
+                  {{ row.name }}
+                  @if (row.categoryName) {
+                    <div class="inc-cat-partners">
+                      <span class="inc-dot" [style.background]="row.categoryAccent || '#5D6B62'"></span>
+                      {{ row.categoryName }}
+                    </div>
+                  }
+                </td>
+                <td>
+                  <span class="badge" [class.badge-gold]="row.activationLevel === 'Gold'">
+                    {{ row.activationLevel }}
+                  </span>
+                </td>
+                <td>{{ row.stakeholder }}</td>
+                <td class="num">{{ row.beneficiaries | number }}</td>
+                <td class="num">₹{{ row.valueDisbursed / 10000000 | number: '1.0-2' }} Cr</td>
+                <td>
+                  <span class="pill" [class.pill-on]="row.status === 'Active'">{{ row.status }}</span>
+                </td>
+                @if (canEdit) {
+                  <td class="nowrap">
+                    <button class="link-btn" type="button" (click)="edit(row)">Edit</button>
+                    <span class="sep">|</span>
+                    <button class="link-btn link-danger" type="button" (click)="toggle(row)">
+                      {{ row.status === 'Active' ? 'Disable' : 'Enable' }}
+                    </button>
+                  </td>
+                }
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <p class="inc-state">Showing {{ rows().length }} of {{ totals()?.total || rows().length }} incentives</p>
+    }
+
+    @if (message(); as note) { <p class="inc-state">{{ note }}</p> }
+    @if (error(); as bad) { <p class="inc-error">{{ bad }}</p> }
+  </section>
+</div>

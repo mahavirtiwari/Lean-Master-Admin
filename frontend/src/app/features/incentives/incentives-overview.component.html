@@ -1,0 +1,146 @@
+<app-page-intro
+  title="Incentives Management"
+  subtitle="Benefits an MSME unlocks on LEAN Silver or Gold certification"
+/>
+
+<div class="stack">
+  <!-- ---------------------------------------------------- filter bar --- -->
+  <section class="card inc-filters">
+    <input
+      class="input inc-search"
+      type="search"
+      name="search"
+      placeholder="Search incentives..."
+      [ngModel]="search()"
+      (ngModelChange)="search.set($event)"
+      (keyup.enter)="load()"
+    />
+
+    <select class="input" name="category" [ngModel]="categoryId()"
+            (ngModelChange)="categoryId.set($event); load()">
+      <option value="">All Categories</option>
+      @for (category of categories(); track category.categoryId) {
+        <option [value]="category.categoryId">{{ category.name }}</option>
+      }
+    </select>
+
+    <select class="input" name="activation" [ngModel]="activation()"
+            (ngModelChange)="activation.set($event); load()">
+      <option value="All">Activation: Both</option>
+      <option value="Silver">Activation: Silver</option>
+      <option value="Gold">Activation: Gold</option>
+    </select>
+
+    <select class="input" name="provider" [ngModel]="providerCode()"
+            (ngModelChange)="providerCode.set($event); load()">
+      <option value="">All Stakeholders</option>
+      @for (provider of providers; track provider.code) {
+        <option [value]="provider.code">{{ provider.name }}</option>
+      }
+    </select>
+
+    <div class="spacer"></div>
+
+    <button class="btn btn-secondary" type="button" (click)="clearFilters()">Clear</button>
+
+    @if (canCreate) {
+      <button class="btn btn-primary" type="button" (click)="create()">Create New Incentive</button>
+    }
+  </section>
+
+  <!-- The rule that governs the whole module, stated where it is first read. -->
+  <p class="inc-note">
+    <strong>Note:</strong> Incentives are activated only upon Silver or Gold certification. LEAN
+    Bronze does not activate them. All five incentive boxes remain visible to MSMEs but stay locked
+    until the Silver or Gold milestone is reached.
+  </p>
+
+  <!-- --------------------------------------------- the five categories --- -->
+  <div class="inc-grid">
+    @for (category of categories(); track category.categoryId) {
+      <article class="card inc-cat" [style.--accent]="category.accentHex">
+        <div class="inc-cat-head">
+          <span class="inc-cat-mark"></span>
+          <span class="badge" [class.badge-gold]="category.activationBadge === 'Gold'">
+            {{ category.activationBadge }}
+          </span>
+        </div>
+
+        <h3 class="inc-cat-title">{{ category.name }}</h3>
+        <p class="inc-cat-count">{{ category.activeCount }} active incentives</p>
+
+        <div class="inc-cat-foot">
+          <span class="inc-cat-partners">{{ category.typicalPartners || '—' }}</span>
+          <button class="link-btn" type="button" (click)="manage(category)">Manage →</button>
+        </div>
+      </article>
+    }
+  </div>
+
+  <!-- ----------------------------------------------- every incentive --- -->
+  <section class="card">
+    <header class="inc-table-head">
+      <h3 class="card-title">All Incentives</h3>
+      <span class="chip chip-blue">{{ totals()?.total || 0 }} incentives</span>
+
+      <div class="spacer"></div>
+
+      @if (totals(); as t) {
+        <span class="inc-stat"><b>{{ t.active }}</b> active</span>
+        <span class="inc-stat"><b>{{ t.draft }}</b> draft</span>
+        <span class="inc-stat"><b>{{ t.beneficiaries | number }}</b> beneficiaries</span>
+      }
+    </header>
+
+    @if (loading()) {
+      <p class="inc-state">Loading incentives…</p>
+    } @else if (rows().length === 0) {
+      <app-empty
+        title="No incentives yet"
+        message="Create the first incentive from a stakeholder sub-menu — Ministry of MSME, State Govt., Financial Institutions or Others."
+      />
+    } @else {
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th class="w-narrow">S.No</th>
+              <th>Incentive Title</th>
+              <th>Category</th>
+              <th>Activation</th>
+              <th>Stakeholder</th>
+              <th class="num">Resources</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of rows(); track row.incentiveId; let i = $index) {
+              <tr class="is-clickable" (click)="open(row)">
+                <td class="muted">{{ i + 1 }}</td>
+                <td class="strong">{{ row.name }}</td>
+                <td>
+                  <span class="inc-dot" [style.background]="row.categoryAccent || '#5D6B62'"></span>
+                  {{ row.categoryName || '—' }}
+                </td>
+                <td>
+                  <span class="badge" [class.badge-gold]="row.activationLevel === 'Gold'">
+                    {{ row.activationLevel }}
+                  </span>
+                </td>
+                <td>{{ row.stakeholder }}</td>
+                <td class="num">{{ row.resourceCount }}</td>
+                <td>
+                  <span class="pill" [class.pill-on]="row.status === 'Active'">{{ row.status }}</span>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+
+    @if (error(); as message) {
+      <p class="inc-error">{{ message }}</p>
+    }
+  </section>
+</div>

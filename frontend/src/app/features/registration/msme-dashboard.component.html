@@ -164,15 +164,47 @@
           <span class="dash-count">{{ d.incentives.groups.length }} benefit groups</span>
         </div>
 
-        @for (group of d.incentives.groups; track group.name) {
-          <div class="ben">
-            <span class="ben-mark"></span>
-            <div class="ben-text">
-              <div class="ben-name">{{ group.name }}</div>
-              <div class="ben-note">{{ group.count }} recorded under this group</div>
-            </div>
-            <span class="ben-state">{{ d.incentives.unlocked ? 'Available' : 'Locked' }}</span>
-          </div>
+        <!-- Each box is a card; the incentives inside it are its contents. A
+             box with nothing published yet still appears — it is part of what
+             the scheme offers, and its emptiness is information. -->
+        @for (group of d.incentives.groups; track group.categoryId) {
+          <article class="ben-card" [style.--accent]="group.accent">
+            <header class="ben-card-head">
+              <div>
+                <div class="ben-name">{{ group.name }}</div>
+                @if (group.partners) {
+                  <div class="ben-note">{{ group.partners }}</div>
+                }
+              </div>
+
+              <span class="ben-state" [class.is-on]="group.unlockedCount > 0">
+                {{ group.unlockedCount > 0 ? group.unlockedCount + ' available' : 'Locked' }}
+              </span>
+            </header>
+
+            @for (item of group.items; track item.incentiveId) {
+              <div class="ben-item" [class.is-locked]="!item.unlocked">
+                <span class="ben-mark"></span>
+                <div class="ben-text">
+                  <div class="ben-item-name">{{ item.name }}</div>
+                  <div class="ben-note">
+                    {{ item.stakeholder }} · unlocks at
+                    {{ item.activation === 'Both' ? 'Silver or Gold' : item.activation }}
+                  </div>
+                </div>
+
+                @if (item.unlocked && item.externalUrl) {
+                  <a class="ben-link" [href]="item.externalUrl" target="_blank" rel="noopener">
+                    Apply →
+                  </a>
+                } @else {
+                  <span class="ben-state">{{ item.unlocked ? 'Available' : 'Locked' }}</span>
+                }
+              </div>
+            } @empty {
+              <p class="ben-empty">Nothing published in this group yet.</p>
+            }
+          </article>
         } @empty {
           <p class="dash-empty">No incentives have been published yet.</p>
         }

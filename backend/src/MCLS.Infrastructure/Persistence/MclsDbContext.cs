@@ -93,6 +93,8 @@ public class MclsDbContext(DbContextOptions<MclsDbContext> options)
     // ---- incentive ---------------------------------------------------------
     public DbSet<IncentiveProvider> IncentiveProviders => Set<IncentiveProvider>();
     public DbSet<Incentive> Incentives => Set<Incentive>();
+    public DbSet<IncentiveCategory> IncentiveCategories => Set<IncentiveCategory>();
+    public DbSet<IncentiveResource> IncentiveResources => Set<IncentiveResource>();
     public DbSet<IncentiveDisbursement> IncentiveDisbursements => Set<IncentiveDisbursement>();
 
     // ---- comm --------------------------------------------------------------

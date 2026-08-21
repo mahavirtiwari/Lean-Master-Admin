@@ -40,7 +40,32 @@ export interface MsmeDashboard {
   }[];
   incentives: {
     unlocked: boolean;
-    groups: { name: string; count: number }[];
+
+    /**
+     * The five boxes, each carrying its own incentives. Every box is listed
+     * whether or not this enterprise has earned it — the scheme shows them from
+     * the start and locks only the benefit behind them.
+     */
+    groups: {
+      categoryId: number;
+      code: string;
+      name: string;
+      description: string | null;
+      partners: string | null;
+      accent: string;
+      count: number;
+      unlockedCount: number;
+      items: {
+        incentiveId: number;
+        name: string;
+        description: string | null;
+        activation: string;
+        stakeholder: string;
+        externalUrl: string | null;
+        videoUrl: string | null;
+        unlocked: boolean;
+      }[];
+    }[];
   };
 }
 

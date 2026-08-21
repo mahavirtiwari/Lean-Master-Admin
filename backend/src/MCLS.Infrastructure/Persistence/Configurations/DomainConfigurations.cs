@@ -582,6 +582,37 @@ internal sealed class IncentiveProviderConfiguration : IEntityTypeConfiguration<
     }
 }
 
+internal sealed class IncentiveCategoryConfiguration : IEntityTypeConfiguration<IncentiveCategory>
+{
+    public void Configure(EntityTypeBuilder<IncentiveCategory> b)
+    {
+        b.ToTable("Category", "incentive");
+        b.HasKey(x => x.CategoryId);
+        b.Property(x => x.Code).HasMaxLength(30).IsRequired().IsUnicode(false);
+        b.Property(x => x.Name).HasMaxLength(200).IsRequired();
+        b.Property(x => x.Description).HasMaxLength(500);
+        b.Property(x => x.TypicalPartners).HasMaxLength(300);
+        b.Property(x => x.AccentHex).HasMaxLength(7).IsFixedLength().IsUnicode(false).IsRequired();
+        b.HasIndex(x => x.Code).IsUnique();
+    }
+}
+
+internal sealed class IncentiveResourceConfiguration : IEntityTypeConfiguration<IncentiveResource>
+{
+    public void Configure(EntityTypeBuilder<IncentiveResource> b)
+    {
+        b.ToTable("IncentiveResource", "incentive");
+        b.HasKey(x => x.ResourceId);
+        b.Property(x => x.Kind).HasMaxLength(12).IsRequired().IsUnicode(false);
+        b.Property(x => x.Title).HasMaxLength(300).IsRequired();
+        b.Property(x => x.Url).HasMaxLength(1000);
+        b.Property(x => x.StoragePath).HasMaxLength(400);
+        b.Property(x => x.FileName).HasMaxLength(260);
+        b.HasOne(x => x.Incentive).WithMany(i => i.Resources)
+            .HasForeignKey(x => x.IncentiveId).OnDelete(DeleteBehavior.Cascade);
+    }
+}
+
 internal sealed class IncentiveConfiguration : IEntityTypeConfiguration<Incentive>
 {
     public void Configure(EntityTypeBuilder<Incentive> b)
@@ -596,7 +627,21 @@ internal sealed class IncentiveConfiguration : IEntityTypeConfiguration<Incentiv
         b.Property(x => x.BenefitDescription).HasMaxLength(1000);
         b.Property(x => x.Status).HasMaxLength(15).IsRequired().IsUnicode(false);
         b.Property(x => x.ExternalUrl).HasMaxLength(500);
+        b.Property(x => x.VideoUrl).HasMaxLength(1000);
+        b.Property(x => x.SchemeCode).HasMaxLength(40).IsUnicode(false);
+        b.Property(x => x.ActivationLevel).HasMaxLength(10).IsUnicode(false);
+        b.Property(x => x.BudgetHead).HasMaxLength(200);
+        b.Property(x => x.GazetteNo).HasMaxLength(80).IsUnicode(false);
+        b.Property(x => x.ProductType).HasMaxLength(120);
+        b.Property(x => x.AgencyType).HasMaxLength(80);
+        b.Property(x => x.ExternalSchemeId).HasMaxLength(80).IsUnicode(false);
+        b.Property(x => x.ContactName).HasMaxLength(160);
+        b.Property(x => x.ContactDesignation).HasMaxLength(160);
+        b.Property(x => x.ContactMobile).HasMaxLength(15).IsUnicode(false);
+        b.Property(x => x.ContactEmail).HasMaxLength(256);
         b.HasIndex(x => x.Code).IsUnique();
+        b.HasOne(x => x.Category).WithMany(c => c.Incentives)
+            .HasForeignKey(x => x.CategoryId).OnDelete(DeleteBehavior.Restrict);
         b.HasOne(x => x.Provider).WithMany(p => p.Incentives)
             .HasForeignKey(x => x.ProviderId).OnDelete(DeleteBehavior.Restrict);
         b.HasOne(x => x.CertificationLevel).WithMany()

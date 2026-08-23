@@ -302,4 +302,130 @@ public sealed class MsmeController(
             },
         });
     }
+
+    /// <summary>
+    /// The applicant's profile (P01): the enterprise's Udyam details, read-only,
+    /// and the SPOC contact. The Udyam fields are what the registry returned and
+    /// are not editable here — a change goes through re-validation with Udyam.
+    /// </summary>
+    [HttpGet("profile")]
+    public async Task<IActionResult> GetProfile(CancellationToken ct)
+    {
+        var userId = currentUser.UserId;
+        if (userId is null) return Unauthorized();
+
+        var profile = await db.Enterprises.AsNoTracking()
+            .Where(e => e.PrimaryUserId == userId)
+            .Select(e => new
+            {
+                enterprise = new
+                {
+                    e.Name,
+                    e.LeanId,
+                    e.UdyamRegistrationNo,
+                    e.OwnerName,
+                    e.Gender,
+                    e.SocialCategory,
+                    e.AddressLine,
+                    e.Pan,
+                    registeredOn = e.RegisteredOnUtc,
+                    e.EnterpriseSize,
+                    e.OrganisationType,
+                    activity = e.NicDescription,
+                    e.TotalEmployees,
+                },
+                spoc = new
+                {
+                    name = db.Users.Where(u => u.Id == e.PrimaryUserId).Select(u => u.FullName).FirstOrDefault(),
+                    designation = db.Users.Where(u => u.Id == e.PrimaryUserId).Select(u => u.Designation).FirstOrDefault(),
+                    email = e.ContactEmail,
+                    mobile = e.ContactMobile,
+                },
+            })
+            .FirstOrDefaultAsync(ct);
+
+        return profile is null
+            ? NotFound(new { message = "No enterprise is linked to this account." })
+            : Ok(profile);
+    }
+
+    /// <summary>
+    /// The documents and videos the Ministry publishes to MSMEs (D01) — the
+    /// same library the admin Documents menu maintains, filtered to the MSME
+    /// audience. A video points at where it is hosted; a file streams from the
+    /// registration document endpoint.
+    /// </summary>
+    [HttpGet("documents")]
+    public async Task<IActionResult> GetDocuments(CancellationToken ct)
+    {
+        const byte msmeEnterprise = 10;
+
+        var rows = await db.Documents.AsNoTracking()
+            .Where(d => d.IsActive && !d.IsDeleted
+                        && (d.CurrentVersionId != null || d.VideoUrl != null)
+                        && d.Audiences.Any(a => a.AccountTypeId == msmeEnterprise))
+            .OrderBy(d => d.Title)
+            .Select(d => new
+            {
+                d.DocumentId,
+                d.Title,
+                d.Description,
+                d.VideoUrl,
+                VersionId = d.CurrentVersionId,
+                ContentType = d.CurrentVersion != null ? d.CurrentVersion.ContentType : null,
+                FileName = d.CurrentVersion != null ? d.CurrentVersion.OriginalFileName : null,
+            })
+            .ToListAsync(ct);
+
+        return Ok(rows.Select(r => new
+        {
+            r.DocumentId,
+            r.Title,
+            r.Description,
+            r.FileName,
+            kind = r.VideoUrl != null ? "video" : "document",
+            url = r.VideoUrl ?? $"/api/registration/applicant-documents/{r.DocumentId}/{r.VersionId}",
+        }));
+    }
+
+    /// <summary>
+    /// The applicant's recent activity as notifications (H03) — derived from
+    /// their own records, newest first. There is no separate notifications
+    /// store yet; these are the events the applicant would expect to see.
+    /// </summary>
+    [HttpGet("notifications")]
+    public async Task<IActionResult> GetNotifications(CancellationToken ct)
+    {
+        var userId = currentUser.UserId;
+        if (userId is null) return Unauthorized();
+
+        var enterprise = await db.Enterprises.AsNoTracking()
+            .Where(e => e.PrimaryUserId == userId)
+            .Select(e => new { e.EnterpriseId })
+            .FirstOrDefaultAsync(ct);
+        if (enterprise is null) return Ok(Array.Empty<Notification>());
+
+        var items = new List<Notification>();
+
+        var submission = await db.ApplicationSubmissions.AsNoTracking()
+            .Where(s => s.EnterpriseId == enterprise.EnterpriseId && s.CertificationLevelId == 2)
+            .Select(s => new { s.Status, s.SubmittedOnUtc, s.PaymentStatus, s.PaidAmount, s.PaidOnUtc })
+            .FirstOrDefaultAsync(ct);
+
+        if (submission is { PaymentStatus: "Paid", PaidOnUtc: { } paidOn })
+            items.Add(new Notification("Payment received", $"₹{submission.PaidAmount:N0} for LEAN Silver", paidOn, "payment"));
+        if (submission is { Status: "Submitted", SubmittedOnUtc: { } submittedOn })
+            items.Add(new Notification("Application submitted", "Your LEAN Silver application is under review", submittedOn, "application"));
+
+        var certs = await db.Applications.AsNoTracking()
+            .Where(a => a.EnterpriseId == enterprise.EnterpriseId && a.CertifiedOnUtc != null)
+            .Select(a => new { a.CertificationLevel.Name, a.CertifiedOnUtc })
+            .ToListAsync(ct);
+        foreach (var c in certs)
+            items.Add(new Notification($"{c.Name} certificate issued", "Available in Documents", c.CertifiedOnUtc!.Value, "certificate"));
+
+        return Ok(items.OrderByDescending(i => i.OnUtc));
+    }
+
+    private sealed record Notification(string Title, string Detail, DateTime OnUtc, string Kind);
 }

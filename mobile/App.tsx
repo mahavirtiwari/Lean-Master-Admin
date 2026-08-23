@@ -15,6 +15,9 @@ import MyIncentivesScreen from './src/screens/MyIncentivesScreen';
 import SilverApplicationScreen from './src/screens/SilverApplicationScreen';
 import ApplicationSubmittedScreen from './src/screens/ApplicationSubmittedScreen';
 import PaymentScreen from './src/screens/PaymentScreen';
+import ProfileScreen from './src/screens/ProfileScreen';
+import DocumentsScreen from './src/screens/DocumentsScreen';
+import NotificationsScreen from './src/screens/NotificationsScreen';
 import OtpScreen from './src/screens/OtpScreen';
 import PledgeScreen from './src/screens/PledgeScreen';
 import RegisterLandingScreen from './src/screens/RegisterLandingScreen';
@@ -62,9 +65,9 @@ function Root(): React.JSX.Element {
         <Stack.Screen name="MyCertifications" component={MyCertificationsScreen} options={{ headerShown: false }} />
         <Stack.Screen name="MyIncentives" component={MyIncentivesScreen} options={{ headerShown: false }} />
         <Stack.Screen name="Payments" component={PaymentScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="Documents" component={ComingSoonScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="Profile" component={ComingSoonScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="Notifications" component={ComingSoonScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="Documents" component={DocumentsScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="Profile" component={ProfileScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="Notifications" component={NotificationsScreen} options={{ headerShown: false }} />
         <Stack.Screen name="SilverApplication" component={SilverApplicationScreen} options={{ headerShown: false }} />
         <Stack.Screen name="ApplicationSubmitted" component={ApplicationSubmittedScreen} options={{ headerShown: false }} />
 

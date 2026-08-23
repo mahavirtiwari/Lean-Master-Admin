@@ -367,6 +367,54 @@ internal sealed class ApplicationConfiguration : IEntityTypeConfiguration<MsmeAp
     }
 }
 
+internal sealed class ApplicationSubmissionConfiguration : IEntityTypeConfiguration<ApplicationSubmission>
+{
+    public void Configure(EntityTypeBuilder<ApplicationSubmission> b)
+    {
+        b.ToTable("ApplicationSubmission", "msme");
+        b.HasKey(x => x.SubmissionId);
+        b.Property(x => x.Status).HasMaxLength(20).IsUnicode(false).IsRequired();
+        b.Property(x => x.RowVersion).IsRowVersion();
+        b.HasIndex(x => new { x.EnterpriseId, x.CertificationLevelId }).IsUnique();
+
+        b.HasMany(x => x.BasicInfo).WithOne().HasForeignKey(x => x.SubmissionId).OnDelete(DeleteBehavior.Cascade);
+        b.HasMany(x => x.EsgAnswers).WithOne().HasForeignKey(x => x.SubmissionId).OnDelete(DeleteBehavior.Cascade);
+        b.HasMany(x => x.Documents).WithOne().HasForeignKey(x => x.SubmissionId).OnDelete(DeleteBehavior.Cascade);
+    }
+}
+
+internal sealed class SubmissionBasicInfoConfiguration : IEntityTypeConfiguration<SubmissionBasicInfo>
+{
+    public void Configure(EntityTypeBuilder<SubmissionBasicInfo> b)
+    {
+        b.ToTable("SubmissionBasicInfo", "msme");
+        b.HasKey(x => new { x.SubmissionId, x.BasicInfoItemId });
+        b.Property(x => x.ValueText).HasMaxLength(1000);
+    }
+}
+
+internal sealed class SubmissionEsgAnswerConfiguration : IEntityTypeConfiguration<SubmissionEsgAnswer>
+{
+    public void Configure(EntityTypeBuilder<SubmissionEsgAnswer> b)
+    {
+        b.ToTable("SubmissionEsgAnswer", "msme");
+        b.HasKey(x => new { x.SubmissionId, x.EsgQuestionId });
+        b.Property(x => x.Answer).HasMaxLength(3).IsUnicode(false).IsRequired();
+    }
+}
+
+internal sealed class SubmissionDocumentConfiguration : IEntityTypeConfiguration<SubmissionDocument>
+{
+    public void Configure(EntityTypeBuilder<SubmissionDocument> b)
+    {
+        b.ToTable("SubmissionDocument", "msme");
+        b.HasKey(x => new { x.SubmissionId, x.DocumentRequirementId });
+        b.Property(x => x.OriginalFileName).HasMaxLength(300);
+        b.Property(x => x.StoredFileName).HasMaxLength(300);
+        b.Property(x => x.ContentType).HasMaxLength(100).IsUnicode(false);
+    }
+}
+
 internal sealed class ApplicationStatusHistoryConfiguration : IEntityTypeConfiguration<ApplicationStatusHistory>
 {
     public void Configure(EntityTypeBuilder<ApplicationStatusHistory> b)

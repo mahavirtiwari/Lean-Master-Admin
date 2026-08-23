@@ -19,6 +19,7 @@ export type RootStackParamList = {
   Profile: undefined;
   Notifications: undefined;
   SilverApplication: undefined;
+  ApplicationSubmitted: undefined;
 
   RegisterLanding: undefined;
   Udyam: undefined;

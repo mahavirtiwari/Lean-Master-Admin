@@ -12,6 +12,8 @@ import EnterpriseScreen from './src/screens/EnterpriseScreen';
 import HomeScreen from './src/screens/HomeScreen';
 import MyCertificationsScreen from './src/screens/MyCertificationsScreen';
 import MyIncentivesScreen from './src/screens/MyIncentivesScreen';
+import SilverApplicationScreen from './src/screens/SilverApplicationScreen';
+import ApplicationSubmittedScreen from './src/screens/ApplicationSubmittedScreen';
 import OtpScreen from './src/screens/OtpScreen';
 import PledgeScreen from './src/screens/PledgeScreen';
 import RegisterLandingScreen from './src/screens/RegisterLandingScreen';
@@ -62,7 +64,8 @@ function Root(): React.JSX.Element {
         <Stack.Screen name="Documents" component={ComingSoonScreen} options={{ headerShown: false }} />
         <Stack.Screen name="Profile" component={ComingSoonScreen} options={{ headerShown: false }} />
         <Stack.Screen name="Notifications" component={ComingSoonScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="SilverApplication" component={ComingSoonScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="SilverApplication" component={SilverApplicationScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="ApplicationSubmitted" component={ApplicationSubmittedScreen} options={{ headerShown: false }} />
 
         <Stack.Screen name="Dashboard" component={DashboardScreen} options={{ title: 'LEAN Scheme' }} />
 

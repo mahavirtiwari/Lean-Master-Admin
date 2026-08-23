@@ -416,3 +416,53 @@ public class AwarenessProgram
     /// </summary>
     public string Source { get; set; } = "Local";
 }
+
+/// <summary>
+/// An enterprise's LEAN Silver application — its self-declared answers to the
+/// basic-information, ESG and document checklists the admin defines. One per
+/// enterprise per level; a draft while it is filled, submitted when confirmed.
+/// </summary>
+public class ApplicationSubmission : IConcurrencyAware
+{
+    public int SubmissionId { get; set; }
+    public int EnterpriseId { get; set; }
+    public byte CertificationLevelId { get; set; }
+
+    /// <summary>Draft or Submitted.</summary>
+    public string Status { get; set; } = "Draft";
+    public DateTime? SubmittedOnUtc { get; set; }
+    public DateTime CreatedOnUtc { get; set; }
+    public DateTime? ModifiedOnUtc { get; set; }
+    public byte[]? RowVersion { get; set; }
+
+    public ICollection<SubmissionBasicInfo> BasicInfo { get; set; } = [];
+    public ICollection<SubmissionEsgAnswer> EsgAnswers { get; set; } = [];
+    public ICollection<SubmissionDocument> Documents { get; set; } = [];
+}
+
+/// <summary>One basic-information answer; text whatever the item's input type.</summary>
+public class SubmissionBasicInfo
+{
+    public int SubmissionId { get; set; }
+    public short BasicInfoItemId { get; set; }
+    public string? ValueText { get; set; }
+}
+
+/// <summary>One ESG answer — Yes, No or NA — against a question.</summary>
+public class SubmissionEsgAnswer
+{
+    public int SubmissionId { get; set; }
+    public int EsgQuestionId { get; set; }
+    public string Answer { get; set; } = string.Empty;
+}
+
+/// <summary>A document uploaded against one requirement of the checklist.</summary>
+public class SubmissionDocument
+{
+    public int SubmissionId { get; set; }
+    public short DocumentRequirementId { get; set; }
+    public string? OriginalFileName { get; set; }
+    public string? StoredFileName { get; set; }
+    public string? ContentType { get; set; }
+    public DateTime? UploadedOnUtc { get; set; }
+}

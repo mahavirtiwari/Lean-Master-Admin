@@ -1,0 +1,238 @@
+using MCLS.Application.Common.Interfaces;
+using MCLS.Domain.Entities.Msme;
+using MCLS.Infrastructure.Persistence;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+
+namespace MCLS.Api.Controllers;
+
+/// <summary>
+/// The applicant's LEAN Silver application, on the mobile app.
+///
+/// The admin menus (ESG Checklist, Basic Info &amp; Documents) define what the
+/// application asks; this returns that checklist to the applicant and stores
+/// their answers. One submission per enterprise per level — a draft while it is
+/// being filled, submitted when they confirm.
+/// </summary>
+[ApiController]
+[Route("api/msme/application")]
+[Authorize]
+public sealed class MsmeApplicationController(MclsDbContext db, ICurrentUser currentUser) : ControllerBase
+{
+    private const byte Silver = 2;
+
+    private async Task<int?> EnterpriseIdAsync(CancellationToken ct)
+    {
+        var userId = currentUser.UserId;
+        if (userId is null) return null;
+        return await db.Enterprises.AsNoTracking()
+            .Where(e => e.PrimaryUserId == userId)
+            .Select(e => (int?)e.EnterpriseId)
+            .FirstOrDefaultAsync(ct);
+    }
+
+    /// <summary>
+    /// The active checklist the Silver application asks for — the basic-info
+    /// items, the ESG sections and their questions (with each conditional
+    /// question's parent and trigger, so the app can show it at the right time),
+    /// and the documents to upload.
+    /// </summary>
+    [HttpGet("config")]
+    public async Task<IActionResult> GetConfig(CancellationToken ct)
+    {
+        var basicInfo = await db.BasicInfoItems.AsNoTracking()
+            .Where(i => i.IsActive)
+            .OrderBy(i => i.SortOrder).ThenBy(i => i.Code)
+            .Select(i => new { i.BasicInfoItemId, i.GroupName, i.Label, i.HelpText, i.InputType, i.IsRequired })
+            .ToListAsync(ct);
+
+        var sections = await db.EsgSections.AsNoTracking()
+            .Where(s => s.IsActive)
+            .OrderBy(s => s.SortOrder).ThenBy(s => s.Code)
+            .Select(s => new
+            {
+                s.EsgSectionId,
+                s.Name,
+                Questions = s.Questions
+                    .Where(q => q.IsActive)
+                    .OrderBy(q => q.SortOrder)
+                    .Select(q => new
+                    {
+                        q.EsgQuestionId,
+                        q.Text,
+                        q.HelpText,
+                        q.ParentQuestionId,
+                        q.ShowWhenAnswer,
+                    })
+                    .ToList(),
+            })
+            .ToListAsync(ct);
+
+        var documents = await db.DocumentRequirements.AsNoTracking()
+            .Where(d => d.IsActive && (d.CertificationLevelId == null || d.CertificationLevelId == Silver))
+            .OrderBy(d => d.SortOrder).ThenBy(d => d.Code)
+            .Select(d => new { d.DocumentRequirementId, d.Name, d.HelpText, d.AcceptedTypes, d.IsMandatory })
+            .ToListAsync(ct);
+
+        return Ok(new { basicInfo, esgSections = sections, documents });
+    }
+
+    /// <summary>The applicant's current Silver submission and its answers, if any.</summary>
+    [HttpGet("silver")]
+    public async Task<IActionResult> GetSilver(CancellationToken ct)
+    {
+        var enterpriseId = await EnterpriseIdAsync(ct);
+        if (enterpriseId is null) return NotFound(new { message = "No enterprise is linked to this account." });
+
+        var submission = await db.ApplicationSubmissions.AsNoTracking()
+            .Where(s => s.EnterpriseId == enterpriseId && s.CertificationLevelId == Silver)
+            .Select(s => new
+            {
+                s.SubmissionId,
+                s.Status,
+                s.SubmittedOnUtc,
+                BasicInfo = s.BasicInfo.Select(b => new { b.BasicInfoItemId, b.ValueText }),
+                Esg = s.EsgAnswers.Select(e => new { e.EsgQuestionId, e.Answer }),
+                Documents = s.Documents.Select(d => new { d.DocumentRequirementId, d.OriginalFileName, d.UploadedOnUtc }),
+            })
+            .FirstOrDefaultAsync(ct);
+
+        return Ok(submission);
+    }
+
+    /// <summary>
+    /// Saves the Silver application — a draft, or submitted when
+    /// <see cref="SilverSubmitRequest.Submit"/> is true. Replaces the answer
+    /// set each time, so the client sends the whole form.
+    /// </summary>
+    [HttpPost("silver")]
+    public async Task<IActionResult> SaveSilver([FromBody] SilverSubmitRequest request, CancellationToken ct)
+    {
+        var enterpriseId = await EnterpriseIdAsync(ct);
+        if (enterpriseId is null) return NotFound(new { message = "No enterprise is linked to this account." });
+
+        if (request.Submit)
+        {
+            var missing = await ValidateMandatoryAsync(request, ct);
+            // A plain message, not a ValidationProblem: the mobile client shows
+            // the reason to the applicant, and there is one reason at a time.
+            if (missing is not null) return BadRequest(new { message = missing });
+        }
+
+        var submission = await db.ApplicationSubmissions
+            .Include(s => s.BasicInfo)
+            .Include(s => s.EsgAnswers)
+            .Include(s => s.Documents)
+            .SingleOrDefaultAsync(s => s.EnterpriseId == enterpriseId && s.CertificationLevelId == Silver, ct);
+
+        if (submission is null)
+        {
+            submission = new ApplicationSubmission
+            {
+                EnterpriseId = enterpriseId.Value,
+                CertificationLevelId = Silver,
+                CreatedOnUtc = DateTime.UtcNow,
+            };
+            db.ApplicationSubmissions.Add(submission);
+        }
+        else
+        {
+            // A submitted application is not edited from here again.
+            if (submission.Status == "Submitted")
+                return Conflict(new { message = "This application has already been submitted." });
+
+            db.SubmissionBasicInfo.RemoveRange(submission.BasicInfo);
+            db.SubmissionEsgAnswers.RemoveRange(submission.EsgAnswers);
+            db.SubmissionDocuments.RemoveRange(submission.Documents);
+            submission.ModifiedOnUtc = DateTime.UtcNow;
+        }
+
+        submission.Status = request.Submit ? "Submitted" : "Draft";
+        submission.SubmittedOnUtc = request.Submit ? DateTime.UtcNow : null;
+
+        foreach (var b in request.BasicInfo ?? [])
+            submission.BasicInfo.Add(new SubmissionBasicInfo { BasicInfoItemId = b.BasicInfoItemId, ValueText = b.Value });
+
+        foreach (var e in request.Esg ?? [])
+            if (e.Answer is "Yes" or "No" or "NA")
+                submission.EsgAnswers.Add(new SubmissionEsgAnswer { EsgQuestionId = e.EsgQuestionId, Answer = e.Answer });
+
+        foreach (var d in request.Documents ?? [])
+            submission.Documents.Add(new SubmissionDocument
+            {
+                DocumentRequirementId = d.DocumentRequirementId,
+                OriginalFileName = d.OriginalFileName,
+                UploadedOnUtc = DateTime.UtcNow,
+            });
+
+        await db.SaveChangesAsync(ct);
+        return Ok(new { submission.SubmissionId, submission.Status });
+    }
+
+    /// <summary>Confirms every mandatory item, ESG question and document is answered.</summary>
+    private async Task<string?> ValidateMandatoryAsync(SilverSubmitRequest request, CancellationToken ct)
+    {
+        var basicGiven = (request.BasicInfo ?? [])
+            .Where(b => !string.IsNullOrWhiteSpace(b.Value))
+            .Select(b => b.BasicInfoItemId).ToHashSet();
+        var requiredBasic = await db.BasicInfoItems.AsNoTracking()
+            .Where(i => i.IsActive && i.IsRequired).Select(i => i.BasicInfoItemId).ToListAsync(ct);
+        if (requiredBasic.Any(id => !basicGiven.Contains(id)))
+            return "Answer every required basic-information item before submitting.";
+
+        // Only the questions that were actually shown need an answer, so this
+        // checks the answered set against the questions whose condition the
+        // answers themselves satisfy — a top-level question, or a child whose
+        // parent was answered its trigger.
+        var esgGiven = (request.Esg ?? []).ToDictionary(e => e.EsgQuestionId, e => e.Answer);
+        var questions = await db.EsgQuestions.AsNoTracking()
+            .Where(q => q.IsActive)
+            .Select(q => new { q.EsgQuestionId, q.ParentQuestionId, q.ShowWhenAnswer })
+            .ToListAsync(ct);
+        foreach (var q in questions)
+        {
+            var shown = q.ParentQuestionId is null
+                || (esgGiven.TryGetValue(q.ParentQuestionId.Value, out var pa) && pa == q.ShowWhenAnswer);
+            if (shown && !esgGiven.ContainsKey(q.EsgQuestionId))
+                return "Answer every ESG question that applies before submitting.";
+        }
+
+        var docsGiven = (request.Documents ?? [])
+            .Where(d => !string.IsNullOrWhiteSpace(d.OriginalFileName))
+            .Select(d => d.DocumentRequirementId).ToHashSet();
+        var requiredDocs = await db.DocumentRequirements.AsNoTracking()
+            .Where(d => d.IsActive && d.IsMandatory && (d.CertificationLevelId == null || d.CertificationLevelId == Silver))
+            .Select(d => d.DocumentRequirementId).ToListAsync(ct);
+        if (requiredDocs.Any(id => !docsGiven.Contains(id)))
+            return "Upload every mandatory document before submitting.";
+
+        return null;
+    }
+}
+
+public sealed class SilverSubmitRequest
+{
+    public bool Submit { get; init; }
+    public List<BasicInfoAnswer>? BasicInfo { get; init; }
+    public List<EsgAnswer>? Esg { get; init; }
+    public List<DocumentAnswer>? Documents { get; init; }
+}
+
+public sealed class BasicInfoAnswer
+{
+    public short BasicInfoItemId { get; init; }
+    public string? Value { get; init; }
+}
+
+public sealed class EsgAnswer
+{
+    public int EsgQuestionId { get; init; }
+    public string Answer { get; init; } = string.Empty;
+}
+
+public sealed class DocumentAnswer
+{
+    public short DocumentRequirementId { get; init; }
+    public string? OriginalFileName { get; init; }
+}

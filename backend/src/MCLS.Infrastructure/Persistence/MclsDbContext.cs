@@ -75,6 +75,10 @@ public class MclsDbContext(DbContextOptions<MclsDbContext> options)
     public DbSet<Domain.Entities.Msme.Application> Applications => Set<Domain.Entities.Msme.Application>();
     public DbSet<ApplicationStatusHistory> ApplicationStatusHistory => Set<ApplicationStatusHistory>();
     public DbSet<HandholdingActivity> HandholdingActivities => Set<HandholdingActivity>();
+    public DbSet<ApplicationSubmission> ApplicationSubmissions => Set<ApplicationSubmission>();
+    public DbSet<SubmissionBasicInfo> SubmissionBasicInfo => Set<SubmissionBasicInfo>();
+    public DbSet<SubmissionEsgAnswer> SubmissionEsgAnswers => Set<SubmissionEsgAnswer>();
+    public DbSet<SubmissionDocument> SubmissionDocuments => Set<SubmissionDocument>();
 
     // ---- assess ------------------------------------------------------------
     public DbSet<Questionnaire> Questionnaires => Set<Questionnaire>();

@@ -30,6 +30,10 @@ export class MsmeLoginComponent {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
 
+  forgotPassword(): void {
+    void this.router.navigate(['/msme/reset-password']);
+  }
+
   readonly leanId = signal('');
   readonly password = signal('');
   readonly showPassword = signal(false);

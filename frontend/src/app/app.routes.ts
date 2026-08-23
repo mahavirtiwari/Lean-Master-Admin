@@ -65,6 +65,14 @@ export const routes: Routes = [
       import('./features/registration/msme-login.component').then((m) => m.MsmeLoginComponent),
   },
 
+  {
+    path: 'msme/reset-password',
+    loadComponent: () =>
+      import('./features/registration/msme-reset-password.component').then(
+        (m) => m.MsmeResetPasswordComponent,
+      ),
+  },
+
   // The post-registration Silver application and its payment, on web. Guarded
   // like the applicant dashboard — an MSME session reaches them.
   {

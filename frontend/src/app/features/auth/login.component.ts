@@ -27,6 +27,10 @@ export class LoginComponent {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
 
+  forgotPassword(): void {
+    void this.router.navigate(['/msme/reset-password']);
+  }
+
 
   /** Set when assets/msme-logo.svg is absent, so the text lockup takes over. */
   readonly ministryLogoMissing = signal(false);

@@ -56,8 +56,8 @@ export default function SignInScreen({ navigation }: Props): React.JSX.Element {
         </View>
 
         <Card capped>
-          <Text style={styles.title}>Sign in</Text>
-          <Text style={styles.sub}>Use the LEAN ID sent to your registered SPOC email address.</Text>
+          <Text style={styles.title}>Welcome</Text>
+          <Text style={styles.sub}>Sign in to your LEAN account with the ID sent to your SPOC email.</Text>
 
           <Field
             label="LEAN ID"

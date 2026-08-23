@@ -374,6 +374,10 @@ internal sealed class ApplicationSubmissionConfiguration : IEntityTypeConfigurat
         b.ToTable("ApplicationSubmission", "msme");
         b.HasKey(x => x.SubmissionId);
         b.Property(x => x.Status).HasMaxLength(20).IsUnicode(false).IsRequired();
+        b.Property(x => x.PaymentStatus).HasMaxLength(20).IsUnicode(false).IsRequired();
+        b.Property(x => x.PaidAmount).HasColumnType("decimal(12,2)");
+        b.Property(x => x.PaymentMethod).HasMaxLength(20).IsUnicode(false);
+        b.Property(x => x.PaymentReference).HasMaxLength(40).IsUnicode(false);
         b.Property(x => x.RowVersion).IsRowVersion();
         b.HasIndex(x => new { x.EnterpriseId, x.CertificationLevelId }).IsUnique();
 

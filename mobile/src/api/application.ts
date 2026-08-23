@@ -57,3 +57,29 @@ export const saveSilver = (payload: SilverPayload) =>
     method: 'POST',
     body: payload,
   });
+
+// ------------------------------------------------------------------ payment ---
+
+export interface SilverFee {
+  gross: number;
+  gstPercent: number;
+  subsidyPercent: number;
+  subsidyAmount: number;
+  payable: number;
+  currency: string;
+}
+
+export interface PaymentReceipt {
+  reference: string;
+  amount: number;
+  method: string;
+  paidOn: string;
+}
+
+export const silverFee = () => request<SilverFee>('/api/msme/application/silver/fee');
+
+export const paySilver = (method: string, simulateFailure = false) =>
+  request<PaymentReceipt>('/api/msme/application/silver/pay', {
+    method: 'POST',
+    body: { method, simulateFailure },
+  });

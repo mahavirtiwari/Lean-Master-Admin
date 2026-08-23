@@ -435,6 +435,13 @@ public class ApplicationSubmission : IConcurrencyAware
     public DateTime? ModifiedOnUtc { get; set; }
     public byte[]? RowVersion { get; set; }
 
+    /// <summary>Unpaid or Paid. A mock/simulated payment sets it for now.</summary>
+    public string PaymentStatus { get; set; } = "Unpaid";
+    public decimal? PaidAmount { get; set; }
+    public DateTime? PaidOnUtc { get; set; }
+    public string? PaymentMethod { get; set; }
+    public string? PaymentReference { get; set; }
+
     public ICollection<SubmissionBasicInfo> BasicInfo { get; set; } = [];
     public ICollection<SubmissionEsgAnswer> EsgAnswers { get; set; } = [];
     public ICollection<SubmissionDocument> Documents { get; set; } = [];

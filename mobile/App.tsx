@@ -14,6 +14,7 @@ import MyCertificationsScreen from './src/screens/MyCertificationsScreen';
 import MyIncentivesScreen from './src/screens/MyIncentivesScreen';
 import SilverApplicationScreen from './src/screens/SilverApplicationScreen';
 import ApplicationSubmittedScreen from './src/screens/ApplicationSubmittedScreen';
+import PaymentScreen from './src/screens/PaymentScreen';
 import OtpScreen from './src/screens/OtpScreen';
 import PledgeScreen from './src/screens/PledgeScreen';
 import RegisterLandingScreen from './src/screens/RegisterLandingScreen';
@@ -60,7 +61,7 @@ function Root(): React.JSX.Element {
         <Stack.Screen name="Home" component={HomeScreen} options={{ headerShown: false }} />
         <Stack.Screen name="MyCertifications" component={MyCertificationsScreen} options={{ headerShown: false }} />
         <Stack.Screen name="MyIncentives" component={MyIncentivesScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="Payments" component={ComingSoonScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="Payments" component={PaymentScreen} options={{ headerShown: false }} />
         <Stack.Screen name="Documents" component={ComingSoonScreen} options={{ headerShown: false }} />
         <Stack.Screen name="Profile" component={ComingSoonScreen} options={{ headerShown: false }} />
         <Stack.Screen name="Notifications" component={ComingSoonScreen} options={{ headerShown: false }} />

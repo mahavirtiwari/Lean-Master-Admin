@@ -92,6 +92,11 @@ public sealed class MsmeApplicationController(MclsDbContext db, ICurrentUser cur
                 s.SubmissionId,
                 s.Status,
                 s.SubmittedOnUtc,
+                s.PaymentStatus,
+                s.PaidAmount,
+                s.PaidOnUtc,
+                s.PaymentMethod,
+                s.PaymentReference,
                 BasicInfo = s.BasicInfo.Select(b => new { b.BasicInfoItemId, b.ValueText }),
                 Esg = s.EsgAnswers.Select(e => new { e.EsgQuestionId, e.Answer }),
                 Documents = s.Documents.Select(d => new { d.DocumentRequirementId, d.OriginalFileName, d.UploadedOnUtc }),
@@ -170,6 +175,97 @@ public sealed class MsmeApplicationController(MclsDbContext db, ICurrentUser cur
         return Ok(new { submission.SubmissionId, submission.Status });
     }
 
+    // ------------------------------------------------------------- payment ---
+
+    /// <summary>
+    /// The fee the applicant pays for Silver: the scheme's fee less the
+    /// government subsidy. Base subsidy is 90%, a further 5% for the priority
+    /// categories — read from the fee master, not hard-coded.
+    /// </summary>
+    [HttpGet("silver/fee")]
+    public async Task<IActionResult> GetSilverFee(CancellationToken ct)
+    {
+        var fee = await db.FeeRates.AsNoTracking()
+            .Where(f => f.CertificationLevelId == Silver && f.EffectiveTo == null)
+            .OrderByDescending(f => f.EffectiveFrom)
+            .Select(f => new { f.AmountInclusiveGst, f.GstPercent })
+            .FirstOrDefaultAsync(ct);
+
+        if (fee is null) return NotFound(new { message = "No current Silver fee is configured." });
+
+        // Base subsidy for everyone; the enterprise's category could raise it,
+        // but that lookup belongs with the invoice — here the base is shown.
+        var subsidyPercent = await db.SubsidyCategories.AsNoTracking()
+            .Where(s => s.Code == "GEN")
+            .Select(s => (decimal?)s.BaseSubsidyPercent)
+            .FirstOrDefaultAsync(ct) ?? 90m;
+
+        var gross = fee.AmountInclusiveGst;
+        var subsidyAmount = Math.Round(gross * subsidyPercent / 100m, 2);
+        var payable = gross - subsidyAmount;
+
+        return Ok(new
+        {
+            gross,
+            gstPercent = fee.GstPercent,
+            subsidyPercent,
+            subsidyAmount,
+            payable,
+            currency = "INR",
+        });
+    }
+
+    /// <summary>
+    /// Records payment of the Silver fee. A simulated payment for now — it takes
+    /// the chosen method, marks the submission paid and returns a receipt; no
+    /// money moves and no card details are handled. A real gateway later fills
+    /// the same fields with its own reference.
+    /// </summary>
+    [HttpPost("silver/pay")]
+    public async Task<IActionResult> PaySilver([FromBody] PayRequest request, CancellationToken ct)
+    {
+        var enterpriseId = await EnterpriseIdAsync(ct);
+        if (enterpriseId is null) return NotFound(new { message = "No enterprise is linked to this account." });
+
+        var submission = await db.ApplicationSubmissions
+            .SingleOrDefaultAsync(s => s.EnterpriseId == enterpriseId && s.CertificationLevelId == Silver, ct);
+
+        if (submission is null || submission.Status != "Submitted")
+            return BadRequest(new { message = "Submit the application before paying the fee." });
+        if (submission.PaymentStatus == "Paid")
+            return Conflict(new { message = "This fee has already been paid." });
+
+        // The applicant can walk the failure path in the prototype; honour it so
+        // the failure screen is reachable without breaking anything.
+        if (request.SimulateFailure)
+            return StatusCode(402, new { message = "The payment was declined. No amount has been charged." });
+
+        var fee = await db.FeeRates.AsNoTracking()
+            .Where(f => f.CertificationLevelId == Silver && f.EffectiveTo == null)
+            .Select(f => f.AmountInclusiveGst)
+            .FirstOrDefaultAsync(ct);
+        var subsidy = await db.SubsidyCategories.AsNoTracking()
+            .Where(s => s.Code == "GEN").Select(s => s.BaseSubsidyPercent).FirstOrDefaultAsync(ct);
+        var payable = fee - Math.Round(fee * subsidy / 100m, 2);
+
+        submission.PaymentStatus = "Paid";
+        submission.PaidAmount = payable;
+        submission.PaidOnUtc = DateTime.UtcNow;
+        submission.PaymentMethod = request.Method;
+        submission.PaymentReference = "PAY-" + Guid.NewGuid().ToString("N")[..12].ToUpperInvariant();
+        submission.ModifiedOnUtc = DateTime.UtcNow;
+
+        await db.SaveChangesAsync(ct);
+
+        return Ok(new
+        {
+            reference = submission.PaymentReference,
+            amount = submission.PaidAmount,
+            method = submission.PaymentMethod,
+            paidOn = submission.PaidOnUtc,
+        });
+    }
+
     /// <summary>Confirms every mandatory item, ESG question and document is answered.</summary>
     private async Task<string?> ValidateMandatoryAsync(SilverSubmitRequest request, CancellationToken ct)
     {
@@ -235,4 +331,13 @@ public sealed class DocumentAnswer
 {
     public short DocumentRequirementId { get; init; }
     public string? OriginalFileName { get; init; }
+}
+
+public sealed class PayRequest
+{
+    /// <summary>UPI, Card, NetBanking or NEFT — recorded, not acted on.</summary>
+    public string Method { get; init; } = "UPI";
+
+    /// <summary>Walks the prototype's failure path without charging anything.</summary>
+    public bool SimulateFailure { get; init; }
 }

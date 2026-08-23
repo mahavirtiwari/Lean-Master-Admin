@@ -2,7 +2,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
 import React from 'react';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import ComingSoonScreen from './src/screens/ComingSoonScreen';
@@ -52,9 +52,13 @@ function Root(): React.JSX.Element {
       <Stack.Navigator
         initialRouteName={user ? 'Home' : 'SignIn'}
         screenOptions={{
-          headerStyle: { backgroundColor: colour.surface },
-          headerTintColor: colour.text,
-          headerTitleStyle: { fontSize: type.body, fontWeight: '700' },
+          // The registration screens use this native header (the post-login
+          // screens hide it and draw their own). The prototype makes it the blue
+          // MCLS bar, so it is styled here once for the whole wizard.
+          headerStyle: { backgroundColor: colour.blue },
+          headerTintColor: colour.surface,
+          headerTitleStyle: { fontSize: type.body, fontWeight: '700', color: colour.surface },
+          headerRight: () => <Text style={styles.headerBrand}>MCLS</Text>,
           contentStyle: { backgroundColor: colour.page },
         }}
       >
@@ -117,6 +121,13 @@ export default function App(): React.JSX.Element {
 }
 
 const styles = StyleSheet.create({
+  headerBrand: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+    marginRight: 4,
+  },
   splash: {
     flex: 1,
     alignItems: 'center',

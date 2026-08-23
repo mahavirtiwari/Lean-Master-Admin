@@ -60,42 +60,44 @@ export default function HomeScreen({ navigation }: Props): React.JSX.Element {
         <Text style={styles.lead}>Nothing recorded yet — start with a certification level.</Text>
       ) : null}
 
-      <Pressable onPress={() => navigation.navigate('MyCertifications')}>
-        <Card>
-          <View style={styles.row}>
-            <View style={styles.flex}>
-              <Text style={styles.cardTitle}>My Certifications</Text>
-              <Text style={styles.cardHint}>
-                {started ? 'Bronze, Silver and Gold levels' : 'Choose a level to begin'}
-              </Text>
-            </View>
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>{started ? `${certified} certified` : 'Not started'}</Text>
-            </View>
+      <Pressable onPress={() => navigation.navigate('MyCertifications')} style={[styles.sectionCard, { borderLeftColor: colour.gold }]}>
+        <View style={[styles.sqIcon, { backgroundColor: '#FBF3E4' }]}>
+          <Text style={[styles.sqGlyph, { color: colour.gold }]}>🏅</Text>
+        </View>
+        <View style={styles.flex}>
+          <Text style={styles.cardTitle}>My Certifications</Text>
+          <Text style={styles.cardHint}>
+            {started ? 'Bronze, Silver and Gold levels' : 'Choose a level to begin'}
+          </Text>
+          <View style={[styles.badge, styles.badgeGold]}>
+            <Text style={[styles.badgeText, { color: colour.gold }]}>{started ? `${certified} certified` : 'Not started'}</Text>
           </View>
-        </Card>
+        </View>
+        <Text style={styles.chev}>›</Text>
       </Pressable>
 
-      <Pressable onPress={() => navigation.navigate('MyIncentives')}>
-        <Card>
-          <View style={styles.row}>
-            <View style={styles.flex}>
-              <Text style={styles.cardTitle}>My Incentives</Text>
-              <Text style={styles.cardHint}>Benefits unlocked by certification</Text>
-            </View>
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>{groups} groups</Text>
-            </View>
+      <Pressable onPress={() => navigation.navigate('MyIncentives')} style={[styles.sectionCard, { borderLeftColor: colour.green }]}>
+        <View style={[styles.sqIcon, { backgroundColor: colour.greenTint }]}>
+          <Text style={[styles.sqGlyph, { color: colour.green }]}>🎁</Text>
+        </View>
+        <View style={styles.flex}>
+          <Text style={styles.cardTitle}>My Incentives</Text>
+          <Text style={styles.cardHint}>Benefits unlocked by certification</Text>
+          <View style={[styles.badge, styles.badgeGreen]}>
+            <Text style={[styles.badgeText, { color: colour.green }]}>{groups} groups</Text>
           </View>
-        </Card>
+        </View>
+        <Text style={styles.chev}>›</Text>
       </Pressable>
 
       <Text style={styles.heading}>How certification works</Text>
       <Card>
         <Text style={styles.explainLead}>Three levels, taken in order</Text>
-        {HOW_IT_WORKS.map((line) => (
+        {HOW_IT_WORKS.map((line, i) => (
           <View key={line} style={styles.bulletRow}>
-            <View style={styles.dot} />
+            <View style={styles.numDot}>
+              <Text style={styles.numText}>{i + 1}</Text>
+            </View>
             <Text style={styles.bullet}>{line}</Text>
           </View>
         ))}
@@ -119,18 +121,51 @@ const styles = StyleSheet.create({
   },
   lead: { fontSize: type.small, color: colour.body, marginBottom: space(3) },
 
+  sectionCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space(3),
+    backgroundColor: colour.surface,
+    borderWidth: 1,
+    borderColor: colour.line,
+    borderLeftWidth: 4,
+    borderRadius: radius.md,
+    padding: space(4),
+    marginBottom: space(3),
+  },
+  sqIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sqGlyph: { fontSize: 20 },
+  chev: { fontSize: type.hero, color: colour.placeholder },
+
   cardTitle: { fontSize: type.body, fontWeight: '700', color: colour.text },
   cardHint: { fontSize: type.tiny, color: colour.muted, marginTop: 2 },
   badge: {
-    backgroundColor: colour.greenTint,
+    alignSelf: 'flex-start',
     borderRadius: radius.pill,
-    paddingHorizontal: space(3),
-    paddingVertical: space(1.5),
+    paddingHorizontal: space(2.5),
+    paddingVertical: space(1),
+    marginTop: space(2),
   },
-  badgeText: { fontSize: type.tiny, fontWeight: '700', color: colour.green },
+  badgeGold: { backgroundColor: '#FBF3E4' },
+  badgeGreen: { backgroundColor: colour.greenTint },
+  badgeText: { fontSize: type.tiny, fontWeight: '700' },
 
   explainLead: { fontSize: type.small, fontWeight: '700', color: colour.text, marginBottom: space(2) },
-  bulletRow: { flexDirection: 'row', gap: space(2), marginTop: space(2) },
-  dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: colour.green, marginTop: 6 },
+  bulletRow: { flexDirection: 'row', gap: space(3), marginTop: space(3), alignItems: 'flex-start' },
+  numDot: {
+    width: 22,
+    height: 22,
+    borderRadius: radius.pill,
+    backgroundColor: colour.blue,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  numText: { fontSize: type.tiny, fontWeight: '800', color: colour.surface },
   bullet: { flex: 1, fontSize: type.small, color: colour.body, lineHeight: 20 },
 });

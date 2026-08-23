@@ -65,25 +65,32 @@ export function AppShell({
     <View style={styles.flex}>
       <OfflineBanner online={online} queued={queued} />
 
+      {/* The blue branded bar the prototype carries on every screen: the
+          hamburger opens the pane, the title (or brand) sits centre-left, and
+          the bell is at the right. */}
       <View style={[styles.bar, { paddingTop: insets.top + space(2) }]}>
-        {canGoBack ? (
-          <Pressable onPress={() => navigation.goBack()} hitSlop={10} style={styles.iconBtn}>
-            <Text style={styles.icon}>‹</Text>
-          </Pressable>
-        ) : (
-          <Pressable onPress={() => setPaneOpen(true)} hitSlop={10} style={styles.iconBtn}>
-            <Text style={styles.hamburger}>☰</Text>
-          </Pressable>
-        )}
+        <Pressable onPress={() => setPaneOpen(true)} hitSlop={10} style={styles.iconBtn}>
+          <Text style={styles.hamburger}>☰</Text>
+        </Pressable>
 
         <Text style={styles.title} numberOfLines={1}>
           {title}
         </Text>
 
         <Pressable onPress={() => navigation.navigate('Notifications' as never)} hitSlop={10} style={styles.iconBtn}>
-          <Text style={styles.icon}>🔔</Text>
+          <Text style={styles.bell}>🔔</Text>
         </Pressable>
       </View>
+
+      {/* On an inner screen, the white sub-bar carries Back, as the artboards
+          draw it below the blue header. */}
+      {canGoBack ? (
+        <View style={styles.subBar}>
+          <Pressable onPress={() => navigation.goBack()} hitSlop={10} style={styles.backBtn}>
+            <Text style={styles.back}>‹ Back</Text>
+          </Pressable>
+        </View>
+      ) : null}
 
       {scroll ? (
         <ScrollView contentContainerStyle={styles.page}>{children}</ScrollView>
@@ -102,16 +109,26 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: space(2),
+    paddingHorizontal: space(4),
+    paddingBottom: space(3.5),
+    backgroundColor: colour.blue,
+  },
+  iconBtn: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },
+  hamburger: { fontSize: 20, color: colour.surface },
+  bell: { fontSize: 18 },
+  title: { flex: 1, fontSize: type.section, fontWeight: '700', color: colour.surface },
+
+  subBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: space(3),
-    paddingBottom: space(3),
+    paddingVertical: space(2.5),
     backgroundColor: colour.surface,
     borderBottomWidth: 1,
     borderBottomColor: colour.line,
   },
-  iconBtn: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },
-  hamburger: { fontSize: 20, color: colour.text },
-  icon: { fontSize: 20, color: colour.text },
-  title: { flex: 1, fontSize: type.section, fontWeight: '700', color: colour.text },
+  backBtn: { paddingVertical: space(1), paddingRight: space(3) },
+  back: { fontSize: type.body, fontWeight: '600', color: colour.blue },
 
   page: { padding: space(4), paddingBottom: space(10) },
   pageFlex: { flex: 1 },

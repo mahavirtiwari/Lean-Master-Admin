@@ -53,8 +53,7 @@ export default function MyCertificationsScreen({ navigation }: Props): React.JSX
       {levels.map((level) => {
         const open = level.state === 'Open' || level.state === 'In progress';
         return (
-          <Card key={level.code} style={styles.level}>
-            <View style={[styles.cap, { backgroundColor: ACCENT[level.code] ?? colour.silver }]} />
+          <Card key={level.code} style={{ ...styles.level, borderLeftColor: ACCENT[level.code] ?? colour.silver }}>
             <View style={styles.levelHead}>
               <Text style={styles.levelName}>{level.name}</Text>
               <View style={[styles.state, open ? styles.stateOpen : null]}>
@@ -97,8 +96,7 @@ export default function MyCertificationsScreen({ navigation }: Props): React.JSX
 }
 
 const styles = StyleSheet.create({
-  level: { padding: 0, overflow: 'hidden', marginBottom: space(3) },
-  cap: { height: 3, marginHorizontal: -space(4), marginTop: -space(4), marginBottom: space(3) },
+  level: { borderLeftWidth: 4, marginBottom: space(3) },
   levelHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   levelName: { fontSize: type.body, fontWeight: '800', color: colour.text },
   state: {

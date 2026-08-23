@@ -60,16 +60,14 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
 
   avatar: {
-    width: 46,
-    height: 46,
+    width: 48,
+    height: 48,
     borderRadius: radius.pill,
-    backgroundColor: colour.greenTint,
-    borderWidth: 1,
-    borderColor: colour.greenLine,
+    backgroundColor: colour.green,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  avatarText: { fontSize: type.body, fontWeight: '800', color: colour.green },
+  avatarText: { fontSize: type.body, fontWeight: '800', color: colour.surface },
 
   hello: { fontSize: type.tiny, color: colour.muted },
   lean: { fontSize: type.small, fontWeight: '800', color: colour.green, marginTop: 1 },

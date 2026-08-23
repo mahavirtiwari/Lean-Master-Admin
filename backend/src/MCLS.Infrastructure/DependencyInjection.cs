@@ -134,14 +134,20 @@ public static class DependencyInjection
                 "and that the application-pool identity has been granted the mcls_application role.");
         }
 
-        // 15 modules x 5 rights. If this is wrong the seed did not run, and
-        // every authorization check would silently fail closed.
+        // Permissions are the module x right cross-product, so the expected
+        // count is derived rather than fixed — a migration that adds a module
+        // (and its five rights) must not trip this guard. What it still catches
+        // is the seed not having run at all: no modules, no rights, no cross.
+        var moduleCount = await db.Modules.CountAsync();
+        var rightCount = await db.RightTypes.CountAsync();
         var permissionCount = await db.Permissions.CountAsync();
-        if (permissionCount != 75)
+        var expected = moduleCount * rightCount;
+
+        if (moduleCount == 0 || rightCount == 0 || permissionCount != expected)
         {
             throw new InvalidOperationException(
-                $"Expected 75 permissions but found {permissionCount}. " +
-                "Run database/04-seed before starting the API.");
+                $"Expected {expected} permissions ({moduleCount} modules x {rightCount} rights) " +
+                $"but found {permissionCount}. Run database/04-seed and the migrations before starting the API.");
         }
 
         await DbSeeder.EnsureBootstrapAdminAsync(sp, logger);

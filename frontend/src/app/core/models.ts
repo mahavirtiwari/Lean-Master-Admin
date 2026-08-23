@@ -752,3 +752,97 @@ export interface QuestionnaireManager {
   examConfig: ExamConfigRow[];
   bank: { items: BankQuestion[]; totalCount: number; pageNumber: number; pageSize: number };
 }
+
+// ---------------------------------------------------------------- ESG checklist ---
+
+export interface EsgSection {
+  esgSectionId: number;
+  code: string;
+  name: string;
+  description: string | null;
+  sortOrder: number;
+  isActive: boolean;
+  questionCount: number;
+}
+
+export interface EsgSectionSave {
+  code: string;
+  name: string;
+  description?: string | null;
+  sortOrder?: number;
+}
+
+export interface EsgQuestion {
+  esgQuestionId: number;
+  esgSectionId: number;
+  code: string;
+  text: string;
+  helpText: string | null;
+  sortOrder: number;
+  parentQuestionId: number | null;
+  parentText: string | null;
+  showWhenAnswer: 'Yes' | 'No' | null;
+  isActive: boolean;
+}
+
+export interface EsgQuestionSave {
+  esgSectionId: number;
+  code: string;
+  text: string;
+  helpText?: string | null;
+  sortOrder?: number;
+  parentQuestionId?: number | null;
+  showWhenAnswer?: 'Yes' | 'No' | null;
+}
+
+export interface EsgParentOption {
+  esgQuestionId: number;
+  code: string;
+  text: string;
+}
+
+// ------------------------------------------------- basic info + documents ---
+
+export interface BasicInfoItem {
+  basicInfoItemId: number;
+  code: string;
+  groupName: string;
+  label: string;
+  helpText: string | null;
+  inputType: 'photo' | 'yesno' | 'text' | 'number' | 'checklist';
+  isRequired: boolean;
+  sortOrder: number;
+  isActive: boolean;
+}
+
+export interface BasicInfoItemSave {
+  code: string;
+  groupName: string;
+  label: string;
+  helpText?: string | null;
+  inputType: string;
+  isRequired: boolean;
+  sortOrder?: number;
+}
+
+export interface DocumentRequirement {
+  documentRequirementId: number;
+  code: string;
+  name: string;
+  helpText: string | null;
+  certificationLevelId: number | null;
+  acceptedTypes: string;
+  isMandatory: boolean;
+  sortOrder: number;
+  isActive: boolean;
+}
+
+export interface DocumentRequirementSave {
+  code: string;
+  name: string;
+  helpText?: string | null;
+  certificationLevelId?: number | null;
+  acceptedTypes?: string;
+  isMandatory: boolean;
+  sortOrder?: number;
+}

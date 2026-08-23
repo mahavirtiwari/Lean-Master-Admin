@@ -1,0 +1,81 @@
+:host { display: block; }
+
+.esg-grid {
+  display: grid;
+  grid-template-columns: minmax(300px, 380px) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+@media (max-width: 1024px) {
+  .esg-grid { grid-template-columns: minmax(0, 1fr); }
+}
+
+.master-form.compact { padding: 0 16px 12px; }
+
+.sec-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 4px 12px 12px;
+}
+
+.sec-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  text-align: left;
+  padding: 10px 12px;
+  border: 1px solid var(--border-divider, #e4ebe7);
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+  transition: border-color 120ms ease, background 120ms ease;
+}
+
+.sec-item:hover { border-color: #b9ccc2; }
+.sec-item.is-sel { border-color: #0f7b45; background: #f3faf6; }
+
+.sec-main { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.sec-main .code { font-size: 11px; font-weight: 700; color: #5d6b62; letter-spacing: 0.03em; }
+.sec-name { font-size: 13px; font-weight: 600; color: #16211a; overflow: hidden; text-overflow: ellipsis; }
+.sec-meta { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.q-count { font-size: 11px; color: #5d6b62; }
+
+.sec-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--border-divider, #e4ebe7);
+}
+
+.conditional .chk {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 13px;
+  color: #16211a;
+  cursor: pointer;
+}
+.conditional .chk input { margin-top: 2px; }
+
+.cond-tag {
+  display: inline-block;
+  font-size: 11px;
+  color: #1b4f8a;
+  background: #eef3f9;
+  border-radius: 4px;
+  padding: 2px 6px;
+}
+
+/* A conditional question reads as belonging to its parent. */
+tr.is-child .code { padding-left: 18px; position: relative; }
+tr.is-child .code::before {
+  content: '↳';
+  position: absolute;
+  left: 2px;
+  color: #93a29a;
+}

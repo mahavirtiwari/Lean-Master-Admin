@@ -115,6 +115,8 @@ public static class Permissions
     public const string Reports = "REPORTS";
     public const string Emailer = "EMAILER";
     public const string Settings = "SETTINGS";
+    public const string EsgChecklist = "ESG_CHECKLIST";
+    public const string BasicInfoDocs = "BASIC_INFO_DOCS";
 
     public const string View = "view";
     public const string Create = "create";

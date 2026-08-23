@@ -1,0 +1,35 @@
+:host { display: block; }
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--border-divider, #e4ebe7);
+}
+
+.tabs button {
+  appearance: none;
+  border: none;
+  background: none;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #5d6b62;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+
+.tabs button.is-on {
+  color: #0f7b45;
+  border-bottom-color: #0f7b45;
+}
+
+.chk {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #16211a;
+  cursor: pointer;
+}

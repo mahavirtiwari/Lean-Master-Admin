@@ -52,6 +52,10 @@ public class MclsDbContext(DbContextOptions<MclsDbContext> options)
     public DbSet<SectorParameter> SectorParameters => Set<SectorParameter>();
     public DbSet<TechnologyCategory> TechnologyCategories => Set<TechnologyCategory>();
     public DbSet<Technology> Technologies => Set<Technology>();
+    public DbSet<EsgSection> EsgSections => Set<EsgSection>();
+    public DbSet<EsgQuestion> EsgQuestions => Set<EsgQuestion>();
+    public DbSet<BasicInfoItem> BasicInfoItems => Set<BasicInfoItem>();
+    public DbSet<DocumentRequirement> DocumentRequirements => Set<DocumentRequirement>();
     public DbSet<LookupType> LookupTypes => Set<LookupType>();
     public DbSet<LookupValue> LookupValues => Set<LookupValue>();
     public DbSet<Document> Documents => Set<Document>();

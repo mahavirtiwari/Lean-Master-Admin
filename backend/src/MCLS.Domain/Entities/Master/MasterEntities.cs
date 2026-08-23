@@ -207,3 +207,92 @@ public class DocumentAudience
     public byte AccountTypeId { get; set; }
     public AccountType AccountType { get; set; } = null!;
 }
+
+/// <summary>
+/// A section of the ESG checklist — Environmental, Social or Governance — that
+/// groups the questions an applicant answers on the LEAN Silver application.
+/// </summary>
+public class EsgSection
+{
+    public short EsgSectionId { get; set; }
+    public string Code { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public short SortOrder { get; set; }
+    public bool IsActive { get; set; } = true;
+
+    public ICollection<EsgQuestion> Questions { get; set; } = [];
+}
+
+/// <summary>
+/// One ESG question. Its options are always Yes / No / Not Applicable, so they
+/// are not stored — the answer set is a constant.
+///
+/// A conditional question sets <see cref="ParentQuestionId"/> and
+/// <see cref="ShowWhenAnswer"/>: it appears only when the parent was answered
+/// that way. A null parent is the ordinary, always-shown question.
+/// </summary>
+public class EsgQuestion
+{
+    public int EsgQuestionId { get; set; }
+    public short EsgSectionId { get; set; }
+    public EsgSection Section { get; set; } = null!;
+
+    public string Code { get; set; } = string.Empty;
+    public string Text { get; set; } = string.Empty;
+    public string? HelpText { get; set; }
+    public short SortOrder { get; set; }
+
+    public int? ParentQuestionId { get; set; }
+    public EsgQuestion? Parent { get; set; }
+
+    /// <summary>"Yes" or "No" — the parent answer that reveals this question.</summary>
+    public string? ShowWhenAnswer { get; set; }
+
+    public bool IsActive { get; set; } = true;
+}
+
+/// <summary>
+/// A configurable item on the application's Basic Information step — a site
+/// photograph, a Yes/No declaration, a text field or a tick list. Held as data
+/// so the form can change without a release.
+/// </summary>
+public class BasicInfoItem
+{
+    public short BasicInfoItemId { get; set; }
+    public string Code { get; set; } = string.Empty;
+
+    /// <summary>The screen group it sits under, e.g. Photographs, Process &amp; Energy.</summary>
+    public string GroupName { get; set; } = string.Empty;
+    public string Label { get; set; } = string.Empty;
+    public string? HelpText { get; set; }
+
+    /// <summary>photo | yesno | text | number | checklist.</summary>
+    public string InputType { get; set; } = "text";
+
+    public bool IsRequired { get; set; } = true;
+    public short SortOrder { get; set; }
+    public bool IsActive { get; set; } = true;
+}
+
+/// <summary>
+/// One required document on the application's document-upload step — the
+/// pictures and certificates the desk assessor works from.
+/// </summary>
+public class DocumentRequirement
+{
+    public short DocumentRequirementId { get; set; }
+    public string Code { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public string? HelpText { get; set; }
+
+    /// <summary>Null applies the requirement to every level.</summary>
+    public byte? CertificationLevelId { get; set; }
+
+    /// <summary>MIME allow-list the picker enforces, e.g. "image/*,application/pdf".</summary>
+    public string AcceptedTypes { get; set; } = "image/*,application/pdf";
+
+    public bool IsMandatory { get; set; } = true;
+    public short SortOrder { get; set; }
+    public bool IsActive { get; set; } = true;
+}

@@ -102,6 +102,66 @@ internal sealed class TechnologyCategoryConfiguration : IEntityTypeConfiguration
     }
 }
 
+internal sealed class EsgSectionConfiguration : IEntityTypeConfiguration<EsgSection>
+{
+    public void Configure(EntityTypeBuilder<EsgSection> b)
+    {
+        b.ToTable("EsgSection", "master");
+        b.HasKey(x => x.EsgSectionId);
+        b.Property(x => x.Code).HasMaxLength(30).IsUnicode(false).IsRequired();
+        b.Property(x => x.Name).HasMaxLength(200).IsRequired();
+        b.Property(x => x.Description).HasMaxLength(500);
+        b.HasIndex(x => x.Code).IsUnique();
+    }
+}
+
+internal sealed class EsgQuestionConfiguration : IEntityTypeConfiguration<EsgQuestion>
+{
+    public void Configure(EntityTypeBuilder<EsgQuestion> b)
+    {
+        b.ToTable("EsgQuestion", "master");
+        b.HasKey(x => x.EsgQuestionId);
+        b.Property(x => x.Code).HasMaxLength(30).IsUnicode(false).IsRequired();
+        b.Property(x => x.Text).HasMaxLength(1000).IsRequired();
+        b.Property(x => x.HelpText).HasMaxLength(500);
+        b.Property(x => x.ShowWhenAnswer).HasMaxLength(3).IsUnicode(false);
+        b.HasIndex(x => x.Code).IsUnique();
+        b.HasOne(x => x.Section).WithMany(s => s.Questions)
+            .HasForeignKey(x => x.EsgSectionId).OnDelete(DeleteBehavior.Restrict);
+        b.HasOne(x => x.Parent).WithMany()
+            .HasForeignKey(x => x.ParentQuestionId).OnDelete(DeleteBehavior.Restrict);
+    }
+}
+
+internal sealed class BasicInfoItemConfiguration : IEntityTypeConfiguration<BasicInfoItem>
+{
+    public void Configure(EntityTypeBuilder<BasicInfoItem> b)
+    {
+        b.ToTable("BasicInfoItem", "master");
+        b.HasKey(x => x.BasicInfoItemId);
+        b.Property(x => x.Code).HasMaxLength(30).IsUnicode(false).IsRequired();
+        b.Property(x => x.GroupName).HasMaxLength(100).IsRequired();
+        b.Property(x => x.Label).HasMaxLength(300).IsRequired();
+        b.Property(x => x.HelpText).HasMaxLength(300);
+        b.Property(x => x.InputType).HasMaxLength(20).IsUnicode(false).IsRequired();
+        b.HasIndex(x => x.Code).IsUnique();
+    }
+}
+
+internal sealed class DocumentRequirementConfiguration : IEntityTypeConfiguration<DocumentRequirement>
+{
+    public void Configure(EntityTypeBuilder<DocumentRequirement> b)
+    {
+        b.ToTable("DocumentRequirement", "master");
+        b.HasKey(x => x.DocumentRequirementId);
+        b.Property(x => x.Code).HasMaxLength(30).IsUnicode(false).IsRequired();
+        b.Property(x => x.Name).HasMaxLength(300).IsRequired();
+        b.Property(x => x.HelpText).HasMaxLength(300);
+        b.Property(x => x.AcceptedTypes).HasMaxLength(200).IsUnicode(false).IsRequired();
+        b.HasIndex(x => x.Code).IsUnique();
+    }
+}
+
 internal sealed class TechnologyConfiguration : IEntityTypeConfiguration<Technology>
 {
     public void Configure(EntityTypeBuilder<Technology> b)

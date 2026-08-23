@@ -180,6 +180,88 @@ export class ApiService {
     });
   }
 
+  // -------------------------------------------------------------- ESG checklist ---
+
+  esgSections(includeInactive = false): Observable<M.EsgSection[]> {
+    return this.http.get<M.EsgSection[]>(`${this.base}/esg/sections`, {
+      params: includeInactive ? { includeInactive: 'true' } : {},
+    });
+  }
+
+  createEsgSection(body: M.EsgSectionSave): Observable<M.EsgSection> {
+    return this.http.post<M.EsgSection>(`${this.base}/esg/sections`, body);
+  }
+
+  updateEsgSection(id: number, body: M.EsgSectionSave): Observable<void> {
+    return this.http.put<void>(`${this.base}/esg/sections/${id}`, body);
+  }
+
+  setEsgSectionStatus(id: number, isActive: boolean, reason: string): Observable<void> {
+    return this.http.post<void>(`${this.base}/esg/sections/${id}/status`, { isActive, reason });
+  }
+
+  esgQuestions(sectionId: number, includeInactive = false): Observable<M.EsgQuestion[]> {
+    return this.http.get<M.EsgQuestion[]>(`${this.base}/esg/sections/${sectionId}/questions`, {
+      params: includeInactive ? { includeInactive: 'true' } : {},
+    });
+  }
+
+  esgParentOptions(sectionId: number, excludeQuestionId?: number): Observable<M.EsgParentOption[]> {
+    return this.http.get<M.EsgParentOption[]>(`${this.base}/esg/sections/${sectionId}/parent-options`, {
+      params: excludeQuestionId ? { excludeQuestionId: String(excludeQuestionId) } : {},
+    });
+  }
+
+  createEsgQuestion(body: M.EsgQuestionSave): Observable<M.EsgQuestion> {
+    return this.http.post<M.EsgQuestion>(`${this.base}/esg/questions`, body);
+  }
+
+  updateEsgQuestion(id: number, body: M.EsgQuestionSave): Observable<void> {
+    return this.http.put<void>(`${this.base}/esg/questions/${id}`, body);
+  }
+
+  setEsgQuestionStatus(id: number, isActive: boolean, reason: string): Observable<void> {
+    return this.http.post<void>(`${this.base}/esg/questions/${id}/status`, { isActive, reason });
+  }
+
+  // ------------------------------------------------ basic info + documents ---
+
+  basicInfoItems(includeInactive = false): Observable<M.BasicInfoItem[]> {
+    return this.http.get<M.BasicInfoItem[]>(`${this.base}/application-forms/basic-info`, {
+      params: includeInactive ? { includeInactive: 'true' } : {},
+    });
+  }
+
+  createBasicInfoItem(body: M.BasicInfoItemSave): Observable<M.BasicInfoItem> {
+    return this.http.post<M.BasicInfoItem>(`${this.base}/application-forms/basic-info`, body);
+  }
+
+  updateBasicInfoItem(id: number, body: M.BasicInfoItemSave): Observable<void> {
+    return this.http.put<void>(`${this.base}/application-forms/basic-info/${id}`, body);
+  }
+
+  setBasicInfoItemStatus(id: number, isActive: boolean, reason: string): Observable<void> {
+    return this.http.post<void>(`${this.base}/application-forms/basic-info/${id}/status`, { isActive, reason });
+  }
+
+  documentRequirements(includeInactive = false): Observable<M.DocumentRequirement[]> {
+    return this.http.get<M.DocumentRequirement[]>(`${this.base}/application-forms/documents`, {
+      params: includeInactive ? { includeInactive: 'true' } : {},
+    });
+  }
+
+  createDocumentRequirement(body: M.DocumentRequirementSave): Observable<M.DocumentRequirement> {
+    return this.http.post<M.DocumentRequirement>(`${this.base}/application-forms/documents`, body);
+  }
+
+  updateDocumentRequirement(id: number, body: M.DocumentRequirementSave): Observable<void> {
+    return this.http.put<void>(`${this.base}/application-forms/documents/${id}`, body);
+  }
+
+  setDocumentRequirementStatus(id: number, isActive: boolean, reason: string): Observable<void> {
+    return this.http.post<void>(`${this.base}/application-forms/documents/${id}/status`, { isActive, reason });
+  }
+
   createTechnology(body: unknown): Observable<unknown> {
     return this.http.post(`${this.base}/technologies`, body);
   }

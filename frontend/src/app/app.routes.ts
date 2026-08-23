@@ -189,6 +189,22 @@ export const routes: Routes = [
           import('./features/masters/technology.component').then((m) => m.TechnologyComponent),
       },
 
+      // ------------------------------------------- ESG & application forms ---
+      {
+        path: 'esg-checklist',
+        canActivate: [permissionGuard('ESG_CHECKLIST')],
+        loadComponent: () =>
+          import('./features/masters/esg-checklist.component').then((m) => m.EsgChecklistComponent),
+      },
+      {
+        path: 'basic-info-documents',
+        canActivate: [permissionGuard('BASIC_INFO_DOCS')],
+        loadComponent: () =>
+          import('./features/masters/basic-info-documents.component').then(
+            (m) => m.BasicInfoDocumentsComponent,
+          ),
+      },
+
       // --------------------------------------------------- fee structure ---
       {
         path: 'fee-structure',

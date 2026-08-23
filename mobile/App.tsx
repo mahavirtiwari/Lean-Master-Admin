@@ -22,6 +22,7 @@ import OtpScreen from './src/screens/OtpScreen';
 import PledgeScreen from './src/screens/PledgeScreen';
 import RegisterLandingScreen from './src/screens/RegisterLandingScreen';
 import SignInScreen from './src/screens/SignInScreen';
+import ResetPasswordScreen from './src/screens/ResetPasswordScreen';
 import SpocScreen from './src/screens/SpocScreen';
 import SummaryScreen from './src/screens/SummaryScreen';
 import UdyamScreen from './src/screens/UdyamScreen';
@@ -58,6 +59,7 @@ function Root(): React.JSX.Element {
         }}
       >
         <Stack.Screen name="SignIn" component={SignInScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} options={{ headerShown: false }} />
 
         {/* Post-login app. These carry their own app bar (AppShell), so the
             stack header is hidden. */}

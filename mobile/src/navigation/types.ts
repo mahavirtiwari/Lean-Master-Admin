@@ -8,6 +8,7 @@
  */
 export type RootStackParamList = {
   SignIn: undefined;
+  ResetPassword: undefined;
   Dashboard: undefined;
 
   // Post-login app (the side-pane sections).

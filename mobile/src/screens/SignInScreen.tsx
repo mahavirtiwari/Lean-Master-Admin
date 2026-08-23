@@ -81,6 +81,10 @@ export default function SignInScreen({ navigation }: Props): React.JSX.Element {
           />
 
           <PrimaryButton label="Sign in" onPress={submit} busy={busy} />
+          <GhostButton
+            label="Forgot password?"
+            onPress={() => navigation.navigate('ResetPassword')}
+          />
         </Card>
 
         <Card>

@@ -10,6 +10,16 @@ export type RootStackParamList = {
   SignIn: undefined;
   Dashboard: undefined;
 
+  // Post-login app (the side-pane sections).
+  Home: undefined;
+  MyCertifications: undefined;
+  MyIncentives: undefined;
+  Payments: undefined;
+  Documents: undefined;
+  Profile: undefined;
+  Notifications: undefined;
+  SilverApplication: undefined;
+
   RegisterLanding: undefined;
   Udyam: undefined;
   Enterprise: undefined;

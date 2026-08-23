@@ -5,9 +5,13 @@ import React from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import ComingSoonScreen from './src/screens/ComingSoonScreen';
 import CompleteScreen from './src/screens/CompleteScreen';
 import DashboardScreen from './src/screens/DashboardScreen';
 import EnterpriseScreen from './src/screens/EnterpriseScreen';
+import HomeScreen from './src/screens/HomeScreen';
+import MyCertificationsScreen from './src/screens/MyCertificationsScreen';
+import MyIncentivesScreen from './src/screens/MyIncentivesScreen';
 import OtpScreen from './src/screens/OtpScreen';
 import PledgeScreen from './src/screens/PledgeScreen';
 import RegisterLandingScreen from './src/screens/RegisterLandingScreen';
@@ -39,7 +43,7 @@ function Root(): React.JSX.Element {
   return (
     <NavigationContainer>
       <Stack.Navigator
-        initialRouteName={user ? 'Dashboard' : 'SignIn'}
+        initialRouteName={user ? 'Home' : 'SignIn'}
         screenOptions={{
           headerStyle: { backgroundColor: colour.surface },
           headerTintColor: colour.text,
@@ -48,6 +52,18 @@ function Root(): React.JSX.Element {
         }}
       >
         <Stack.Screen name="SignIn" component={SignInScreen} options={{ headerShown: false }} />
+
+        {/* Post-login app. These carry their own app bar (AppShell), so the
+            stack header is hidden. */}
+        <Stack.Screen name="Home" component={HomeScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="MyCertifications" component={MyCertificationsScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="MyIncentives" component={MyIncentivesScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="Payments" component={ComingSoonScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="Documents" component={ComingSoonScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="Profile" component={ComingSoonScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="Notifications" component={ComingSoonScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="SilverApplication" component={ComingSoonScreen} options={{ headerShown: false }} />
+
         <Stack.Screen name="Dashboard" component={DashboardScreen} options={{ title: 'LEAN Scheme' }} />
 
         <Stack.Screen

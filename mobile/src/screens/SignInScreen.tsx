@@ -25,7 +25,7 @@ export default function SignInScreen({ navigation }: Props): React.JSX.Element {
     setBusy(true);
     try {
       await signIn(leanId, password);
-      navigation.reset({ index: 0, routes: [{ name: 'Dashboard' }] });
+      navigation.reset({ index: 0, routes: [{ name: 'Home' }] });
     } catch (error) {
       setDialog({
         title: error instanceof OfflineError ? 'No connection' : 'Could not sign in',

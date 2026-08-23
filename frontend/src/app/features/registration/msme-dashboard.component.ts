@@ -148,6 +148,18 @@ export class MsmeDashboardComponent {
     () => this.data()?.levels.find((l) => l.state === 'Open') ?? null,
   );
 
+  /**
+   * Start the application for the given level. Silver runs on web through
+   * submission and payment; Bronze (courses) and Gold open on the mobile app.
+   */
+  apply(level: { code: string; name: string }): void {
+    if (level.code === 'SILVER') {
+      void this.router.navigate(['/msme/application']);
+    } else {
+      window.alert(`${level.name} is completed on the MSME LEAN mobile app.`);
+    }
+  }
+
   constructor() {
     this.http.get<MsmeDashboard>(`${environment.apiBase}/msme/dashboard`).subscribe({
       next: (data) => {

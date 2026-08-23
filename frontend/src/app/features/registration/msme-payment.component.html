@@ -1,0 +1,89 @@
+<header class="app-head">
+  <img class="head-lean" src="assets/mcls-logo.png" alt="MSME Competitive (LEAN) Scheme" height="34" />
+  <div class="head-title">
+    <span class="t1">Payment</span>
+    <span class="t2">LEAN Silver certification fee</span>
+  </div>
+</header>
+
+<div class="wrap">
+  @if (stage() === 'loading') {
+    <div class="loading">Loading…</div>
+  }
+
+  @if (stage() === 'nothing') {
+    <section class="card">
+      <h2 class="h">No fee due yet</h2>
+      <p class="p">Submit your LEAN Silver application first — the fee becomes payable once it is submitted.</p>
+      <button class="btn-ghost" type="button" (click)="home()">Back to dashboard</button>
+    </section>
+  }
+
+  @if (stage() === 'methods' && fee(); as f) {
+    <section class="card">
+      <span class="label">AMOUNT PAYABLE</span>
+      <div class="amount">{{ inr(f.payable) }}</div>
+      <div class="breakdown">
+        <div class="brow"><span>Certification fee (incl. GST)</span><span>{{ inr(f.gross) }}</span></div>
+        <div class="brow"><span>Government subsidy ({{ f.subsidyPercent }}%)</span><span class="good">– {{ inr(f.subsidyAmount) }}</span></div>
+        <div class="rule"></div>
+        <div class="brow"><span>You pay</span><b>{{ inr(f.payable) }}</b></div>
+      </div>
+    </section>
+
+    <h3 class="section">Choose a payment method</h3>
+    @for (m of methods; track m.code) {
+      <button type="button" class="method" [class.on]="method() === m.code" (click)="method.set(m.code)">
+        <span class="m-main">
+          <span class="m-label">{{ m.label }}</span>
+          <span class="m-hint">{{ m.hint }}</span>
+        </span>
+        @if (m.tag) { <span class="tag">{{ m.tag }}</span> }
+        <span class="radio" [class.on]="method() === m.code"></span>
+      </button>
+    }
+
+    <p class="note">
+      Payments are processed on the Government of India payment gateway. MCLS never stores your card details.
+    </p>
+
+    <button class="btn-primary block" type="button" (click)="pay(false)">Pay {{ inr(f.payable) }}</button>
+    <button class="btn-ghost block" type="button" (click)="pay(true)">Simulate a declined payment</button>
+  }
+
+  @if (stage() === 'processing') {
+    <section class="card center">
+      <div class="spinner"></div>
+      <h2 class="h">Processing your payment…</h2>
+      <p class="p">Do not close or refresh this page.</p>
+    </section>
+  }
+
+  @if (stage() === 'success' && receipt(); as r) {
+    <section class="card">
+      <div class="tickwrap"><div class="tick">✓</div></div>
+      <h2 class="h center-t">Payment successful</h2>
+      <p class="p center-t">{{ inr(r.amount) }} paid. Handholding can now begin.</p>
+    </section>
+    <section class="card">
+      <div class="brow"><span>Reference</span><b>{{ r.reference }}</b></div>
+      <div class="brow"><span>Amount</span><span>{{ inr(r.amount) }}</span></div>
+      <div class="brow"><span>Method</span><span>{{ r.method }}</span></div>
+      <div class="brow"><span>Paid on</span><span>{{ r.paidOn | date: 'medium' }}</span></div>
+    </section>
+    <div class="handover">
+      Continue on the <b>mobile app</b> from here — the handholding milestones and consultant
+      selection are completed there.
+    </div>
+    <button class="btn-primary block" type="button" (click)="home()">Back to dashboard</button>
+  }
+
+  @if (stage() === 'failed') {
+    <section class="card">
+      <div class="tickwrap"><div class="cross">!</div></div>
+      <h2 class="h center-t">Payment not completed</h2>
+      <p class="p center-t">{{ error() ?? 'No amount has been charged. You can try again.' }}</p>
+      <button class="btn-primary block" type="button" (click)="stage.set('methods')">Try again</button>
+    </section>
+  }
+</div>

@@ -65,6 +65,21 @@ export const routes: Routes = [
       import('./features/registration/msme-login.component').then((m) => m.MsmeLoginComponent),
   },
 
+  // The post-registration Silver application and its payment, on web. Guarded
+  // like the applicant dashboard — an MSME session reaches them.
+  {
+    path: 'msme/application',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/registration/msme-application.component').then((m) => m.MsmeApplicationComponent),
+  },
+  {
+    path: 'msme/payment',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/registration/msme-payment.component').then((m) => m.MsmePaymentComponent),
+  },
+
   {
     path: 'login',
     loadComponent: () => import('./features/auth/login.component').then((m) => m.LoginComponent),

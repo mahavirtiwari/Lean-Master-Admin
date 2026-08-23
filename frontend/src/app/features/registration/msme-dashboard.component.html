@@ -104,7 +104,7 @@
           </div>
 
           @if (nextLevel(); as next) {
-            <button class="btn-primary" type="button" disabled>Apply for {{ next.name }}</button>
+            <button class="btn-primary" type="button" (click)="apply(next)">Apply for {{ next.name }}</button>
           }
         </div>
 

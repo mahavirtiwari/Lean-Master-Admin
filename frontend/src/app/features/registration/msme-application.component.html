@@ -2,169 +2,87 @@
   <img class="head-lean" src="assets/mcls-logo.png" alt="MSME Competitive (LEAN) Scheme" height="34" />
   <div class="head-title">
     <span class="t1">LEAN Silver Application</span>
-    <span class="t2">Complete on web, or continue on the mobile app</span>
+    <span class="t2">Filled on the mobile app · review and pay here</span>
   </div>
 </header>
 
-@if (loading()) {
-  <div class="wrap"><div class="loading">Loading the application form…</div></div>
-} @else if (error() && !config()) {
-  <div class="wrap"><div class="alert alert-error">{{ error() }}</div></div>
-} @else if (config(); as cfg) {
-  <div class="wrap">
-    <!-- step rail -->
-    <nav class="rail" aria-label="Application progress">
-      @for (label of steps; track label; let i = $index) {
-        <div class="rail-step" [class.on]="step() === i" [class.done]="step() > i">
-          <span class="marker">{{ step() > i ? '✓' : i + 1 }}</span>
-          <span class="label">{{ label }}</span>
-        </div>
-      }
-    </nav>
-
-    <section class="card step-card">
-      <!-- ---------------------------------------------------- basic info -->
-      @if (step() === 0) {
-        <h2 class="step-title">Basic information</h2>
-        <p class="step-sub">Everything here is declared by you. Photographs must show the actual unit.</p>
-
-        @for (group of groups(); track group.name) {
-          <div class="group">
-            <h3 class="group-name">{{ group.name }}</h3>
-            @for (item of group.items; track item.basicInfoItemId) {
-              <div class="field">
-                <label class="field-label">
-                  {{ item.label }}@if (item.isRequired) { <span class="req">*</span> }
-                </label>
-                @if (item.helpText) { <p class="field-hint">{{ item.helpText }}</p> }
-
-                @switch (item.inputType) {
-                  @case ('yesno') {
-                    <div class="seg">
-                      <button type="button" [class.on]="basic()[item.basicInfoItemId] === 'Yes'"
-                              (click)="setBasic(item.basicInfoItemId, 'Yes')">Yes</button>
-                      <button type="button" [class.on]="basic()[item.basicInfoItemId] === 'No'"
-                              (click)="setBasic(item.basicInfoItemId, 'No')">No</button>
-                    </div>
-                  }
-                  @case ('photo') {
-                    <div class="uploader">
-                      @if (basic()[item.basicInfoItemId]) {
-                        <span class="uploaded">✓ {{ basic()[item.basicInfoItemId] }}</span>
-                      }
-                      <label class="file-btn">
-                        {{ basic()[item.basicInfoItemId] ? 'Replace' : 'Choose photo' }}
-                        <input type="file" accept="image/*" hidden
-                               (change)="captureFile('basic', item.basicInfoItemId, $event)" />
-                      </label>
-                    </div>
-                  }
-                  @default {
-                    <input class="input" [type]="item.inputType === 'number' ? 'number' : 'text'"
-                           [ngModel]="basic()[item.basicInfoItemId] ?? ''"
-                           (ngModelChange)="setBasic(item.basicInfoItemId, $event)" [name]="'b' + item.basicInfoItemId" />
-                  }
-                }
-              </div>
-            }
-          </div>
-        }
-      }
-
-      <!-- ---------------------------------------------------------- ESG -->
-      @if (step() === 1) {
-        <h2 class="step-title">ESG information</h2>
-        <p class="step-sub">Answer every question. Not Applicable is valid where the requirement does not apply.</p>
-
-        @for (section of visibleSections(); track section.esgSectionId) {
-          <div class="group">
-            <h3 class="group-name">{{ section.name }}</h3>
-            @for (q of section.questions; track q.esgQuestionId; let i = $index) {
-              <div class="field" [class.child]="q.parentQuestionId">
-                <p class="q-text">
-                  @if (q.parentQuestionId) { <span class="q-arrow">↳</span> } @else { {{ i + 1 }}. }
-                  {{ q.text }}
-                </p>
-                @if (q.helpText) { <p class="field-hint">{{ q.helpText }}</p> }
-                <div class="seg seg-3">
-                  <button type="button" [class.on]="esg()[q.esgQuestionId] === 'Yes'"
-                          (click)="setEsg(q.esgQuestionId, 'Yes')">Yes</button>
-                  <button type="button" [class.on]="esg()[q.esgQuestionId] === 'No'"
-                          (click)="setEsg(q.esgQuestionId, 'No')">No</button>
-                  <button type="button" [class.on]="esg()[q.esgQuestionId] === 'NA'"
-                          (click)="setEsg(q.esgQuestionId, 'NA')">N/A</button>
-                </div>
-              </div>
-            }
-          </div>
-        }
-      }
-
-      <!-- ----------------------------------------------------- documents -->
-      @if (step() === 2) {
-        <h2 class="step-title">Documents</h2>
-        <p class="step-sub">Upload the pictures and certificates the desk assessor works from.</p>
-
-        @for (d of config()!.documents; track d.documentRequirementId) {
-          <div class="field doc-row">
-            <div class="doc-main">
-              <label class="field-label">
-                {{ d.name }}@if (d.isMandatory) { <span class="req">*</span> }
-              </label>
-              @if (d.helpText) { <p class="field-hint">{{ d.helpText }}</p> }
-            </div>
-            <div class="uploader">
-              @if (docs()[d.documentRequirementId]) {
-                <span class="uploaded">✓ {{ docs()[d.documentRequirementId] }}</span>
-              }
-              <label class="file-btn">
-                {{ docs()[d.documentRequirementId] ? 'Replace' : 'Upload' }}
-                <input type="file" [attr.accept]="d.acceptedTypes" hidden
-                       (change)="captureFile('doc', d.documentRequirementId, $event)" />
-              </label>
-            </div>
-          </div>
-        }
-      }
-
-      <!-- ------------------------------------------------------- review -->
-      @if (step() === 3) {
-        <h2 class="step-title">Review & submit</h2>
-        <p class="step-sub">Check your answers. You cannot edit after submitting.</p>
-
-        <div class="review">
-          <div class="review-row">
-            <span>Basic information</span><b>{{ basicFilled() }} of {{ config()!.basicInfo.length }} filled</b>
-          </div>
-          <div class="review-row">
-            <span>ESG questions</span><b>{{ esgAnswered() }} of {{ visibleEsg().size }} answered</b>
-          </div>
-          <div class="review-row">
-            <span>Documents</span><b>{{ docsUploaded() }} of {{ config()!.documents.length }} uploaded</b>
-          </div>
-        </div>
-        <p class="declaration">
-          By submitting, I declare that the information provided is true to the best of my knowledge.
-          After payment, the remaining steps up to consultant selection are completed on the mobile app.
-        </p>
-      }
-
-      @if (error()) { <div class="alert alert-error">{{ error() }}</div> }
-      @if (notice()) { <div class="alert alert-ok">{{ notice() }}</div> }
-
-      <!-- footer -->
-      <div class="foot">
-        @if (step() > 0) { <button class="btn-ghost" type="button" (click)="back()">Back</button> }
-        <span class="spacer"></span>
-        <button class="btn-ghost" type="button" (click)="saveDraft()" [disabled]="saving()">Save draft</button>
-        @if (step() < 3) {
-          <button class="btn-primary" type="button" (click)="next()">Continue</button>
-        } @else {
-          <button class="btn-primary" type="button" (click)="submit()" [disabled]="saving()">
-            {{ saving() ? 'Submitting…' : 'Submit application' }}
-          </button>
-        }
-      </div>
+<div class="wrap">
+  @if (loading()) {
+    <div class="loading">Loading your application…</div>
+  } @else if (!submitted()) {
+    <!-- Nothing submitted yet: the application is filled on the mobile app. -->
+    <section class="card notice-card">
+      <h2 class="h">Complete your application on the mobile app</h2>
+      <p class="p">
+        The LEAN Silver application — basic information, ESG and document uploads — is filled on the
+        MSME LEAN mobile app. Once you have submitted it there, return here to review the details and
+        pay the certification fee.
+      </p>
+      <button class="btn-ghost" type="button" (click)="dashboard()">Back to dashboard</button>
     </section>
-  </div>
-}
+  } @else {
+    @if (submission()?.submittedOnUtc) {
+      <p class="submitted-on">Submitted on the mobile app · {{ submission()!.submittedOnUtc }}</p>
+    }
+
+    <!-- --------------------------------------------------- basic information -->
+    <section class="card">
+      <h2 class="sec-title">Basic information</h2>
+      @for (group of basicGroups(); track group.name) {
+        <div class="group">
+          <h3 class="group-name">{{ group.name }}</h3>
+          @for (item of group.items; track item.label) {
+            <div class="data-row">
+              <span class="dr-label">{{ item.label }}</span>
+              <span class="dr-value" [class.provided]="item.isPhoto && item.value === 'Provided'">
+                {{ item.value }}
+              </span>
+            </div>
+          }
+        </div>
+      }
+    </section>
+
+    <!-- ------------------------------------------------------------------ ESG -->
+    <section class="card">
+      <h2 class="sec-title">ESG information</h2>
+      @for (section of esgSections(); track section.name) {
+        <div class="group">
+          <h3 class="group-name">{{ section.name }}</h3>
+          @for (q of section.questions; track q.text) {
+            <div class="data-row" [class.child]="q.child">
+              <span class="dr-label">{{ q.child ? '↳ ' : '' }}{{ q.text }}</span>
+              <span class="answer"
+                    [class.yes]="q.answer === 'Yes'"
+                    [class.no]="q.answer === 'No'"
+                    [class.na]="q.answer === 'NA'">{{ answerLabel(q.answer) }}</span>
+            </div>
+          }
+        </div>
+      }
+    </section>
+
+    <!-- ------------------------------------------------------------ documents -->
+    <section class="card">
+      <h2 class="sec-title">Documents</h2>
+      @for (d of documents(); track d.name) {
+        <div class="data-row">
+          <span class="dr-label">
+            {{ d.name }}@if (d.mandatory) { <span class="req">*</span> }
+          </span>
+          @if (d.fileName) {
+            <span class="doc-ok">✓ Uploaded</span>
+          } @else {
+            <span class="doc-missing">Not uploaded</span>
+          }
+        </div>
+      }
+    </section>
+
+    <div class="foot">
+      <button class="btn-ghost" type="button" (click)="dashboard()">Back to dashboard</button>
+      <span class="spacer"></span>
+      <button class="btn-primary" type="button" (click)="pay()">Proceed to payment</button>
+    </div>
+  }
+</div>

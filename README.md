@@ -1,13 +1,23 @@
-# MCLS Portal — Master Administration
+# MCLS Portal — MSME Competitive (LEAN) Scheme
 
-Super Admin portal for the **MSME Competitive (LEAN) Scheme**, built to the SVG
-designs in `E:\Lean\14-inch-1512` (97 screens).
+The platform for the **MSME Competitive (LEAN) Scheme**, built to the supplied
+SVG artboards. It has three faces over one API and one database:
 
-| Layer     | Technology                          | Location    |
-| --------- | ----------------------------------- | ----------- |
-| Database  | SQL Server 2022 Express (`.\SQLEXPRESS`, db `MCLS`) | `database/` |
-| Backend   | .NET 10 Web API, EF Core, JWT       | `backend/`  |
-| Frontend  | Angular 22.1 (standalone, signals, zoneless) | `frontend/` |
+- **Master Administration** — the Super Admin / Ministry web portal.
+- **Applicant web** — enterprise registration and the post-registration journey
+  (Silver data is read-only on web; captured on mobile).
+- **Applicant mobile app** — the React Native / Expo app the enterprise uses to
+  register and complete its application.
+
+| Layer    | Technology                                          | Location    |
+| -------- | --------------------------------------------------- | ----------- |
+| Database | SQL Server 2022 Express (`.\SQLEXPRESS`, db `MCLS`) | `database/` |
+| Backend  | .NET 10 Web API, EF Core, JWT                       | `backend/`  |
+| Frontend | Angular 22 (standalone, signals, zoneless)          | `frontend/` |
+| Mobile   | React Native / Expo SDK 57 (TypeScript)             | `mobile/`   |
+| Deploy   | Windows/IIS deploy script + guide                   | `deploy/`   |
+
+**Production:** https://lean.umon.in — see [`deploy/README.md`](deploy/README.md).
 
 ---
 
@@ -63,6 +73,32 @@ cd E:\Lean\LeanPortal\frontend; npm start
   is deliberate -- binding IPv6-only made `127.0.0.1:4200` refuse connections
   while `localhost:4200` worked, depending on how the machine resolved the name.
 
+### Mobile app (`mobile/`)
+
+```powershell
+cd E:\Lean\LeanPortal\mobile; npx expo start
+```
+
+Point it at an API with `EXPO_PUBLIC_API_BASE_URL`, or set `extra.apiBaseUrl` in
+`app.json` (production defaults to `https://lean.umon.in`). A signed testing APK
+is produced with `npx expo prebuild -p android` then
+`android\gradlew.bat assembleRelease` (needs JDK 17 + the Android SDK). The
+generated `android/` and `ios/` folders are gitignored.
+
+---
+
+## Deployment
+
+The Windows/IIS deploy is scripted and idempotent:
+
+```powershell
+E:\Lean\LeanPortal\deploy\Deploy-Lean.ps1
+```
+
+It is **single-process hosting** — the API serves the built Angular app; there is
+no separate static site or `/api` child application. Full steps, prerequisites
+and the Udyam token switch are in [`deploy/README.md`](deploy/README.md).
+
 ---
 
 
@@ -86,8 +122,10 @@ alongside it.
 
 ## Database
 
-Already deployed to `.\SQLEXPRESS` as `MCLS` — 67 tables, 11 views, 15 stored
-procedures, 75 permissions, 15 modules, 45 menu rows, 9 account types.
+Already deployed to `.\SQLEXPRESS` as `MCLS` — 88 tables, 11 views, 15 stored
+procedures, 85 permissions, 17 modules, 55 menu rows, 12 account types.
+Schema changes since the baseline live in `database/07-migrations/` (numbered
+`001`–`041`), applied in order and idempotent.
 
 To rebuild from scratch on another machine:
 
@@ -136,12 +174,17 @@ in that file.
 
 Two matrices, both seeded in `database\04-seed\02-roles-and-permissions.sql`:
 
-- **ACCESS** — which of the 15 modules a role may open.
+- **ACCESS** — which of the 17 modules a role may open.
 - **MANAGE** — which of those it may act on. Openable but not manageable means
   view + export only.
 
-15 modules × 5 rights = **75 permissions**. The API refuses to start if that
-count is wrong, because every authorization check would otherwise fail closed.
+17 modules × 5 rights = **85 permissions**. The API refuses to start if that
+count is wrong (the expected count is derived from modules × rights, not
+hard-coded), because every authorization check would otherwise fail closed.
+
+The two newest modules — **ESG Checklist** and **Basic Info & Documents** — were
+added in migration `039`; they configure what the applicant's LEAN Silver
+application collects.
 
 The sidebar is built from the menu the API returns for the signed-in user, not
 from a hard-coded list — a role that cannot open Assessments is never sent that
@@ -170,27 +213,38 @@ leaves them empty and the API will refuse to start without them.
 
 ---
 
-## Screen coverage
+## Modules
 
-Built and verified against the SVG exports:
+### Admin web (`frontend/`)
 
-| Module | Artboards covered |
-| ------ | ----------------- |
-| Sign-in | `0`, `0a` |
-| Dashboard | `1`, `1-no-data` |
-| **User Management** | `2`, `2-no-data`, `2-edit-permissions`, `2a`, `2b`, `3`, `4`, `4-no-data`, `18`-`25` and their no-data variants, `41`-`65` |
-| Sectors | `66`, `66-no-data`, `68`, `69`, `70` |
-| Parameters | `67`, `67-no-data`, `71`, `72`, `73` |
-| Technology Upgradation | `74`, `74-no-data`, `75` |
-| Fee Structure | `14`, `26`, `27`, `28`, `82` |
-| Settings | `33`, `34`, `35`, `36` |
+All admin modules are built and wired to the API:
 
-Not yet built as Angular screens. Their APIs exist and are verified, so these are
-front-end work following the same pattern as Sectors and User Management:
-**Handholding** (`11`, `15`, `16`), **Assessments** (`17`), **Questionnaire
-Silver/Gold** (`5`, `6`, `7`), **Incentives** (`12`, `13`, `29`-`32`, `37`-`40`),
-**Upload Documents** (`9`, `9-no-data`, `10`, `76`, `77`, `78`), **Reports**
-(`8`), **Emailer** (`79`, `79-no-data`, `80`, `81`).
+- **Dashboard** — pipeline figures, India choropleth, exportable sections.
+- **User Management** — the nine agency sub-menus, create/edit, permissions.
+- **Sectors**, **Parameters**, **Technology Upgradation** — master lists, each
+  with CSV export; Technology also has CSV import (template + upload).
+- **Questionnaire** (Silver/Gold) — question bank with export.
+- **ESG Checklist**, **Basic Info & Documents** — configure the applicant's
+  LEAN Silver application (sections, Yes/No/NA questions with dependents;
+  basic-information items and required document list).
+- **Fee Structure**, **Incentives**, **Handholding**, **Assessments**,
+  **Documents / Upload Documents**, **Reports**, **Emailer**, **Settings**.
+
+### Applicant web (`frontend/`, routes under `/register` and `/msme/*`)
+
+Public registration (`/register`) and the applicant portal (`/msme/login`,
+`/msme/dashboard`, `/msme/application`, `/msme/payment`, `/msme/reset-password`).
+Payment can be made on web; from payment through consultant selection the LEAN
+Silver journey is mobile-only, and that captured data is **read-only on web**.
+Bronze works fully on both web and mobile.
+
+### Applicant mobile (`mobile/`)
+
+The React Native / Expo app built to the A-series (auth) and R-series
+(registration) artboards: splash, sign-in, reset password, and the seven-step
+registration wizard, plus the signed-in home, certifications, incentives,
+payment, documents, profile and the LEAN Silver application. Config in
+`mobile/app.json` (`extra.apiBaseUrl` → the API).
 
 ---
 

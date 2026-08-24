@@ -6,6 +6,7 @@ import { Observable } from 'rxjs';
 import { ApiService } from '../../core/api.service';
 import { AuthService } from '../../core/auth.service';
 import { Parameter } from '../../core/models';
+import { downloadCsv, stamp } from '../../shared/csv';
 import {
   ConfirmComponent,
   EmptyComponent,
@@ -135,6 +136,16 @@ import {
               <option value="true">Active</option>
               <option value="false">Inactive</option>
             </select>
+
+            <button
+              class="btn btn-secondary"
+              type="button"
+              (click)="exportCsv()"
+              [disabled]="exporting() || total() === 0"
+              title="Export the filtered parameters to Excel (CSV)"
+            >
+              {{ exporting() ? 'Exporting…' : 'Export' }}
+            </button>
           </div>
         </div>
 
@@ -376,4 +387,35 @@ export class ParametersComponent {
     this.load();
   }
 
+  readonly exporting = signal(false);
+
+  /** Exports every parameter matching the current filter as a CSV for Excel. */
+  exportCsv(): void {
+    this.exporting.set(true);
+
+    this.api
+      .parameters({
+        search: this.search(),
+        isActive: this.status(),
+        pageNumber: 1,
+        pageSize: Math.max(this.total(), 1),
+      })
+      .subscribe({
+        next: (result) => {
+          downloadCsv(
+            `parameters-${stamp()}.csv`,
+            ['#', 'Code', 'Parameter Name', 'Description', 'Status'],
+            result.items.map((row, i) => [
+              i + 1,
+              row.code,
+              row.name,
+              row.description ?? '',
+              row.isActive ? 'Active' : 'Inactive',
+            ]),
+          );
+          this.exporting.set(false);
+        },
+        error: () => this.exporting.set(false),
+      });
+  }
 }

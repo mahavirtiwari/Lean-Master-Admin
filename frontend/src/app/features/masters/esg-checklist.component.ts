@@ -108,7 +108,7 @@ import { ConfirmComponent, EmptyComponent, PageIntroComponent } from '../../shar
           <app-empty title="Select a section" text="Choose a section on the left to add and arrange its questions." />
         } @else {
           @if (canEdit) {
-            <form class="master-form" (ngSubmit)="saveQuestion()">
+            <form class="master-form q-form" (ngSubmit)="saveQuestion()">
               <div class="field">
                 <label class="field-label">QUESTION CODE<span class="req">*</span></label>
                 <input class="input" maxlength="30" placeholder="e.g. ENV-1" name="qc"

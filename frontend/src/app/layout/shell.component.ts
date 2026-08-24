@@ -107,17 +107,26 @@ export class ShellComponent {
       });
     });
 
+    // Auto-open the group that owns the current route — but only when the route
+    // (or the menu) changes. Reading openGroups untracked keeps it OUT of the
+    // dependency set: otherwise collapsing a group whose child is the open route
+    // re-runs this effect, which re-adds the group and snaps it back open, so
+    // the chevron could never close it.
     effect(() => {
       const current = this.url();
-      const open = new Set(this.openGroups());
+      const menu = this.menu();
 
-      for (const parent of this.menu()) {
-        if (parent.children.some((c) => c.routePath && isOn(current, c.routePath))) {
-          open.add(parent.code);
+      untracked(() => {
+        const open = new Set(this.openGroups());
+
+        for (const parent of menu) {
+          if (parent.children.some((c) => c.routePath && isOn(current, c.routePath))) {
+            open.add(parent.code);
+          }
         }
-      }
 
-      if (open.size !== this.openGroups().size) this.openGroups.set(open);
+        if (open.size !== this.openGroups().size) this.openGroups.set(open);
+      });
     });
   }
 

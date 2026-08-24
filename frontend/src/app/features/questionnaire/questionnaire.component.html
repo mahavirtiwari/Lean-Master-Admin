@@ -111,6 +111,16 @@
         </button>
       }
     </div>
+
+    <button
+      class="btn-solid btn-export"
+      type="button"
+      (click)="exportCsv()"
+      [disabled]="exporting() || total() === 0"
+      title="Export the question bank to Excel (CSV)"
+    >
+      {{ exporting() ? 'Exporting…' : 'Export' }}
+    </button>
   </div>
 
   @if (loading()) {

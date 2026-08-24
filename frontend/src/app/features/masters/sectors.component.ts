@@ -6,6 +6,7 @@ import { Observable } from 'rxjs';
 import { ApiService } from '../../core/api.service';
 import { AuthService } from '../../core/auth.service';
 import { Sector } from '../../core/models';
+import { downloadCsv, stamp } from '../../shared/csv';
 import {
   ConfirmComponent,
   EmptyComponent,
@@ -180,4 +181,38 @@ export class SectorsComponent {
     this.load();
   }
 
+  readonly exporting = signal(false);
+
+  /**
+   * Exports every sector matching the current search/status filter — not just
+   * the visible page — as a CSV that Excel opens directly.
+   */
+  exportCsv(): void {
+    this.exporting.set(true);
+
+    this.api
+      .sectors({
+        search: this.search(),
+        isActive: this.status(),
+        pageNumber: 1,
+        pageSize: Math.max(this.total(), 1),
+      })
+      .subscribe({
+        next: (result) => {
+          downloadCsv(
+            `sectors-${stamp()}.csv`,
+            ['#', 'Sector Code', 'Sector Name', 'MSMEs Mapped', 'Status'],
+            result.items.map((row, i) => [
+              i + 1,
+              row.nicCode,
+              row.name,
+              row.msmesMapped ?? 0,
+              row.isActive ? 'Active' : 'Inactive',
+            ]),
+          );
+          this.exporting.set(false);
+        },
+        error: () => this.exporting.set(false),
+      });
+  }
 }

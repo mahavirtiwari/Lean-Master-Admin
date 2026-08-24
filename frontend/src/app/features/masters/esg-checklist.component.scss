@@ -13,6 +13,16 @@
 
 .master-form.compact { padding: 0 16px 12px; }
 
+/* The questions form sat flush against the card border and pressed straight
+   onto the table below it. Pad it in from the card edges (as the sections form
+   is) and rule it off from the list. */
+.master-form.q-form {
+  padding: 0 16px 16px;
+  margin-bottom: 0;
+  border-bottom: 1px solid var(--border-divider, #e4ebe7);
+}
+.master-form.q-form + .tbl-wrap { margin-top: 4px; }
+
 .sec-list {
   display: flex;
   flex-direction: column;

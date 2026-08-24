@@ -90,6 +90,16 @@
           <option value="true">Active</option>
           <option value="false">Inactive</option>
         </select>
+
+        <button
+          class="btn btn-secondary"
+          type="button"
+          (click)="exportCsv()"
+          [disabled]="exporting() || total() === 0"
+          title="Export the filtered sectors to Excel (CSV)"
+        >
+          {{ exporting() ? 'Exporting…' : 'Export' }}
+        </button>
       </div>
     </div>
 

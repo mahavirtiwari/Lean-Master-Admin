@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { ApiService } from '../../core/api.service';
 import { AuthService } from '../../core/auth.service';
 import { QuestionnaireManager } from '../../core/models';
+import { downloadCsv, stamp } from '../../shared/csv';
 
 /**
  * Questionnaire Manager — 5-green.svg.
@@ -160,6 +161,44 @@ export class QuestionnaireComponent {
       `Archiving ${question.questionId} withdraws it from live assessments; that is a ` +
         'content change and is made against the requirement, not from the bank list.',
     );
+  }
+
+  readonly exporting = signal(false);
+
+  /**
+   * Exports the whole question bank for the current level/search filter — every
+   * page, not just the ten on screen — as a CSV that Excel opens directly.
+   */
+  exportCsv(): void {
+    this.exporting.set(true);
+
+    this.api
+      .questionnaireManager({
+        level: this.bankFilter(),
+        search: this.search(),
+        pageNumber: 1,
+        pageSize: Math.max(this.total(), 1),
+      })
+      .subscribe({
+        next: (r) => {
+          downloadCsv(
+            `question-bank-${this.level()}-${stamp()}.csv`,
+            ['S.No', 'Question ID', 'Question Preview', 'Level', 'Course/Module', 'Difficulty', 'Status', 'Version'],
+            (r.bank?.items ?? []).map((q, i) => [
+              i + 1,
+              q.questionId,
+              q.preview,
+              q.levelName,
+              q.module,
+              q.difficulty,
+              q.status,
+              q.version,
+            ]),
+          );
+          this.exporting.set(false);
+        },
+        error: () => this.exporting.set(false),
+      });
   }
 
   formatDate(iso: string | null): string {

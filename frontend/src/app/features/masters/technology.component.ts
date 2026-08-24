@@ -1,11 +1,12 @@
 import { DecimalPipe } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Observable } from 'rxjs';
+import { Observable, catchError, forkJoin, map, of } from 'rxjs';
 
 import { ApiService } from '../../core/api.service';
 import { AuthService } from '../../core/auth.service';
 import { Sector, Technology, TechnologyCategory } from '../../core/models';
+import { downloadCsv, parseCsv, stamp } from '../../shared/csv';
 import {
   ConfirmComponent,
   EmptyComponent,
@@ -206,8 +207,42 @@ import {
               <option value="true">Active</option>
               <option value="false">Inactive</option>
             </select>
+
+            <button
+              class="btn btn-secondary"
+              type="button"
+              (click)="exportCsv()"
+              [disabled]="exporting() || total() === 0"
+              title="Export the filtered technologies to Excel (CSV)"
+            >
+              {{ exporting() ? 'Exporting…' : 'Export' }}
+            </button>
+
+            @if (canCreate) {
+              <button
+                class="btn btn-secondary"
+                type="button"
+                (click)="downloadTemplate()"
+                title="Download the import template (CSV, opens in Excel)"
+              >
+                Template
+              </button>
+              <label class="btn btn-primary import-btn" [class.is-disabled]="importing()">
+                {{ importing() ? 'Importing…' : 'Import' }}
+                <input
+                  type="file"
+                  accept=".csv"
+                  hidden
+                  (change)="onFile($any($event.target).files); $any($event.target).value = ''"
+                />
+              </label>
+            }
           </div>
         </div>
+
+        @if (importMsg(); as m) {
+          <div class="import-note" [class.is-bad]="importBad()">{{ m }}</div>
+        }
 
         @if (loading()) {
           <div class="empty"><div class="empty-text">Loading technologies…</div></div>
@@ -312,6 +347,17 @@ import {
       </app-confirm>
     }
   `,
+  styles: [
+    `
+      .import-btn { cursor: pointer; display: inline-flex; align-items: center; }
+      .import-btn.is-disabled { opacity: 0.6; pointer-events: none; }
+      .import-note {
+        margin: 12px 0 0; padding: 10px 14px; border-radius: 8px;
+        background: #eef8f1; border: 1px solid #cfe8d8; color: #216a41; font-size: 13px; line-height: 1.5;
+      }
+      .import-note.is-bad { background: #fdf1f1; border-color: #f3cfcf; color: #b91c1c; }
+    `,
+  ],
 })
 export class TechnologyComponent {
   private readonly api = inject(ApiService);
@@ -485,4 +531,169 @@ export class TechnologyComponent {
     this.load();
   }
 
+  // ------------------------------------------------------ export / import ---
+
+  readonly exporting = signal(false);
+  readonly importing = signal(false);
+  readonly importMsg = signal<string | null>(null);
+  readonly importBad = signal(false);
+
+  /** Exports every technology matching the current filters as a CSV for Excel. */
+  exportCsv(): void {
+    this.exporting.set(true);
+
+    this.api
+      .technologies({
+        search: this.search(),
+        categoryId: this.categoryFilter(),
+        isActive: this.status(),
+        pageNumber: 1,
+        pageSize: Math.max(this.total(), 1),
+      })
+      .subscribe({
+        next: (result) => {
+          downloadCsv(
+            `technologies-${stamp()}.csv`,
+            ['#', 'Code', 'Technology Name', 'Category', 'Sector', 'Status'],
+            result.items.map((row, i) => [
+              i + 1,
+              row.code,
+              row.name,
+              row.categoryName ?? '',
+              row.sectorName ?? '',
+              row.isActive ? 'Active' : 'Inactive',
+            ]),
+          );
+          this.exporting.set(false);
+        },
+        error: () => this.exporting.set(false),
+      });
+  }
+
+  /** The import template — same columns the importer reads, so it cannot drift. */
+  downloadTemplate(): void {
+    const category = this.categories()[0];
+    const sector = this.sectors()[0];
+
+    downloadCsv(
+      'technology-import-template.csv',
+      ['Code', 'Technology Name', 'Category Code', 'Sector NIC Code', 'Description'],
+      [
+        [
+          'TU-01',
+          'Energy-efficient motors',
+          category?.code ?? 'TC-01',
+          sector?.nicCode ?? '25',
+          'Replace standard motors with IE3/IE4 rated units.',
+        ],
+      ],
+    );
+
+    this.importBad.set(false);
+    this.importMsg.set(
+      'Template downloaded. One row per technology. Category Code must match an existing ' +
+        'category; Sector NIC Code is optional. Fill it in Excel and Save As CSV, then Import.',
+    );
+  }
+
+  onFile(files: FileList | null): void {
+    const file = files?.[0];
+    if (!file || this.importing()) return;
+
+    if (!file.name.toLowerCase().endsWith('.csv')) {
+      this.importBad.set(true);
+      this.importMsg.set(
+        'Please upload a .csv file. In Excel use File → Save As → CSV (the Template button gives you one).',
+      );
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => this.importRows(String(reader.result ?? ''));
+    reader.onerror = () => {
+      this.importBad.set(true);
+      this.importMsg.set('The file could not be read. Try again.');
+    };
+    reader.readAsText(file);
+  }
+
+  /** Parses the CSV, resolves category/sector by code, and creates each row. */
+  private importRows(text: string): void {
+    const rows = parseCsv(text).filter((r) => r.some((c) => c.trim().length > 0));
+    if (rows.length <= 1) {
+      this.importBad.set(true);
+      this.importMsg.set('The file has no data rows below the header.');
+      return;
+    }
+
+    // Skip the header row; map the rest to create payloads.
+    const catByCode = new Map(this.categories().map((c) => [c.code.trim().toUpperCase(), c.technologyCategoryId]));
+    const sectorByNic = new Map(this.sectors().map((s) => [s.nicCode.trim().toUpperCase(), s.sectorId]));
+
+    const problems: string[] = [];
+    const payloads: { code: string; name: string; description: string; technologyCategoryId: number; sectorId: number | null }[] = [];
+
+    rows.slice(1).forEach((r, idx) => {
+      const line = idx + 2; // 1-based, plus the header
+      const [code, name, catCode, nic, description] = [r[0] ?? '', r[1] ?? '', r[2] ?? '', r[3] ?? '', r[4] ?? ''].map((c) => c.trim());
+
+      if (!code || !name || !catCode) {
+        problems.push(`Row ${line}: Code, Technology Name and Category Code are required.`);
+        return;
+      }
+
+      const categoryId = catByCode.get(catCode.toUpperCase());
+      if (!categoryId) {
+        problems.push(`Row ${line}: category "${catCode}" was not found.`);
+        return;
+      }
+
+      const sectorId = nic ? sectorByNic.get(nic.toUpperCase()) ?? null : null;
+      if (nic && sectorId === null) {
+        problems.push(`Row ${line}: sector NIC "${nic}" was not found.`);
+        return;
+      }
+
+      payloads.push({ code, name, description, technologyCategoryId: categoryId, sectorId });
+    });
+
+    if (payloads.length === 0) {
+      this.importBad.set(true);
+      this.importMsg.set(`Nothing imported. ${problems.slice(0, 4).join(' ')}`);
+      return;
+    }
+
+    this.importing.set(true);
+    this.importMsg.set(null);
+
+    // Each create reports ok/fail on its own so one duplicate code does not sink
+    // the batch; the summary is assembled once all have settled.
+    forkJoin(
+      payloads.map((p) =>
+        this.api.createTechnology(p).pipe(
+          map(() => ({ ok: true, code: p.code })),
+          catchError((e: { error?: { errors?: Record<string, string[]>; title?: string } }) => {
+            const why = e.error?.errors ? Object.values(e.error.errors)[0]?.[0] : e.error?.title;
+            return of({ ok: false, code: p.code, why: why ?? 'rejected' });
+          }),
+        ),
+      ),
+    ).subscribe((results) => {
+      const added = results.filter((r) => r.ok).length;
+      const failed = results.filter((r) => !r.ok);
+
+      this.importing.set(false);
+      this.importBad.set(added === 0);
+
+      const parts = [`${added} technolog${added === 1 ? 'y' : 'ies'} imported.`];
+      if (failed.length) parts.push(`${failed.length} skipped: ${failed.slice(0, 3).map((f: { code: string; why?: string }) => `${f.code} (${f.why})`).join(', ')}${failed.length > 3 ? '…' : ''}.`);
+      if (problems.length) parts.push(`${problems.length} row(s) had bad data: ${problems.slice(0, 2).join(' ')}`);
+      this.importMsg.set(parts.join(' '));
+
+      if (added > 0) {
+        this.api.technologySummary().subscribe((s) => this.summary.set(s));
+        this.applyFilters();
+      }
+    });
+  }
 }

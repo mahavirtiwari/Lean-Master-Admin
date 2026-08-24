@@ -32,8 +32,8 @@ GO
    below generate its five rights automatically, exactly as the seed does. */
 MERGE auth.Module AS tgt
 USING (VALUES
-    (16, 'ESG_CHECKLIST',   N'ESG Checklist',            '/esg-checklist',        'leaf',   16),
-    (17, 'BASIC_INFO_DOCS', N'Basic Info & Documents',   '/basic-info-documents', 'folder', 17)
+    (16, 'ESG_CHECKLIST',   N'ESG Checklist',            '/esg-checklist',        'clipboard', 16),
+    (17, 'BASIC_INFO_DOCS', N'Basic Info & Documents',   '/basic-info-documents', 'doc',       17)
 ) AS src (ModuleId, Code, Name, RoutePath, IconKey, SortOrder)
    ON tgt.ModuleId = src.ModuleId
 WHEN MATCHED THEN UPDATE SET
@@ -82,8 +82,8 @@ GO
    and before Documents, where scheme-content configuration sits. */
 MERGE auth.MenuItem AS tgt
 USING (VALUES
-    ('ESG_CHECKLIST',   16, N'ESG Checklist',          '/esg-checklist',        'leaf',   1150),
-    ('BASIC_INFO_DOCS', 17, N'Basic Info & Documents', '/basic-info-documents', 'folder', 1160)
+    ('ESG_CHECKLIST',   16, N'ESG Checklist',          '/esg-checklist',        'clipboard', 1150),
+    ('BASIC_INFO_DOCS', 17, N'Basic Info & Documents', '/basic-info-documents', 'doc',       1160)
 ) AS src (Code, ModuleId, Label, RoutePath, IconKey, SortOrder)
    ON tgt.Code = src.Code
 WHEN MATCHED THEN UPDATE SET

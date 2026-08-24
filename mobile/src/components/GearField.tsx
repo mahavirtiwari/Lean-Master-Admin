@@ -58,7 +58,7 @@ function Gear({
  */
 export function GearField({ headerSafe = false }: { headerSafe?: boolean }): React.JSX.Element {
   return (
-    <View style={StyleSheet.absoluteFill} pointerEvents="none">
+    <View style={[StyleSheet.absoluteFill, { pointerEvents: 'none' }]}>
       <Svg
         width="100%"
         height="100%"

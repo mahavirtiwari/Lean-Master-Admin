@@ -40,7 +40,7 @@ export function RegShell({
         end={{ x: 0.4, y: 1 }}
         style={[styles.bar, { paddingTop: insets.top + space(2) }]}
       >
-        <View style={styles.flex}>
+        <View style={styles.barText}>
           <Text style={styles.title} numberOfLines={1}>{title}</Text>
           {step ? <Text style={styles.step}>Step {step} of {total}</Text> : null}
         </View>
@@ -77,6 +77,9 @@ export function RegShell({
 
 const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: colour.page },
+  // The title column inside the blue bar — flex only, no background, so it does
+  // not paint a light patch over the gradient.
+  barText: { flex: 1 },
   field: { flex: 1, backgroundColor: '#F6F9F7' },
   bar: {
     flexDirection: 'row',

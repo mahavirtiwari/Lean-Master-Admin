@@ -14,50 +14,88 @@ import { environment } from '../../../environments/environment';
   selector: 'app-msme-reset-password',
   imports: [],
   template: `
-    <header class="app-head">
-      <img class="head-lean" src="assets/mcls-logo.png" alt="MSME Competitive (LEAN) Scheme" height="34" />
-      <div class="head-title">
-        <span class="t1">Reset password</span>
-        <span class="t2">Recover access to your LEAN account</span>
-      </div>
+    <!-- The public header the registration flow uses, so reset password sits
+         in the same shell rather than a bare page. -->
+    <header class="pub-head">
+      <img class="head-lean" src="assets/mcls-logo.png"
+           alt="MSME Competitive (LEAN) Scheme — MCLS" />
+      <span class="head-rule"></span>
+      <a href="https://www.msme.gov.in/" target="_blank" rel="noopener noreferrer" title="Ministry of MSME">
+        <img class="head-logo" src="assets/msme-logo.svg"
+             alt="Ministry of Micro, Small &amp; Medium Enterprises" />
+      </a>
+
+      <div class="spacer"></div>
+
+      <button class="head-link" type="button" (click)="manualVideo()">User Manual</button>
+      <span class="head-sep">|</span>
+      <button class="head-link" type="button" (click)="help()">Help</button>
+
+      <button class="head-signin" type="button" (click)="backToLogin()">Sign in</button>
     </header>
+
+    <main class="pub-body">
+      <h1 class="page-title">Reset password</h1>
+      <p class="page-sub">Recover access to your LEAN account</p>
+      <span class="page-rule"></span>
 
     <div class="wrap">
       @if (sent()) {
         <section class="card">
           <div class="tickwrap"><div class="tick">✓</div></div>
-          <h2 class="h">Check your email</h2>
           <p class="p">
             If <b>{{ leanId().trim() }}</b> is a registered account, a reset link has been sent to its
-            registered email address. Open the link to set a new password.
+            registered SPOC email address. Open the link to set a new password.
           </p>
-          <p class="hint">The link expires shortly for security. Check your spam folder if it does not arrive.</p>
+          <p class="hint">The link expires shortly. Check your spam folder if it does not arrive.</p>
           <button class="btn-primary block" type="button" (click)="backToLogin()">Back to sign in</button>
         </section>
       } @else {
         <section class="card">
-          <label class="field-label" for="leanId">LEAN ID</label>
+          <label class="field-label" for="leanId">LEAN ID or Udyam number <span class="req">*</span></label>
           <input
             id="leanId"
             class="input"
             type="text"
             autocomplete="username"
-            placeholder="LEAN-XX-YYYY-000000"
+            placeholder="Enter here"
             [value]="leanId()"
             (input)="leanId.set($any($event.target).value)"
             (keyup.enter)="submit()"
           />
-          <p class="hint">The reset link goes to the account's registered email (the SPOC email for enterprise accounts).</p>
+          <p class="hint">Enter either one — both are accepted</p>
 
           @if (error()) { <div class="login-error" role="alert">{{ error() }}</div> }
 
           <button class="btn-primary block" type="button" [disabled]="busy()" (click)="submit()">
-            {{ busy() ? 'Sending…' : 'Send reset link' }}
+            {{ busy() ? 'Sending…' : 'Continue ›' }}
           </button>
-          <button class="btn-ghost block" type="button" (click)="backToLogin()">Back to sign in</button>
         </section>
+
+        <section class="card info">
+          <div class="info-row">
+            <div class="info-icon green">🪪</div>
+            <div class="info-text">
+              <span class="it-title">You enter a LEAN ID</span>
+              <span class="it-sub">The reset link goes straight to that account's SPOC email.</span>
+            </div>
+          </div>
+          <div class="info-div"></div>
+          <div class="info-row">
+            <div class="info-icon blue">🗂️</div>
+            <div class="info-text">
+              <span class="it-title">You enter a Udyam number</span>
+              <span class="it-sub">Every LEAN ID under it is listed with its plant; pick one and the link goes to that plant's SPOC email.</span>
+            </div>
+          </div>
+        </section>
+
+        <div class="delivery">The reset link is delivered to the account's registered SPOC email.</div>
+
+        <button class="link-back" type="button" (click)="backToLogin()">‹ Back to sign in</button>
       }
     </div>
+    </main>
   `,
   styleUrl: './msme-reset-password.component.scss',
 })
@@ -96,5 +134,14 @@ export class MsmeResetPasswordComponent {
 
   backToLogin(): void {
     void this.router.navigate(['/msme/login']);
+  }
+
+  // Header links, matching the registration flow.
+  manualVideo(): void {
+    window.open('https://lean.msme.gov.in/Home/RegisteredMSME', '_blank', 'noopener');
+  }
+
+  help(): void {
+    window.open('https://ndie.qcin.org/contact-us/', '_blank', 'noopener');
   }
 }

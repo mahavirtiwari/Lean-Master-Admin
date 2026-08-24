@@ -1,16 +1,14 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import React, { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { RegistrationActivity, RegistrationDraft, RegistrationPlant } from '../api/registration';
 import {
   AlertDialog,
   Card,
-  GhostButton,
-  OfflineBanner,
-  PrimaryButton,
   StepHead,
 } from '../components/ui';
+import { RegShell, RegGhost, RegPrimary } from '../components/RegShell';
 import { useApp } from '../state/AppContext';
 import { colour, radius, space, type } from '../theme/theme';
 import type { RootStackParamList } from '../navigation/types';
@@ -19,7 +17,7 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Summary'>;
 
 /** R7. Built entirely from the local draft, so it opens with no connection. */
 export default function SummaryScreen({ navigation }: Props): React.JSX.Element {
-  const { online, queued, draft } = useApp();
+  const { draft } = useApp();
 
   // The pledge PDF is generated from exactly what this screen shows, so the
   // applicant states that it is right rather than being advised to check it.
@@ -36,11 +34,29 @@ export default function SummaryScreen({ navigation }: Props): React.JSX.Element 
   const e = stored?.enterprise;
 
   return (
-    <View style={styles.flex}>
-      <OfflineBanner online={online} queued={queued} />
-
-      <ScrollView contentContainerStyle={styles.page}>
-        <Card>
+    <RegShell
+      title="Summary"
+      step={7}
+      footer={
+        <>
+          <RegGhost label="Back" onPress={() => navigation.goBack()} />
+          <RegPrimary
+            label="Proceed to Pledge"
+            onPress={() => {
+              if (!confirmed) {
+                setDialog({
+                  title: 'Please confirm',
+                  text: 'Confirm that the details above are correct before proceeding to the pledge.',
+                });
+                return;
+              }
+              navigation.navigate('Pledge');
+            }}
+          />
+        </>
+      }
+    >
+      <Card>
           <StepHead step={7} title="Summary" subtitle="Review your details before accepting the LEAN Pledge" />
 
           <Section title="Enterprise">
@@ -88,27 +104,7 @@ export default function SummaryScreen({ navigation }: Props): React.JSX.Element 
               I confirm the above and agree to proceed with the information provided.
             </Text>
           </Pressable>
-
-          <View style={styles.actions}>
-            <GhostButton label="Back" onPress={() => navigation.goBack()} style={styles.half} />
-            <PrimaryButton
-              label="Proceed to Pledge"
-              onPress={() => {
-                if (!confirmed) {
-                  setDialog({
-                    title: 'Please confirm',
-                    text: 'Confirm that the details above are correct before proceeding to the pledge.',
-                  });
-                  return;
-                }
-
-                navigation.navigate('Pledge');
-              }}
-              style={styles.half}
-            />
-          </View>
-        </Card>
-      </ScrollView>
+      </Card>
 
       <AlertDialog
         visible={dialog !== null}
@@ -116,7 +112,7 @@ export default function SummaryScreen({ navigation }: Props): React.JSX.Element 
         text={dialog?.text ?? ''}
         onClose={() => setDialog(null)}
       />
-    </View>
+    </RegShell>
   );
 }
 
@@ -142,10 +138,6 @@ function Row({ label, value }: { label: string; value?: string | null }): React.
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1, backgroundColor: colour.page },
-  half: { flex: 1 },
-  page: { padding: space(4), paddingBottom: space(10) },
-
   section: {
     backgroundColor: colour.surfaceQuiet,
     borderWidth: 1,
@@ -196,5 +188,4 @@ const styles = StyleSheet.create({
   boxOn: { backgroundColor: colour.green, borderColor: colour.green },
   tick: { color: colour.surface, fontSize: type.small, fontWeight: '700' },
   confirmText: { flex: 1, fontSize: type.small, color: colour.body, lineHeight: 20 },
-  actions: { flexDirection: 'row', gap: space(3) },
 });

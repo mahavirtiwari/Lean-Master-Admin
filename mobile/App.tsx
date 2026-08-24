@@ -21,6 +21,7 @@ import NotificationsScreen from './src/screens/NotificationsScreen';
 import OtpScreen from './src/screens/OtpScreen';
 import PledgeScreen from './src/screens/PledgeScreen';
 import RegisterLandingScreen from './src/screens/RegisterLandingScreen';
+import SplashScreen from './src/screens/SplashScreen';
 import SignInScreen from './src/screens/SignInScreen';
 import ResetPasswordScreen from './src/screens/ResetPasswordScreen';
 import SpocScreen from './src/screens/SpocScreen';
@@ -50,7 +51,7 @@ function Root(): React.JSX.Element {
   return (
     <NavigationContainer>
       <Stack.Navigator
-        initialRouteName={user ? 'Home' : 'SignIn'}
+        initialRouteName={user ? 'Home' : 'Splash'}
         screenOptions={{
           // The registration screens use this native header (the post-login
           // screens hide it and draw their own). The prototype makes it the blue
@@ -62,6 +63,7 @@ function Root(): React.JSX.Element {
           contentStyle: { backgroundColor: colour.page },
         }}
       >
+        <Stack.Screen name="Splash" component={SplashScreen} options={{ headerShown: false }} />
         <Stack.Screen name="SignIn" component={SignInScreen} options={{ headerShown: false }} />
         <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} options={{ headerShown: false }} />
 
@@ -77,33 +79,17 @@ function Root(): React.JSX.Element {
         <Stack.Screen name="SilverApplication" component={SilverApplicationScreen} options={{ headerShown: false }} />
         <Stack.Screen name="ApplicationSubmitted" component={ApplicationSubmittedScreen} options={{ headerShown: false }} />
 
-        <Stack.Screen name="Dashboard" component={DashboardScreen} options={{ title: 'LEAN Scheme' }} />
+        <Stack.Screen name="Dashboard" component={DashboardScreen} options={{ headerShown: false }} />
 
-        <Stack.Screen
-          name="RegisterLanding"
-          component={RegisterLandingScreen}
-          options={{ title: 'Register' }}
-        />
-        <Stack.Screen name="Udyam" component={UdyamScreen} options={{ title: 'Udyam Validation' }} />
-        <Stack.Screen
-          name="Enterprise"
-          component={EnterpriseScreen}
-          options={{ title: 'Enterprise Details' }}
-        />
-        <Stack.Screen
-          name="UnitActivity"
-          component={UnitActivityScreen}
-          options={{ title: 'Unit & Activity' }}
-        />
-        <Stack.Screen name="Spoc" component={SpocScreen} options={{ title: 'SPOC & Awareness' }} />
-        <Stack.Screen name="Otp" component={OtpScreen} options={{ title: 'Verify Email' }} />
-        <Stack.Screen name="Summary" component={SummaryScreen} options={{ title: 'Summary' }} />
-        <Stack.Screen name="Pledge" component={PledgeScreen} options={{ title: 'LEAN Pledge' }} />
-        <Stack.Screen
-          name="Complete"
-          component={CompleteScreen}
-          options={{ title: 'Complete', headerBackVisible: false }}
-        />
+        <Stack.Screen name="RegisterLanding" component={RegisterLandingScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="Udyam" component={UdyamScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="Enterprise" component={EnterpriseScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="UnitActivity" component={UnitActivityScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="Spoc" component={SpocScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="Otp" component={OtpScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="Summary" component={SummaryScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="Pledge" component={PledgeScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="Complete" component={CompleteScreen} options={{ headerShown: false }} />
       </Stack.Navigator>
     </NavigationContainer>
   );

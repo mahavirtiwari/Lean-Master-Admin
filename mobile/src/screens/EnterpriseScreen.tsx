@@ -1,9 +1,10 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import React from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
 import type { RegistrationDraft } from '../api/registration';
-import { Card, GhostButton, OfflineBanner, PrimaryButton, StepHead } from '../components/ui';
+import { Card, StepHead } from '../components/ui';
+import { RegShell, RegGhost, RegPrimary } from '../components/RegShell';
 import { useApp } from '../state/AppContext';
 import { colour, radius, space, type } from '../theme/theme';
 import type { RootStackParamList } from '../navigation/types';
@@ -16,7 +17,7 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Enterprise'>;
  * without asking the registry again.
  */
 export default function EnterpriseScreen({ navigation }: Props): React.JSX.Element {
-  const { online, queued, draft, saveDraft } = useApp();
+  const { draft, saveDraft } = useApp();
 
   const stored = draft.payload.draft as RegistrationDraft | undefined;
   const e = stored?.enterprise;
@@ -34,53 +35,48 @@ export default function EnterpriseScreen({ navigation }: Props): React.JSX.Eleme
   ];
 
   return (
-    <View style={styles.flex}>
-      <OfflineBanner online={online} queued={queued} />
-
-      <ScrollView contentContainerStyle={styles.page}>
-        <Card>
-          <StepHead
-            step={3}
-            title="Enterprise Details"
-            subtitle="Validated from the MSME database, Ministry of MSME — these fields are read-only"
+    <RegShell
+      title="Enterprise Details"
+      step={3}
+      footer={
+        <>
+          <RegGhost label="Back" onPress={() => navigation.goBack()} />
+          <RegPrimary
+            label="Continue"
+            onPress={() => {
+              void saveDraft({ step: 4 });
+              navigation.navigate('UnitActivity');
+            }}
           />
+        </>
+      }
+    >
+      <Card>
+        <StepHead
+          step={3}
+          title="Enterprise Details"
+          subtitle="Validated from the MSME database, Ministry of MSME — these fields are read-only"
+        />
 
-          {rows.map((row) => (
-            <View key={row.key} style={styles.row}>
-              <Text style={styles.key}>{row.key}</Text>
-              <Text style={styles.value}>{row.value}</Text>
-            </View>
-          ))}
-
-          {e?.address ? (
-            <View style={styles.row}>
-              <Text style={styles.key}>Address</Text>
-              <Text style={styles.value}>{e.address}</Text>
-            </View>
-          ) : null}
-
-          <View style={styles.actions}>
-            <GhostButton label="Back" onPress={() => navigation.goBack()} style={styles.half} />
-            <PrimaryButton
-              label="Continue"
-              onPress={() => {
-                void saveDraft({ step: 4 });
-                navigation.navigate('UnitActivity');
-              }}
-              style={styles.half}
-            />
+        {rows.map((row) => (
+          <View key={row.key} style={styles.row}>
+            <Text style={styles.key}>{row.key}</Text>
+            <Text style={styles.value}>{row.value}</Text>
           </View>
-        </Card>
-      </ScrollView>
-    </View>
+        ))}
+
+        {e?.address ? (
+          <View style={styles.row}>
+            <Text style={styles.key}>Address</Text>
+            <Text style={styles.value}>{e.address}</Text>
+          </View>
+        ) : null}
+      </Card>
+    </RegShell>
   );
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1, backgroundColor: colour.page },
-  half: { flex: 1 },
-  page: { padding: space(4), paddingBottom: space(10) },
-
   // Label above, value beneath: a Udyam address does not fit beside its label
   // on a phone at any sensible type size.
   row: {
@@ -93,6 +89,4 @@ const styles = StyleSheet.create({
   },
   key: { fontSize: type.tiny, fontWeight: '700', letterSpacing: 0.3, color: colour.muted },
   value: { fontSize: type.small, fontWeight: '600', color: colour.text, marginTop: space(1), lineHeight: 20 },
-
-  actions: { flexDirection: 'row', gap: space(3), marginTop: space(4) },
 });

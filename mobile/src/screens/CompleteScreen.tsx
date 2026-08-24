@@ -1,17 +1,16 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import React, { useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
 import { downloadDraftPledge, pledgeFileName } from '../api/pledge';
-import { AlertDialog, Card, GhostButton, OfflineBanner, PrimaryButton } from '../components/ui';
-import { useApp } from '../state/AppContext';
+import { AlertDialog, Card, GhostButton, PrimaryButton } from '../components/ui';
+import { RegShell } from '../components/RegShell';
 import { colour, radius, space, type } from '../theme/theme';
 import type { RootStackParamList } from '../navigation/types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Complete'>;
 
 export default function CompleteScreen({ navigation, route }: Props): React.JSX.Element {
-  const { online, queued } = useApp();
   const { leanId, enterpriseName, spocEmail, queued: pending, token, udyamNumber } = route.params;
 
   const [downloading, setDownloading] = useState(false);
@@ -41,10 +40,7 @@ export default function CompleteScreen({ navigation, route }: Props): React.JSX.
   }
 
   return (
-    <View style={styles.flex}>
-      <OfflineBanner online={online} queued={queued} />
-
-      <ScrollView contentContainerStyle={styles.page}>
+    <RegShell title={pending ? 'Registration Saved' : 'Registration Successful'}>
         <Card capped>
           <View style={styles.mark}>
             <Text style={styles.markText}>{pending ? '⏳' : '✓'}</Text>
@@ -99,7 +95,6 @@ export default function CompleteScreen({ navigation, route }: Props): React.JSX.
             onPress={() => navigation.reset({ index: 0, routes: [{ name: 'RegisterLanding' }] })}
           />
         </Card>
-      </ScrollView>
 
       <AlertDialog
         visible={dialog !== null}
@@ -107,14 +102,11 @@ export default function CompleteScreen({ navigation, route }: Props): React.JSX.
         text={dialog?.text ?? ''}
         onClose={() => setDialog(null)}
       />
-    </View>
+    </RegShell>
   );
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1, backgroundColor: colour.page },
-  page: { padding: space(4), paddingBottom: space(10), paddingTop: space(8) },
-
   mark: {
     width: 56,
     height: 56,

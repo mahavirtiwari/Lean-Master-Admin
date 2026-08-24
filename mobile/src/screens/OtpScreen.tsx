@@ -1,10 +1,11 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { StyleSheet, Text, TextInput, View, ScrollView, Pressable } from 'react-native';
+import { StyleSheet, Text, TextInput, View, Pressable } from 'react-native';
 
 import { ApiError } from '../api/client';
 import { sendOtp, verifyOtp } from '../api/registration';
-import { AlertDialog, Card, GhostButton, OfflineBanner, PrimaryButton, StepHead } from '../components/ui';
+import { AlertDialog, Card, StepHead } from '../components/ui';
+import { RegShell, RegGhost, RegPrimary } from '../components/RegShell';
 import { useApp } from '../state/AppContext';
 import { colour, radius, space, type } from '../theme/theme';
 import type { RootStackParamList } from '../navigation/types';
@@ -15,7 +16,7 @@ const LENGTH = 6;
 const RESEND_AFTER_SECONDS = 30;
 
 export default function OtpScreen({ navigation }: Props): React.JSX.Element {
-  const { online, queued, draft, saveDraft } = useApp();
+  const { online, draft, saveDraft } = useApp();
 
   const spoc = draft.payload.spoc as { email?: string } | undefined;
   const email = spoc?.email ?? 'your SPOC address';
@@ -109,11 +110,17 @@ export default function OtpScreen({ navigation }: Props): React.JSX.Element {
   }
 
   return (
-    <View style={styles.flex}>
-      <OfflineBanner online={online} queued={queued} />
-
-      <ScrollView contentContainerStyle={styles.page} keyboardShouldPersistTaps="handled">
-        <Card>
+    <RegShell
+      title="Verify Email"
+      step={6}
+      footer={
+        <>
+          <RegGhost label="Back" onPress={() => navigation.goBack()} />
+          <RegPrimary label="Verify & Continue" onPress={verify} busy={busy} />
+        </>
+      }
+    >
+      <Card>
           <StepHead step={6} title="Verify your email address" subtitle={`We have sent a 6-digit OTP to ${email}`} />
 
           <Text style={styles.note}>
@@ -146,13 +153,7 @@ export default function OtpScreen({ navigation }: Props): React.JSX.Element {
               </Text>
             </Pressable>
           </View>
-
-          <View style={styles.actions}>
-            <GhostButton label="Back" onPress={() => navigation.goBack()} style={styles.half} />
-            <PrimaryButton label="Verify & Continue" onPress={verify} busy={busy} style={styles.half} />
-          </View>
-        </Card>
-      </ScrollView>
+      </Card>
 
       <AlertDialog
         visible={dialog !== null}
@@ -160,15 +161,11 @@ export default function OtpScreen({ navigation }: Props): React.JSX.Element {
         text={dialog?.text ?? ''}
         onClose={() => setDialog(null)}
       />
-    </View>
+    </RegShell>
   );
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1, backgroundColor: colour.page },
-  half: { flex: 1 },
-  page: { padding: space(4), paddingBottom: space(10) },
-
   note: { fontSize: type.small, color: colour.body, lineHeight: 20, marginBottom: space(5) },
 
   boxes: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: space(5) },
@@ -189,6 +186,4 @@ const styles = StyleSheet.create({
   resendText: { fontSize: type.small, color: colour.muted },
   resendLink: { fontSize: type.small, fontWeight: '700', color: colour.blue },
   resendOff: { color: colour.input },
-
-  actions: { flexDirection: 'row', gap: space(3) },
 });

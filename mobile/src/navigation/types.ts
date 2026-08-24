@@ -7,6 +7,7 @@
  * the app reopens on a saved draft.
  */
 export type RootStackParamList = {
+  Splash: undefined;
   SignIn: undefined;
   ResetPassword: undefined;
   Dashboard: undefined;

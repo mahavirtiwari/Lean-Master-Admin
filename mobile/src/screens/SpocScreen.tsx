@@ -1,6 +1,6 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import React, { useEffect, useMemo, useState } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { ApiError } from '../api/client';
 import { awarenessPrograms, queueSpoc, saveSpoc, type AwarenessProgram } from '../api/registration';
@@ -8,11 +8,9 @@ import {
   AlertDialog,
   Card,
   Field,
-  GhostButton,
-  OfflineBanner,
-  PrimaryButton,
   StepHead,
 } from '../components/ui';
+import { RegShell, RegGhost, RegPrimary } from '../components/RegShell';
 import { useApp } from '../state/AppContext';
 import { colour, radius, space, type } from '../theme/theme';
 import type { RootStackParamList } from '../navigation/types';
@@ -22,7 +20,7 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Spoc'>;
 const digits = (value: string, max: number): string => value.replace(/\D+/g, '').slice(0, max);
 
 export default function SpocScreen({ navigation }: Props): React.JSX.Element {
-  const { online, queued, draft, saveDraft, sync } = useApp();
+  const { online, draft, saveDraft, sync } = useApp();
 
   const [name, setName] = useState('');
   const [designation, setDesignation] = useState('');
@@ -134,11 +132,17 @@ export default function SpocScreen({ navigation }: Props): React.JSX.Element {
   }
 
   return (
-    <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <OfflineBanner online={online} queued={queued} />
-
-      <ScrollView contentContainerStyle={styles.page} keyboardShouldPersistTaps="handled">
-        <Card>
+    <RegShell
+      title="SPOC Contact Details"
+      step={5}
+      footer={
+        <>
+          <RegGhost label="Back" onPress={() => navigation.goBack()} />
+          <RegPrimary label="Send OTP to Email" onPress={next} busy={busy} />
+        </>
+      }
+    >
+      <Card>
           <StepHead
             step={5}
             title="SPOC Contact Details & Awareness Program"
@@ -228,13 +232,7 @@ export default function SpocScreen({ navigation }: Props): React.JSX.Element {
               </View>
             ) : null}
           </View>
-
-          <View style={styles.actions}>
-            <GhostButton label="Back" onPress={() => navigation.goBack()} style={styles.half} />
-            <PrimaryButton label="Send OTP to Email" onPress={next} busy={busy} style={styles.half} />
-          </View>
-        </Card>
-      </ScrollView>
+      </Card>
 
       <AlertDialog
         visible={dialog !== null}
@@ -242,15 +240,11 @@ export default function SpocScreen({ navigation }: Props): React.JSX.Element {
         text={dialog?.text ?? ''}
         onClose={() => setDialog(null)}
       />
-    </KeyboardAvoidingView>
+    </RegShell>
   );
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1, backgroundColor: colour.page },
-  half: { flex: 1 },
-  page: { padding: space(4), paddingBottom: space(10) },
-
   panel: {
     backgroundColor: colour.greenTint,
     borderWidth: 1,
@@ -297,6 +291,4 @@ const styles = StyleSheet.create({
   optionCode: { fontSize: type.small, fontWeight: '700', color: colour.text },
   optionVenue: { fontSize: type.tiny, color: colour.muted, marginTop: space(1) },
   empty: { fontSize: type.tiny, color: colour.muted, paddingVertical: space(3) },
-
-  actions: { flexDirection: 'row', gap: space(3) },
 });

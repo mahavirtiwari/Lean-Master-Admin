@@ -13,7 +13,8 @@ import {
 import { ApiError } from '../api/client';
 import { complete, type RegistrationDraft } from '../api/registration';
 import { enqueue } from '../offline/db';
-import { AlertDialog, Card, GhostButton, OfflineBanner, PrimaryButton, StepHead } from '../components/ui';
+import { AlertDialog, Card, StepHead } from '../components/ui';
+import { RegShell, RegGhost, RegPrimary } from '../components/RegShell';
 import { useApp } from '../state/AppContext';
 import { colour, radius, space, type } from '../theme/theme';
 import type { RootStackParamList } from '../navigation/types';
@@ -43,7 +44,7 @@ const PLEDGE = [
 ];
 
 export default function PledgeScreen({ navigation }: Props): React.JSX.Element {
-  const { online, queued, draft, saveDraft, resetDraft, sync } = useApp();
+  const { online, draft, saveDraft, resetDraft, sync } = useApp();
 
   const stored = draft.payload.draft as RegistrationDraft | undefined;
 
@@ -187,11 +188,17 @@ export default function PledgeScreen({ navigation }: Props): React.JSX.Element {
   }
 
   return (
-    <View style={styles.flex}>
-      <OfflineBanner online={online} queued={queued} />
-
-      <ScrollView contentContainerStyle={styles.page}>
-        <Card>
+    <RegShell
+      title="LEAN Pledge"
+      step={8}
+      footer={
+        <>
+          <RegGhost label="Back" onPress={() => navigation.goBack()} />
+          <RegPrimary label="I/We Pledge" onPress={submit} busy={busy} disabled={!read} />
+        </>
+      }
+    >
+      <Card>
           <StepHead
             step={8}
             title="LEAN Pledge"
@@ -221,19 +228,7 @@ export default function PledgeScreen({ navigation }: Props): React.JSX.Element {
               I/We Pledge opens once the whole pledge has been shown. You can scroll ahead.
             </Text>
           )}
-
-          <View style={styles.actions}>
-            <GhostButton label="Back" onPress={() => navigation.goBack()} style={styles.half} />
-            <PrimaryButton
-              label="I/We Pledge"
-              onPress={submit}
-              busy={busy}
-              disabled={busy || !read}
-              style={styles.half}
-            />
-          </View>
-        </Card>
-      </ScrollView>
+      </Card>
 
       <AlertDialog
         visible={dialog !== null}
@@ -241,15 +236,11 @@ export default function PledgeScreen({ navigation }: Props): React.JSX.Element {
         text={dialog?.text ?? ''}
         onClose={() => setDialog(null)}
       />
-    </View>
+    </RegShell>
   );
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1, backgroundColor: colour.page },
-  half: { flex: 1 },
-  page: { padding: space(4), paddingBottom: space(10) },
-
   pledgeRead: { maxHeight: undefined },
 
   pledge: {
@@ -269,6 +260,4 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     marginTop: space(3),
   },
-
-  actions: { flexDirection: 'row', gap: space(3) },
 });

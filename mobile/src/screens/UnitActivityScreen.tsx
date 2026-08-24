@@ -1,6 +1,6 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import React, { useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
 import { ApiError } from '../api/client';
 import { queueUnit, saveUnit, type RegistrationDraft } from '../api/registration';
@@ -8,12 +8,10 @@ import {
   AlertDialog,
   Card,
   ChoiceCard,
-  GhostButton,
-  OfflineBanner,
-  PrimaryButton,
   SectionBand,
   StepHead,
 } from '../components/ui';
+import { RegShell, RegGhost, RegPrimary } from '../components/RegShell';
 import { useApp } from '../state/AppContext';
 import { colour, radius, space, type } from '../theme/theme';
 import type { RootStackParamList } from '../navigation/types';
@@ -21,7 +19,7 @@ import type { RootStackParamList } from '../navigation/types';
 type Props = NativeStackScreenProps<RootStackParamList, 'UnitActivity'>;
 
 export default function UnitActivityScreen({ navigation }: Props): React.JSX.Element {
-  const { online, queued, draft, saveDraft, sync } = useApp();
+  const { online, draft, saveDraft, sync } = useApp();
 
   const stored = draft.payload.draft as RegistrationDraft | undefined;
   const plants = stored?.plants ?? [];
@@ -114,11 +112,17 @@ export default function UnitActivityScreen({ navigation }: Props): React.JSX.Ele
   }
 
   return (
-    <View style={styles.flex}>
-      <OfflineBanner online={online} queued={queued} />
-
-      <ScrollView contentContainerStyle={styles.page}>
-        <Card>
+    <RegShell
+      title="Plant Location & Activity"
+      step={4}
+      footer={
+        <>
+          <RegGhost label="Back" onPress={() => navigation.goBack()} />
+          <RegPrimary label="Continue" onPress={next} busy={busy} />
+        </>
+      }
+    >
+      <Card>
           <StepHead
             step={4}
             title="Plant Location & Activity"
@@ -208,13 +212,7 @@ export default function UnitActivityScreen({ navigation }: Props): React.JSX.Ele
               Select a plant location above to see the activities recorded against it.
             </Text>
           )}
-
-          <View style={styles.actions}>
-            <GhostButton label="Back" onPress={() => navigation.goBack()} style={styles.half} />
-            <PrimaryButton label="Continue" onPress={next} busy={busy} style={styles.half} />
-          </View>
-        </Card>
-      </ScrollView>
+      </Card>
 
       <AlertDialog
         visible={dialog !== null}
@@ -222,15 +220,11 @@ export default function UnitActivityScreen({ navigation }: Props): React.JSX.Ele
         text={dialog?.text ?? ''}
         onClose={() => setDialog(null)}
       />
-    </View>
+    </RegShell>
   );
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1, backgroundColor: colour.page },
-  half: { flex: 1 },
-  page: { padding: space(4), paddingBottom: space(10) },
-
   name: { fontSize: type.small, fontWeight: '700', color: colour.text, lineHeight: 20 },
   addr: { fontSize: type.tiny, color: colour.muted, marginTop: space(1.5), lineHeight: 18 },
   warn: { fontSize: type.tiny, fontWeight: '600', color: colour.danger, marginTop: space(2) },
@@ -259,5 +253,4 @@ const styles = StyleSheet.create({
   nicValue: { fontSize: type.tiny, fontWeight: '600', color: colour.text, marginTop: space(1), lineHeight: 17 },
 
   pending: { fontSize: type.tiny, color: colour.muted, marginVertical: space(4) },
-  actions: { flexDirection: 'row', gap: space(3), marginTop: space(4) },
 });

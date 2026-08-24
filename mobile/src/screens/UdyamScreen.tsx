@@ -1,10 +1,11 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import React, { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { ApiError, OfflineError } from '../api/client';
 import { verifyUdyam } from '../api/registration';
-import { AlertDialog, Card, Field, OfflineBanner, PrimaryButton, StepHead } from '../components/ui';
+import { AlertDialog, Card, Field, StepHead } from '../components/ui';
+import { RegShell, RegGhost, RegPrimary } from '../components/RegShell';
 import { useApp } from '../state/AppContext';
 import { colour, radius, space, type } from '../theme/theme';
 import type { RootStackParamList } from '../navigation/types';
@@ -14,7 +15,7 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Udyam'>;
 const digits = (value: string, max: number): string => value.replace(/\D+/g, '').slice(0, max);
 
 export default function UdyamScreen({ navigation }: Props): React.JSX.Element {
-  const { online, queued, saveDraft } = useApp();
+  const { online, saveDraft } = useApp();
 
   const [udyam, setUdyam] = useState('');
   const [mobile, setMobile] = useState('');
@@ -84,58 +85,61 @@ export default function UdyamScreen({ navigation }: Props): React.JSX.Element {
   }
 
   return (
-    <View style={styles.flex}>
-      <OfflineBanner online={online} queued={queued} />
+    <RegShell
+      title="Udyam Verification"
+      step={2}
+      footer={
+        <>
+          <RegGhost label="Cancel" onPress={() => navigation.goBack()} />
+          <RegPrimary label="Validate" onPress={validate} busy={busy} />
+        </>
+      }
+    >
+      <Card>
+        <StepHead
+          step={2}
+          title="Udyam Verification"
+          subtitle="Enter the Udyam Registration Number and the mobile number registered against it"
+        />
 
-      <ScrollView contentContainerStyle={styles.page} keyboardShouldPersistTaps="handled">
-        <Card>
-          <StepHead
-            step={2}
-            title="Udyam Verification"
-            subtitle="Enter the Udyam Registration Number and the mobile number registered against it"
-          />
+        <View style={styles.notice}>
+          <Text style={styles.noticeText}>
+            Validation is done through the Udyam API by matching your mobile number to Udyam
+            records.
+          </Text>
+        </View>
 
-          <View style={styles.notice}>
-            <Text style={styles.noticeText}>
-              Validation is done through the Udyam API by matching your mobile number to Udyam
-              records.
-            </Text>
+        <Field
+          label="Udyam Registration Number"
+          required
+          value={udyam}
+          onChangeText={(v) => setUdyam(v.toUpperCase())}
+          autoCapitalize="characters"
+          autoCorrect={false}
+          placeholder="UDYAM-MH-26-0014582"
+          hint="Format: UDYAM-XX-00-XXXXXXX"
+        />
+
+        <Field
+          label="Udyam-registered mobile number"
+          required
+          value={mobile}
+          onChangeText={(v) => setMobile(digits(v, 10))}
+          keyboardType="number-pad"
+          placeholder="98765 43210"
+          error={mobileError}
+          hint="Must match the mobile recorded on the Udyam certificate"
+        />
+
+        <Pressable style={styles.check} onPress={() => setAuthorised((v) => !v)}>
+          <View style={[styles.box, authorised ? styles.boxOn : null]}>
+            {authorised ? <Text style={styles.tick}>✓</Text> : null}
           </View>
-
-          <Field
-            label="Udyam Registration Number"
-            required
-            value={udyam}
-            onChangeText={(v) => setUdyam(v.toUpperCase())}
-            autoCapitalize="characters"
-            autoCorrect={false}
-            placeholder="UDYAM-MH-26-0014582"
-            hint="Format: UDYAM-XX-00-XXXXXXX"
-          />
-
-          <Field
-            label="Udyam-registered mobile number"
-            required
-            value={mobile}
-            onChangeText={(v) => setMobile(digits(v, 10))}
-            keyboardType="number-pad"
-            placeholder="98765 43210"
-            error={mobileError}
-            hint="Must match the mobile recorded on the Udyam certificate"
-          />
-
-          <Pressable style={styles.check} onPress={() => setAuthorised((v) => !v)}>
-            <View style={[styles.box, authorised ? styles.boxOn : null]}>
-              {authorised ? <Text style={styles.tick}>✓</Text> : null}
-            </View>
-            <Text style={styles.checkText}>
-              I confirm that I am authorised to register this enterprise under the LEAN Scheme.
-            </Text>
-          </Pressable>
-
-          <PrimaryButton label="Validate" onPress={validate} busy={busy} />
-        </Card>
-      </ScrollView>
+          <Text style={styles.checkText}>
+            I confirm that I am authorised to register this enterprise under the LEAN Scheme.
+          </Text>
+        </Pressable>
+      </Card>
 
       <AlertDialog
         visible={dialog !== null}
@@ -143,14 +147,11 @@ export default function UdyamScreen({ navigation }: Props): React.JSX.Element {
         text={dialog?.text ?? ''}
         onClose={() => setDialog(null)}
       />
-    </View>
+    </RegShell>
   );
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1, backgroundColor: colour.page },
-  page: { padding: space(4), paddingBottom: space(10) },
-
   notice: {
     backgroundColor: colour.blueTint,
     borderWidth: 1,

@@ -1,10 +1,11 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import React, { useEffect, useState } from 'react';
-import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { API_BASE_URL } from '../config';
 import { applicantDocuments, type ApplicantDocument } from '../api/registration';
-import { Card, GhostButton, OfflineBanner, PrimaryButton } from '../components/ui';
+import { Card, GhostButton, PrimaryButton } from '../components/ui';
+import { RegShell } from '../components/RegShell';
 import { useApp } from '../state/AppContext';
 import { colour, radius, space, type } from '../theme/theme';
 import type { RootStackParamList } from '../navigation/types';
@@ -25,7 +26,7 @@ const LEVELS = [
 ];
 
 export default function RegisterLandingScreen({ navigation }: Props): React.JSX.Element {
-  const { online, queued, draft } = useApp();
+  const { draft } = useApp();
   const [guides, setGuides] = useState<ApplicantDocument[]>([]);
 
   useEffect(() => {
@@ -40,10 +41,7 @@ export default function RegisterLandingScreen({ navigation }: Props): React.JSX.
   const resuming = draft.sessionToken !== null && draft.step > 1;
 
   return (
-    <View style={styles.flex}>
-      <OfflineBanner online={online} queued={queued} />
-
-      <ScrollView contentContainerStyle={styles.page}>
+    <RegShell title="New Registration" step={1}>
         <Text style={styles.hero}>Register for the LEAN Scheme</Text>
         <Text style={styles.heroSub}>
           One registration covers all three certification levels. Apply for a level later from your
@@ -122,14 +120,12 @@ export default function RegisterLandingScreen({ navigation }: Props): React.JSX.
             </View>
           </View>
         ))}
-      </ScrollView>
-    </View>
+    </RegShell>
   );
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1, backgroundColor: colour.page },
-  page: { padding: space(4), paddingBottom: space(10) },
+  flex: { flex: 1 },
 
   hero: { fontSize: type.hero, fontWeight: '700', color: colour.text, lineHeight: 32 },
   heroSub: { fontSize: type.small, color: colour.muted, marginTop: space(2), lineHeight: 20 },

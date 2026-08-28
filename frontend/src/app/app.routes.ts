@@ -102,9 +102,8 @@ export const routes: Routes = [
   {
     path: 'msme/documents',
     canActivate: [authGuard],
-    data: { title: 'My Documents', glyph: '🗂️' },
     loadComponent: () =>
-      import('./features/registration/msme-coming-soon.component').then((m) => m.MsmeComingSoonComponent),
+      import('./features/registration/msme-documents.component').then((m) => m.MsmeDocumentsComponent),
   },
   {
     path: 'msme/payments',
@@ -116,9 +115,8 @@ export const routes: Routes = [
   {
     path: 'msme/profile',
     canActivate: [authGuard],
-    data: { title: 'View Profile', glyph: '👤' },
     loadComponent: () =>
-      import('./features/registration/msme-coming-soon.component').then((m) => m.MsmeComingSoonComponent),
+      import('./features/registration/msme-profile.component').then((m) => m.MsmeProfileComponent),
   },
   {
     path: 'msme/help',

@@ -64,21 +64,23 @@ import { AuthService } from '../../core/auth.service';
   styles: [
     `
       :host { display: block; }
+      /* Geometry matched to the registration header (.pub-head) so the logos
+         sit in the same place and switching screens does not make them jump:
+         full width, 88px tall, MCLS 54px, Ministry 46px, a 44px divider. */
       .mh {
         background: #fff;
         border-bottom: 3px solid #0f7b45;
       }
       .mh-inner {
-        max-width: 1512px;
-        margin: 0 auto;
         display: flex;
         align-items: center;
-        gap: 18px;
-        padding: 12px 40px;
+        gap: 22px;
+        height: 88px;
+        padding: 0 40px;
       }
-      .mh-mcls { height: 44px; width: auto; }
-      .mh-div { width: 1px; height: 40px; background: #d9ebe1; }
-      .mh-min { height: 44px; width: auto; }
+      .mh-mcls { height: 54px; width: auto; object-fit: contain; }
+      .mh-div { width: 1px; height: 44px; background: #c6d3cb; }
+      .mh-min { height: 46px; width: auto; object-fit: contain; }
       .mh-spacer { flex: 1; }
 
       .mh-link {
@@ -114,7 +116,8 @@ import { AuthService } from '../../core/auth.service';
       .mh-signin { cursor: pointer; font-size: 14px; font-weight: 700; color: #1b4f8a; padding: 6px 4px; }
 
       @media (max-width: 700px) {
-        .mh-inner { padding: 10px 16px; gap: 12px; }
+        .mh-inner { padding: 0 16px; gap: 12px; height: 72px; }
+        .mh-mcls { height: 38px; }
         .mh-min { display: none; }
         .mh-name, .mh-id { display: none; }
       }

@@ -33,8 +33,6 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
         border-bottom: 1px solid #d9ebe1;
       }
       .sm-inner {
-        max-width: 1512px;
-        margin: 0 auto;
         display: flex;
         gap: 6px;
         padding: 0 40px;

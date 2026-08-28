@@ -44,11 +44,11 @@ import { MsmeMastheadComponent } from './msme-masthead.component';
               <label class="rp-label" for="pw">NEW PASSWORD <span class="rp-req">*</span></label>
               <div class="rp-field">
                 <input id="pw" class="rp-input" [type]="show() ? 'text' : 'password'"
-                       autocomplete="new-password" placeholder="At least 12 characters"
+                       autocomplete="new-password" placeholder="At least 8 characters"
                        [value]="password()" (input)="password.set($any($event.target).value)" />
                 <button class="rp-eye" type="button" (click)="show.set(!show())">{{ show() ? 'Hide' : 'Show' }}</button>
               </div>
-              <p class="rp-hint">At least 12 characters, with an uppercase and a lowercase letter, a number and a symbol.</p>
+              <p class="rp-hint">At least 8 characters, with an uppercase and a lowercase letter, a number and a symbol.</p>
 
               <label class="rp-label" for="cpw">CONFIRM PASSWORD <span class="rp-req">*</span></label>
               <div class="rp-field">
@@ -100,11 +100,11 @@ export class MsmeResetCompleteComponent {
     if (this.busy()) return;
     const pw = this.password();
 
-    // Mirror the portal's Identity policy (Program.cs): 12+ chars with an
+    // Mirror the portal's Identity policy (Program.cs): 8+ chars with an
     // uppercase and a lowercase letter, a digit and a symbol — the same rule
     // super-admin passwords follow, so the front end guides before the server
     // rejects.
-    if (pw.length < 12) { this.error.set('Use at least 12 characters.'); return; }
+    if (pw.length < 8) { this.error.set('Use at least 8 characters.'); return; }
     if (!/[A-Z]/.test(pw) || !/[a-z]/.test(pw) || !/\d/.test(pw) || !/[^A-Za-z0-9]/.test(pw)) {
       this.error.set('Include an uppercase and a lowercase letter, a number and a symbol.');
       return;

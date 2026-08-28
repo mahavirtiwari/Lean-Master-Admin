@@ -493,7 +493,7 @@ public sealed class RefreshRequest
 public sealed class ChangePasswordRequest
 {
     [Required] public string CurrentPassword { get; set; } = string.Empty;
-    [Required, MinLength(12)] public string NewPassword { get; set; } = string.Empty;
+    [Required, MinLength(8)] public string NewPassword { get; set; } = string.Empty;
 }
 
 public sealed class ForgotPasswordRequest
@@ -506,7 +506,7 @@ public sealed class ResetPasswordRequest
 {
     [Required, StringLength(40)] public string UserId { get; set; } = string.Empty;
     [Required] public string Token { get; set; } = string.Empty;
-    [Required, MinLength(12)] public string NewPassword { get; set; } = string.Empty;
+    [Required, MinLength(8)] public string NewPassword { get; set; } = string.Empty;
 }
 
 public sealed class LoginResponse

@@ -52,7 +52,7 @@ builder.Services
         // Deliberately stricter than the ASP.NET defaults: this is a
         // government portal with externally-facing accounts. The values are
         // also mirrored in Settings > System so they can be reported on.
-        options.Password.RequiredLength = 12;
+        options.Password.RequiredLength = 8;
         options.Password.RequireDigit = true;
         options.Password.RequireLowercase = true;
         options.Password.RequireUppercase = true;

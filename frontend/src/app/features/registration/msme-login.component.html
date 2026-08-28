@@ -217,7 +217,10 @@
             </div>
 
             <div class="field">
-              <label class="field-label" for="password">PASSWORD</label>
+              <div class="label-row">
+                <label class="field-label" for="password">PASSWORD</label>
+                <button class="forgot-link" type="button" (click)="forgotPassword()">Forgot password?</button>
+              </div>
 
               <div class="input-wrap">
                 <svg class="lead-icon" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
@@ -329,8 +332,6 @@
             @if (error()) {
               <div class="login-error" role="alert">{{ error() }}</div>
             }
-
-            <button class="forgot-link" type="button" (click)="forgotPassword()">Forgot password?</button>
 
             <button class="signin-btn" type="submit" [disabled]="busy()">
               {{ busy() ? 'Signing in…' : 'Sign in' }}

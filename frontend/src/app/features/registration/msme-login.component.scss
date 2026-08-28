@@ -626,15 +626,22 @@
   }
 }
 
+// "Forgot password?" sits on the PASSWORD label row, right-aligned, as a plain
+// text link — the same placement as the admin login.
+.label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
 .forgot-link {
-  display: block;
-  margin: 0 0 14px auto;
   background: none;
   border: none;
   padding: 0;
-  font-size: 13px;
-  font-weight: 600;
-  color: #1b4f8a;
   cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  color: #1b4f8a;
 }
 .forgot-link:hover { text-decoration: underline; }

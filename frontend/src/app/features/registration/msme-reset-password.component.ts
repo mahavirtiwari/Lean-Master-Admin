@@ -99,11 +99,6 @@ interface AccountsResponse {
               </button>
             }
 
-            <div class="rp-deliver">
-              <span class="rp-deliver-ic">✉</span>
-              The link goes only to the SPOC email of the plant you select — {{ chosen()?.maskedEmail }}
-            </div>
-
             @if (error()) { <div class="rp-error" role="alert">{{ error() }}</div> }
 
             <button class="rp-btn" type="button" [disabled]="busy() || !selected()" (click)="sendReset(selected())">

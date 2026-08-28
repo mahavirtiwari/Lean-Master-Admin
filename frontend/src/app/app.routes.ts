@@ -73,6 +73,18 @@ export const routes: Routes = [
       ),
   },
 
+  // Where the emailed reset link lands — /reset-password?userId=…&token=…. Public
+  // (the applicant is not signed in) and shared by applicant and staff accounts;
+  // without it the link fell through to the wildcard and bounced to the landing
+  // page. It completes the reset against POST /auth/reset-password.
+  {
+    path: 'reset-password',
+    loadComponent: () =>
+      import('./features/registration/msme-reset-complete.component').then(
+        (m) => m.MsmeResetCompleteComponent,
+      ),
+  },
+
   // The post-registration Silver application and its payment, on web. Guarded
   // like the applicant dashboard — an MSME session reaches them.
   {

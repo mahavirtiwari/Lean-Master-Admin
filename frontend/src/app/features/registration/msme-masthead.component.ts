@@ -26,7 +26,6 @@ import { AuthService } from '../../core/auth.service';
         <span class="mh-spacer"></span>
 
         <button class="mh-link" type="button" (click)="help()">Help</button>
-        <button class="mh-link mh-lang" type="button" title="Language">English (EN)</button>
 
         @if (mode() === 'app') {
           <button class="mh-bell" type="button" aria-label="Notifications">
@@ -76,7 +75,9 @@ import { AuthService } from '../../core/auth.service';
         align-items: center;
         gap: 22px;
         height: 88px;
-        padding: 0 40px;
+        /* Extra right room so Help / Sign in / the user chip clear the floating
+           Bhashini language widget that sits fixed in the top-right corner. */
+        padding: 0 150px 0 40px;
       }
       .mh-mcls { height: 54px; width: auto; object-fit: contain; }
       .mh-div { width: 1px; height: 44px; background: #c6d3cb; }
@@ -116,7 +117,7 @@ import { AuthService } from '../../core/auth.service';
       .mh-signin { cursor: pointer; font-size: 14px; font-weight: 700; color: #1b4f8a; padding: 6px 4px; }
 
       @media (max-width: 700px) {
-        .mh-inner { padding: 0 16px; gap: 12px; height: 72px; }
+        .mh-inner { padding: 0 120px 0 16px; gap: 12px; height: 72px; }
         .mh-mcls { height: 38px; }
         .mh-min { display: none; }
         .mh-name, .mh-id { display: none; }

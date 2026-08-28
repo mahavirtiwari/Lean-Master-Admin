@@ -298,6 +298,7 @@ public sealed class AuthController(
                 new Dictionary<string, string>
                 {
                     ["user_name"] = user.FullName,
+                    ["lean_id"] = user.UserCode,
                     ["reset_url"] = resetUrl,
                     ["expiry_minutes"] = "60",
                 }, ct);

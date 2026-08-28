@@ -147,9 +147,10 @@ USING (VALUES
      N'Reset your MCLS portal password',
      N'<p>Dear {{user_name}},</p>
 <p>A password reset was requested for your account. Use the link below within {{expiry_minutes}} minutes:</p>
+<p>Your LEAN ID: <strong>{{lean_id}}</strong></p>
 <p><a href="{{reset_url}}">Reset password</a></p>
 <p>If you did not request this, no action is needed and your password is unchanged.</p>',
-     N'{{user_name}},{{reset_url}},{{expiry_minutes}}', 1),
+     N'{{user_name}},{{lean_id}},{{reset_url}},{{expiry_minutes}}', 1),
 
     ('USER_DISABLED', N'Account disabled',
      N'Your MCLS portal account has been disabled',

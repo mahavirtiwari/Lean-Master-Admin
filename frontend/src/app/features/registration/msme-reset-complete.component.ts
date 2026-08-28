@@ -44,10 +44,11 @@ import { MsmeMastheadComponent } from './msme-masthead.component';
               <label class="rp-label" for="pw">NEW PASSWORD <span class="rp-req">*</span></label>
               <div class="rp-field">
                 <input id="pw" class="rp-input" [type]="show() ? 'text' : 'password'"
-                       autocomplete="new-password" placeholder="At least 8 characters"
+                       autocomplete="new-password" placeholder="At least 12 characters"
                        [value]="password()" (input)="password.set($any($event.target).value)" />
                 <button class="rp-eye" type="button" (click)="show.set(!show())">{{ show() ? 'Hide' : 'Show' }}</button>
               </div>
+              <p class="rp-hint">At least 12 characters, with an uppercase and a lowercase letter, a number and a symbol.</p>
 
               <label class="rp-label" for="cpw">CONFIRM PASSWORD <span class="rp-req">*</span></label>
               <div class="rp-field">
@@ -98,7 +99,16 @@ export class MsmeResetCompleteComponent {
   submit(): void {
     if (this.busy()) return;
     const pw = this.password();
-    if (pw.length < 8) { this.error.set('Use at least 8 characters.'); return; }
+
+    // Mirror the portal's Identity policy (Program.cs): 12+ chars with an
+    // uppercase and a lowercase letter, a digit and a symbol — the same rule
+    // super-admin passwords follow, so the front end guides before the server
+    // rejects.
+    if (pw.length < 12) { this.error.set('Use at least 12 characters.'); return; }
+    if (!/[A-Z]/.test(pw) || !/[a-z]/.test(pw) || !/\d/.test(pw) || !/[^A-Za-z0-9]/.test(pw)) {
+      this.error.set('Include an uppercase and a lowercase letter, a number and a symbol.');
+      return;
+    }
     if (pw !== this.confirm()) { this.error.set('The two passwords do not match.'); return; }
 
     this.busy.set(true);
@@ -110,11 +120,27 @@ export class MsmeResetCompleteComponent {
       newPassword: pw,
     }).subscribe({
       next: () => { this.busy.set(false); this.done.set(true); },
-      error: (r: { error?: { message?: string; errors?: string[] } }) => {
+      error: (r: { error?: { message?: string; errors?: unknown } }) => {
         this.busy.set(false);
-        this.error.set(r.error?.errors?.[0] ?? r.error?.message ?? 'The reset link is invalid or has expired. Request a new one.');
+        this.error.set(this.firstError(r.error));
       },
     });
+  }
+
+  /**
+   * Surfaces the real reason. The API answers with either the controller's
+   * { message, errors: string[] } or ASP.NET's ProblemDetails
+   * { errors: { Field: string[] } }; the old code read neither, so a
+   * too-short password showed the misleading "invalid or expired" instead.
+   */
+  private firstError(e?: { message?: string; errors?: unknown }): string {
+    const errs = e?.errors;
+    if (Array.isArray(errs) && errs.length) return String(errs[0]);
+    if (errs && typeof errs === 'object') {
+      const first = Object.values(errs as Record<string, string[]>)[0];
+      if (Array.isArray(first) && first.length) return first[0];
+    }
+    return e?.message ?? 'The reset link is invalid or has expired. Request a new one.';
   }
 
   /** LEAN IDs sign in on the applicant portal; staff codes on the admin login. */

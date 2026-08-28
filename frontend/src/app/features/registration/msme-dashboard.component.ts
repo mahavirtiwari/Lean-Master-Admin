@@ -4,6 +4,8 @@ import { Router } from '@angular/router';
 
 import { environment } from '../../../environments/environment';
 import { AuthService } from '../../core/auth.service';
+import { MsmeMastheadComponent } from './msme-masthead.component';
+import { MsmeSectionMenuComponent } from './msme-section-menu.component';
 
 /** What the dashboard endpoint returns. */
 export interface MsmeDashboard {
@@ -78,7 +80,7 @@ export interface MsmeDashboard {
  */
 @Component({
   selector: 'app-msme-dashboard',
-  imports: [],
+  imports: [MsmeMastheadComponent, MsmeSectionMenuComponent],
   templateUrl: './msme-dashboard.component.html',
   styleUrl: './msme-dashboard.component.scss',
 })

@@ -3,6 +3,8 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { environment } from '../../../environments/environment';
+import { MsmeMastheadComponent } from './msme-masthead.component';
+import { MsmeSectionMenuComponent } from './msme-section-menu.component';
 
 interface AppConfig {
   basicInfo: {
@@ -35,7 +37,7 @@ interface Submission {
  */
 @Component({
   selector: 'app-msme-application',
-  imports: [],
+  imports: [MsmeMastheadComponent, MsmeSectionMenuComponent],
   templateUrl: './msme-application.component.html',
   styleUrl: './msme-application.component.scss',
 })

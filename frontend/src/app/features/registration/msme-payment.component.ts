@@ -4,6 +4,7 @@ import { Component, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { environment } from '../../../environments/environment';
+import { MsmeMastheadComponent } from './msme-masthead.component';
 
 interface Fee {
   gross: number;
@@ -30,7 +31,7 @@ type Stage = 'loading' | 'methods' | 'processing' | 'success' | 'failed' | 'noth
  */
 @Component({
   selector: 'app-msme-payment',
-  imports: [DatePipe],
+  imports: [DatePipe, MsmeMastheadComponent],
   templateUrl: './msme-payment.component.html',
   styleUrl: './msme-payment.component.scss',
 })

@@ -88,6 +88,46 @@ export const routes: Routes = [
       import('./features/registration/msme-payment.component').then((m) => m.MsmePaymentComponent),
   },
 
+  // Section-menu destinations whose full web screens are not built yet. They
+  // carry the same masthead + section menu so the chrome is complete and no tab
+  // is a dead link, and point people at where the data lives (the mobile app,
+  // for LEAN Silver).
+  {
+    path: 'msme/certificates',
+    canActivate: [authGuard],
+    data: { title: 'My Certificates', glyph: '🏅' },
+    loadComponent: () =>
+      import('./features/registration/msme-coming-soon.component').then((m) => m.MsmeComingSoonComponent),
+  },
+  {
+    path: 'msme/documents',
+    canActivate: [authGuard],
+    data: { title: 'My Documents', glyph: '🗂️' },
+    loadComponent: () =>
+      import('./features/registration/msme-coming-soon.component').then((m) => m.MsmeComingSoonComponent),
+  },
+  {
+    path: 'msme/payments',
+    canActivate: [authGuard],
+    data: { title: 'Payments', glyph: '₹' },
+    loadComponent: () =>
+      import('./features/registration/msme-coming-soon.component').then((m) => m.MsmeComingSoonComponent),
+  },
+  {
+    path: 'msme/profile',
+    canActivate: [authGuard],
+    data: { title: 'View Profile', glyph: '👤' },
+    loadComponent: () =>
+      import('./features/registration/msme-coming-soon.component').then((m) => m.MsmeComingSoonComponent),
+  },
+  {
+    path: 'msme/help',
+    canActivate: [authGuard],
+    data: { title: 'Help & Support', glyph: '💬' },
+    loadComponent: () =>
+      import('./features/registration/msme-coming-soon.component').then((m) => m.MsmeComingSoonComponent),
+  },
+
   {
     path: 'login',
     loadComponent: () => import('./features/auth/login.component').then((m) => m.LoginComponent),

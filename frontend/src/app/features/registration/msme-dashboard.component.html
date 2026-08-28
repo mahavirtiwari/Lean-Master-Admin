@@ -1,30 +1,16 @@
-<!-- ================================================== public header (D1) == -->
-<header class="pub-head">
-  <img class="head-lean" src="assets/mcls-logo.png"
-       alt="MSME Competitive (LEAN) Scheme — MCLS" />
-  <span class="head-rule"></span>
-  <a href="https://www.msme.gov.in/" target="_blank" rel="noopener noreferrer" title="Ministry of MSME">
-    <img class="head-logo" src="assets/msme-logo.svg"
-         alt="Ministry of Micro, Small &amp; Medium Enterprises" />
-  </a>
-
-  <div class="spacer"></div>
-
-  <button class="head-link" type="button" (click)="help()">Help</button>
-
-  <!-- The enterprise chip the artboard sets at the right of the bar. -->
-  <div class="who">
-    <span class="who-mark">{{ initials() }}</span>
-    <span class="who-text">
-      <span class="who-name">{{ data()?.enterprise?.name || '—' }}</span>
-      <span class="who-id">{{ data()?.enterprise?.leanId || '' }}</span>
-    </span>
-  </div>
-
-  <button class="head-signin" type="button" (click)="signOut()">Sign out</button>
-</header>
+<!-- ============================================ masthead + section menu == -->
+<app-msme-masthead
+  mode="app"
+  [name]="data()?.enterprise?.name || ''"
+  [leanId]="data()?.enterprise?.leanId || ''"
+  [initials]="initials()"
+/>
+<app-msme-section-menu />
 
 <main class="pub-body dash-body">
+  <div class="dash-crumb">Home <span>›</span> Dashboard</div>
+  <h1 class="dash-h1">Home</h1>
+
   @if (loading()) {
     <p class="dash-loading">Loading your dashboard…</p>
   } @else if (error(); as message) {

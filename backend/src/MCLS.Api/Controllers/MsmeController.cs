@@ -151,9 +151,9 @@ public sealed class MsmeController(
             })
             .ToListAsync(ct);
 
-        // The lowest level is open from the start. A higher one opens when the
-        // level below it has been certified — which is the rule the artboard
-        // draws as "Requires Intermediate certificate" on the top card.
+        // Bronze and Silver are both open from the start; Gold opens only once
+        // Silver has been certified (Gold eligibility = Silver completed). A
+        // level with a live application shows that application's state instead.
         var certified = applications
             .Where(a => a.CertifiedOnUtc != null)
             .Select(a => a.CertificationLevelId)
@@ -163,7 +163,7 @@ public sealed class MsmeController(
         {
             var application = applications.FirstOrDefault(a => a.CertificationLevelId == l.CertificationLevelId);
             var previous = index == 0 ? null : levels[index - 1];
-            var open = index == 0 || (previous is not null && certified.Contains(previous.CertificationLevelId));
+            var open = index <= 1 || (previous is not null && certified.Contains(previous.CertificationLevelId));
 
             return new
             {

@@ -6,6 +6,7 @@ import { environment } from '../../../environments/environment';
 import { AuthService } from '../../core/auth.service';
 import { MsmeMastheadComponent } from './msme-masthead.component';
 import { MsmeSectionMenuComponent } from './msme-section-menu.component';
+import { MsmeSidebarComponent } from './msme-sidebar.component';
 
 /** What the dashboard endpoint returns. */
 export interface MsmeDashboard {
@@ -80,7 +81,7 @@ export interface MsmeDashboard {
  */
 @Component({
   selector: 'app-msme-dashboard',
-  imports: [MsmeMastheadComponent, MsmeSectionMenuComponent],
+  imports: [MsmeMastheadComponent, MsmeSectionMenuComponent, MsmeSidebarComponent],
   templateUrl: './msme-dashboard.component.html',
   styleUrl: './msme-dashboard.component.scss',
 })
@@ -160,6 +161,45 @@ export class MsmeDashboardComponent {
     } else {
       window.alert(`${level.name} is completed on the MSME LEAN mobile app.`);
     }
+  }
+
+  // ---- certification card presentation (deck H00/H02) ----
+
+  stateClass(state: string): string {
+    switch (state) {
+      case 'Certified': return 's-done';
+      case 'In progress': return 's-prog';
+      case 'Locked': return 's-lock';
+      default: return 's-open';
+    }
+  }
+
+  stateIcon(state: string): string {
+    return state === 'Certified' ? '✓' : state === 'Locked' ? '🔒' : '→';
+  }
+
+  stateLabel(state: string): string {
+    switch (state) {
+      case 'Certified': return 'Completed';
+      case 'In progress': return 'In progress';
+      case 'Locked': return 'Locked';
+      default: return 'Not started';
+    }
+  }
+
+  levelNote(level: { state: string; requiresBefore: string | null; cost: string }): string {
+    if (level.state === 'Locked' && level.requiresBefore) return `Needs a valid ${level.requiresBefore} certificate`;
+    return level.cost === 'FREE' ? 'Five self-paced courses, exam each' : 'Handholding, then assessment';
+  }
+
+  /** A glyph for an incentive group, from its code — matching the deck's icons. */
+  groupGlyph(code: string): string {
+    const c = (code || '').toUpperCase();
+    if (c.includes('TECH')) return '⚙️';
+    if (c.includes('TEST') || c.includes('CERT') || c.includes('PROD')) return '🧪';
+    if (c.includes('STATE')) return '🏛️';
+    if (c.includes('MARKET')) return '📣';
+    return '★';
   }
 
   constructor() {

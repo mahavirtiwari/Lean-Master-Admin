@@ -9,7 +9,7 @@
 
 <main class="pub-body dash-body">
   <div class="dash-crumb">Home <span>›</span> Dashboard</div>
-  <h1 class="dash-h1">Home</h1>
+  <h1 class="dash-h1">Dashboard</h1>
 
   @if (loading()) {
     <p class="dash-loading">Loading your dashboard…</p>
@@ -20,180 +20,79 @@
     </div>
   } @else if (data(); as d) {
     <div class="dash-grid">
-      <!-- ------------------------------------------- left: the enterprise -->
-      <aside class="card profile">
-        <div class="profile-head">
-          <span class="profile-mark">{{ initials() }}</span>
-          <div>
-            <div class="profile-name">{{ d.enterprise.name }}</div>
-            <div class="profile-chips">
-              @if (d.enterprise.size) {
-                <span class="chip chip-size">{{ d.enterprise.size.toUpperCase() }}</span>
-              }
-              <span class="chip" [class.chip-on]="d.enterprise.isActive">
-                {{ d.enterprise.isActive ? 'Active' : 'Inactive' }}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <div class="fact">
-          <span class="fact-key">LEAN ID</span>
-          <span class="fact-value">{{ d.enterprise.leanId }}</span>
-        </div>
-        <div class="fact">
-          <span class="fact-key">UDYAM NUMBER</span>
-          <span class="fact-value">{{ d.enterprise.udyamNumber }}</span>
-        </div>
-        <div class="fact">
-          <span class="fact-key">ENTREPRENEUR</span>
-          <span class="fact-value">{{ d.enterprise.entrepreneur || '—' }}</span>
-        </div>
-        <div class="fact">
-          <span class="fact-key">REGISTERED ON</span>
-          <span class="fact-value">{{ formatDate(d.enterprise.registeredOn) }}</span>
-        </div>
-        <div class="fact">
-          <span class="fact-key">SELECTED UNIT</span>
-          <span class="fact-value">{{ unitLine() }}</span>
-        </div>
-        <div class="fact">
-          <span class="fact-key">ACTIVITY / NIC</span>
-          <span class="fact-value">{{ d.enterprise.activity || '—' }}</span>
-          <span class="nic-chips">
-            @if (d.enterprise.nicTwoDigit) { <span class="nic-chip">{{ d.enterprise.nicTwoDigit }}</span> }
-            @if (d.enterprise.nicFourDigit) { <span class="nic-chip">{{ d.enterprise.nicFourDigit }}</span> }
-            @if (d.enterprise.nicFiveDigit) { <span class="nic-chip">{{ d.enterprise.nicFiveDigit }}</span> }
-          </span>
-        </div>
-
-        <!-- The pledge accepted at registration. Generated when it is asked
-             for, so it always carries the details above. -->
-        <button class="btn-ghost profile-pledge" type="button"
-                [disabled]="downloading()" (click)="downloadPledge()">
-          {{ downloading() ? 'Preparing…' : 'Download LEAN Pledge' }}
-        </button>
-      </aside>
+      <!-- left: the shared enterprise column (deck H00) -->
+      <app-msme-sidebar />
 
       <!-- ------------------------------------------------ right: the work -->
       <section class="dash-main">
-        <div class="dash-head">
-          <div>
-            <h1 class="dash-title">Dashboard</h1>
-            <p class="dash-sub">
-              @if (nextLevel(); as next) {
-                Your registration is complete. Start with {{ next.name }}.
-              } @else {
-                Your registration is complete.
-              }
-            </p>
+        <!-- ------------------------------------------- My Certifications -->
+        <section class="panel panel-green">
+          <div class="panel-head">
+            <h2 class="panel-title">My Certifications</h2>
+            <p class="panel-sub">Apply for Bronze, Silver or Gold certification.</p>
           </div>
 
-          @if (nextLevel(); as next) {
-            <button class="btn-primary" type="button" (click)="apply(next)">Apply for {{ next.name }}</button>
-          }
-        </div>
+          <div class="cert-grid">
+            @for (level of d.levels; track level.code) {
+              <article class="cert" [attr.data-lvl]="level.code.toLowerCase()">
+                <span class="cert-cap"></span>
+                <img class="cert-mark" src="assets/mcls-logo.png" alt="" />
+                <div class="cert-name">{{ level.name }}</div>
 
-        <h2 class="dash-section">My Certification</h2>
-
-        <div class="levels-grid">
-          @for (level of d.levels; track level.code) {
-            <article class="lvl" [class.is-locked]="level.state === 'Locked'">
-              <div class="lvl-head">
-                <span class="lvl-name">{{ level.name }}</span>
-                <span class="lvl-state" [class.on]="level.state !== 'Locked'">{{ level.state }}</span>
-              </div>
-
-              <div class="lvl-tags">
-                <span class="tag tag-blue">{{ level.delivery }}</span>
-                <span class="tag" [class.tag-free]="level.cost === 'FREE'"
-                      [class.tag-paid]="level.cost !== 'FREE'">{{ level.cost }}</span>
-              </div>
-
-              <p class="lvl-note">
-                @if (level.requiresBefore) {
-                  Requires the {{ level.requiresBefore }} certificate before it can be applied for.
-                } @else if (level.cost === 'FREE') {
-                  Self-paced courses with an online exam. A certificate is issued per course.
-                } @else {
-                  Handholding across milestones, followed by an independent assessment.
-                }
-              </p>
-
-              @if (level.applicationNo) {
-                <p class="lvl-app">{{ level.applicationNo }} · {{ level.applicationStatus }}</p>
-              }
-
-              <button class="lvl-btn" type="button"
-                      [class.is-off]="level.state === 'Locked'"
-                      [disabled]="level.state === 'Locked'">
-                @if (level.state === 'Locked') {
-                  Complete {{ level.requiresBefore }} first
-                } @else if (level.applicationNo) {
-                  View application
-                } @else {
-                  Apply for {{ level.name }}
-                }
-              </button>
-            </article>
-          }
-        </div>
-
-        <!-- The amber note the artboard sets above the incentive list. -->
-        <div class="dash-warn">
-          Incentives stay locked until an assessed level is certified. The entry level does not
-          activate them.
-        </div>
-
-        <div class="dash-head">
-          <h2 class="dash-section">My Incentives</h2>
-          <span class="dash-count">{{ d.incentives.groups.length }} benefit groups</span>
-        </div>
-
-        <!-- Each box is a card; the incentives inside it are its contents. A
-             box with nothing published yet still appears — it is part of what
-             the scheme offers, and its emptiness is information. -->
-        @for (group of d.incentives.groups; track group.categoryId) {
-          <article class="ben-card" [style.--accent]="group.accent">
-            <header class="ben-card-head">
-              <div>
-                <div class="ben-name">{{ group.name }}</div>
-                @if (group.partners) {
-                  <div class="ben-note">{{ group.partners }}</div>
-                }
-              </div>
-
-              <span class="ben-state" [class.is-on]="group.unlockedCount > 0">
-                {{ group.unlockedCount > 0 ? group.unlockedCount + ' available' : 'Locked' }}
-              </span>
-            </header>
-
-            @for (item of group.items; track item.incentiveId) {
-              <div class="ben-item" [class.is-locked]="!item.unlocked">
-                <span class="ben-mark"></span>
-                <div class="ben-text">
-                  <div class="ben-item-name">{{ item.name }}</div>
-                  <div class="ben-note">
-                    {{ item.stakeholder }} · unlocks at
-                    {{ item.activation === 'Both' ? 'Silver or Gold' : item.activation }}
-                  </div>
+                <div class="cert-state" [class]="stateClass(level.state)">
+                  <span class="cert-state-ic">{{ stateIcon(level.state) }}</span> {{ stateLabel(level.state) }}
                 </div>
 
-                @if (item.unlocked && item.externalUrl) {
-                  <a class="ben-link" [href]="item.externalUrl" target="_blank" rel="noopener">
-                    Apply →
-                  </a>
-                } @else {
-                  <span class="ben-state">{{ item.unlocked ? 'Available' : 'Locked' }}</span>
+                <div class="cert-track">
+                  @for (i of [0,1,2,3,4]; track i) { <span class="cert-dot"></span> }
+                </div>
+
+                <p class="cert-note">{{ levelNote(level) }}</p>
+
+                @if (level.applicationNo) {
+                  <p class="cert-app">{{ level.applicationNo }} · {{ level.applicationStatus }}</p>
                 }
-              </div>
-            } @empty {
-              <p class="ben-empty">Nothing published in this group yet.</p>
+
+                <div class="cert-foot">
+                  <button class="cert-details" type="button" (click)="apply(level)">VIEW DETAILS</button>
+                  @if (level.state === 'Locked') {
+                    <button class="cert-apply is-off" type="button" disabled>Apply</button>
+                  } @else if (level.applicationNo) {
+                    <button class="cert-apply" type="button" (click)="apply(level)">View</button>
+                  } @else {
+                    <button class="cert-apply" type="button" (click)="apply(level)">Apply</button>
+                  }
+                </div>
+              </article>
             }
-          </article>
-        } @empty {
-          <p class="dash-empty">No incentives have been published yet.</p>
-        }
+          </div>
+        </section>
+
+        <!-- ------------------------------------------------ My Incentives -->
+        <section class="panel panel-blue">
+          <div class="panel-head">
+            <h2 class="panel-title">My Incentives</h2>
+            <p class="panel-sub">Certify at Silver or Gold to unlock these.</p>
+          </div>
+
+          <div class="inc-grid">
+            @for (group of d.incentives.groups; track group.categoryId) {
+              <article class="inc">
+                <div class="inc-ic">{{ groupGlyph(group.code) }}</div>
+                <div class="inc-name">{{ group.name }}</div>
+                <p class="inc-desc">{{ group.description || group.partners || '' }}</p>
+                <div class="inc-foot">
+                  <span class="inc-details">VIEW DETAILS</span>
+                  <span class="inc-avail" [class.is-off]="group.unlockedCount === 0">
+                    {{ group.unlockedCount > 0 ? 'Avail' : 'Locked' }}
+                  </span>
+                </div>
+              </article>
+            } @empty {
+              <p class="dash-empty">No incentives have been published yet.</p>
+            }
+          </div>
+        </section>
       </section>
     </div>
   }

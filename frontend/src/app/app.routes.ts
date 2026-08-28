@@ -129,13 +129,6 @@ export const routes: Routes = [
       import('./features/registration/msme-profile.component').then((m) => m.MsmeProfileComponent),
   },
   {
-    path: 'msme/help',
-    canActivate: [authGuard],
-    loadComponent: () =>
-      import('./features/registration/msme-help.component').then((m) => m.MsmeHelpComponent),
-  },
-
-  {
     path: 'login',
     loadComponent: () => import('./features/auth/login.component').then((m) => m.LoginComponent),
   },

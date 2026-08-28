@@ -12,15 +12,19 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
   template: `
     <nav class="sm">
       <div class="sm-inner">
-        @for (t of tabs; track t.path) {
-          <a
-            class="sm-tab"
-            [routerLink]="t.path"
-            routerLinkActive="is-active"
-            [routerLinkActiveOptions]="{ exact: false }"
-          >
-            {{ t.label }}
-          </a>
+        @for (t of tabs; track t.label) {
+          @if (t.external) {
+            <a class="sm-tab" [href]="t.external" target="_blank" rel="noopener">{{ t.label }}</a>
+          } @else {
+            <a
+              class="sm-tab"
+              [routerLink]="t.path"
+              routerLinkActive="is-active"
+              [routerLinkActiveOptions]="{ exact: false }"
+            >
+              {{ t.label }}
+            </a>
+          }
         }
       </div>
     </nav>
@@ -68,12 +72,12 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
   ],
 })
 export class MsmeSectionMenuComponent {
-  readonly tabs = [
+  readonly tabs: { label: string; path?: string; external?: string }[] = [
     { label: 'Dashboard', path: '/msme/dashboard' },
     { label: 'My Certificates', path: '/msme/certificates' },
     { label: 'My Documents', path: '/msme/documents' },
     { label: 'Payments', path: '/msme/payments' },
     { label: 'View Profile', path: '/msme/profile' },
-    { label: 'Help & Support', path: '/msme/help' },
+    { label: 'Help & Support', external: 'https://ndie.qcin.org/contact-us/' },
   ];
 }

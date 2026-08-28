@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace MCLS.Api.Controllers;
 
@@ -344,6 +345,27 @@ public sealed class AuthController(
         return Ok(new { message = "Password reset. Please sign in." });
     }
 
+    /// <summary>
+    /// The portal's password policy, read from the single Identity configuration
+    /// (Program.cs). Exposed so the password screens can guide and validate from
+    /// the same rule the server enforces, instead of duplicating the numbers —
+    /// change the policy once and every screen follows.
+    /// </summary>
+    [HttpGet("password-policy")]
+    [AllowAnonymous]
+    public IActionResult PasswordPolicy([FromServices] IOptions<IdentityOptions> identityOptions)
+    {
+        var p = identityOptions.Value.Password;
+        return Ok(new
+        {
+            minLength = p.RequiredLength,
+            requireUppercase = p.RequireUppercase,
+            requireLowercase = p.RequireLowercase,
+            requireDigit = p.RequireDigit,
+            requireSymbol = p.RequireNonAlphanumeric,
+        });
+    }
+
     // ------------------------------------------------------------- helpers --
 
     private async Task<LoginResponse> BuildLoginResponseAsync(
@@ -493,7 +515,9 @@ public sealed class RefreshRequest
 public sealed class ChangePasswordRequest
 {
     [Required] public string CurrentPassword { get; set; } = string.Empty;
-    [Required, MinLength(8)] public string NewPassword { get; set; } = string.Empty;
+    // Length/complexity are enforced by the Identity policy (Program.cs), the
+    // single source of truth — no number is duplicated here.
+    [Required] public string NewPassword { get; set; } = string.Empty;
 }
 
 public sealed class ForgotPasswordRequest
@@ -506,7 +530,9 @@ public sealed class ResetPasswordRequest
 {
     [Required, StringLength(40)] public string UserId { get; set; } = string.Empty;
     [Required] public string Token { get; set; } = string.Empty;
-    [Required, MinLength(8)] public string NewPassword { get; set; } = string.Empty;
+    // Length/complexity are enforced by the Identity policy (Program.cs), the
+    // single source of truth — no number is duplicated here.
+    [Required] public string NewPassword { get; set; } = string.Empty;
 }
 
 public sealed class LoginResponse

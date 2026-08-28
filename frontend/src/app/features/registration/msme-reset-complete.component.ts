@@ -5,6 +5,20 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { environment } from '../../../environments/environment';
 import { MsmeMastheadComponent } from './msme-masthead.component';
 
+interface PasswordPolicy {
+  minLength: number;
+  requireUppercase: boolean;
+  requireLowercase: boolean;
+  requireDigit: boolean;
+  requireSymbol: boolean;
+}
+
+/** "a, b and c" — for the requirements line. */
+function joinAnd(parts: string[]): string {
+  if (parts.length <= 1) return parts[0] ?? '';
+  return `${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1]}`;
+}
+
 /**
  * Set-a-new-password screen — where the emailed reset link lands
  * (/reset-password?userId=…&token=…). The request form (msme-reset-password)
@@ -44,11 +58,11 @@ import { MsmeMastheadComponent } from './msme-masthead.component';
               <label class="rp-label" for="pw">NEW PASSWORD <span class="rp-req">*</span></label>
               <div class="rp-field">
                 <input id="pw" class="rp-input" [type]="show() ? 'text' : 'password'"
-                       autocomplete="new-password" placeholder="At least 8 characters"
+                       autocomplete="new-password" [placeholder]="'At least ' + minLength() + ' characters'"
                        [value]="password()" (input)="password.set($any($event.target).value)" />
                 <button class="rp-eye" type="button" (click)="show.set(!show())">{{ show() ? 'Hide' : 'Show' }}</button>
               </div>
-              <p class="rp-hint">At least 8 characters, with an uppercase and a lowercase letter, a number and a symbol.</p>
+              <p class="rp-hint">{{ policyHint() }}</p>
 
               <label class="rp-label" for="cpw">CONFIRM PASSWORD <span class="rp-req">*</span></label>
               <div class="rp-field">
@@ -92,6 +106,38 @@ export class MsmeResetCompleteComponent {
   readonly error = signal<string | null>(null);
   readonly done = signal(false);
 
+  // The policy comes from the server (GET /auth/password-policy), so the screen
+  // guides and validates from the same rule Identity enforces — no number is
+  // hardcoded here. Defaults keep the form usable until it loads.
+  readonly policy = signal<PasswordPolicy>({
+    minLength: 8, requireUppercase: true, requireLowercase: true, requireDigit: true, requireSymbol: true,
+  });
+
+  constructor() {
+    this.http.get<PasswordPolicy>(`${this.base}/auth/password-policy`).subscribe({
+      next: (p) => this.policy.set(p),
+      error: () => { /* keep the defaults */ },
+    });
+  }
+
+  minLength(): number {
+    return this.policy().minLength;
+  }
+
+  /** The requirements line under the field, built from the live policy. */
+  policyHint(): string {
+    const p = this.policy();
+    const bits: string[] = [];
+    if (p.requireUppercase && p.requireLowercase) bits.push('an uppercase and a lowercase letter');
+    else if (p.requireUppercase) bits.push('an uppercase letter');
+    else if (p.requireLowercase) bits.push('a lowercase letter');
+    if (p.requireDigit) bits.push('a number');
+    if (p.requireSymbol) bits.push('a symbol');
+
+    const base = `At least ${p.minLength} characters`;
+    return bits.length ? `${base}, with ${joinAnd(bits)}.` : `${base}.`;
+  }
+
   hasToken(): boolean {
     return this.token.length > 0 && this.userId().length > 0;
   }
@@ -99,16 +145,15 @@ export class MsmeResetCompleteComponent {
   submit(): void {
     if (this.busy()) return;
     const pw = this.password();
+    const p = this.policy();
 
-    // Mirror the portal's Identity policy (Program.cs): 8+ chars with an
-    // uppercase and a lowercase letter, a digit and a symbol — the same rule
-    // super-admin passwords follow, so the front end guides before the server
-    // rejects.
-    if (pw.length < 8) { this.error.set('Use at least 8 characters.'); return; }
-    if (!/[A-Z]/.test(pw) || !/[a-z]/.test(pw) || !/\d/.test(pw) || !/[^A-Za-z0-9]/.test(pw)) {
-      this.error.set('Include an uppercase and a lowercase letter, a number and a symbol.');
-      return;
-    }
+    // Validate against the server-supplied policy, so it always matches what the
+    // API will accept.
+    if (pw.length < p.minLength) { this.error.set(`Use at least ${p.minLength} characters.`); return; }
+    if (p.requireUppercase && !/[A-Z]/.test(pw)) { this.error.set('Include an uppercase letter.'); return; }
+    if (p.requireLowercase && !/[a-z]/.test(pw)) { this.error.set('Include a lowercase letter.'); return; }
+    if (p.requireDigit && !/\d/.test(pw)) { this.error.set('Include a number.'); return; }
+    if (p.requireSymbol && !/[^A-Za-z0-9]/.test(pw)) { this.error.set('Include a symbol.'); return; }
     if (pw !== this.confirm()) { this.error.set('The two passwords do not match.'); return; }
 
     this.busy.set(true);

@@ -389,6 +389,68 @@ public sealed class MsmeController(
     }
 
     /// <summary>
+    /// The applicant's invoices and receipts (Y00). Each paid application yields
+    /// an invoice and a receipt line for the amount paid; nothing is shown until
+    /// a payment has been made, so an unpaid enterprise sees an empty list.
+    /// </summary>
+    [HttpGet("payments")]
+    public async Task<IActionResult> GetPayments(CancellationToken ct)
+    {
+        var userId = currentUser.UserId;
+        if (userId is null) return Unauthorized();
+
+        var enterpriseId = await db.Enterprises.AsNoTracking()
+            .Where(e => e.PrimaryUserId == userId)
+            .Select(e => (int?)e.EnterpriseId)
+            .FirstOrDefaultAsync(ct);
+
+        if (enterpriseId is null) return Ok(new { payments = Array.Empty<object>() });
+
+        var paid = await db.ApplicationSubmissions.AsNoTracking()
+            .Where(s => s.EnterpriseId == enterpriseId && s.PaymentStatus == "Paid" && s.PaidAmount != null)
+            .OrderByDescending(s => s.PaidOnUtc)
+            .Select(s => new
+            {
+                level = db.CertificationLevels
+                    .Where(l => l.CertificationLevelId == s.CertificationLevelId)
+                    .Select(l => l.Name)
+                    .FirstOrDefault(),
+                s.PaidAmount,
+                s.PaidOnUtc,
+                s.PaymentMethod,
+                s.PaymentReference,
+            })
+            .ToListAsync(ct);
+
+        var payments = new List<object>();
+        foreach (var p in paid)
+        {
+            var name = string.IsNullOrWhiteSpace(p.level) ? "LEAN" : p.level!;
+            if (!name.StartsWith("LEAN", StringComparison.OrdinalIgnoreCase)) name = "LEAN " + name;
+
+            payments.Add(new
+            {
+                kind = "invoice",
+                title = $"{name} Invoice",
+                amount = p.PaidAmount,
+                reference = p.PaymentReference,
+                paidOn = p.PaidOnUtc,
+            });
+            payments.Add(new
+            {
+                kind = "receipt",
+                title = $"{name} Receipt",
+                amount = p.PaidAmount,
+                reference = p.PaymentReference,
+                paidOn = p.PaidOnUtc,
+                method = p.PaymentMethod,
+            });
+        }
+
+        return Ok(new { payments });
+    }
+
+    /// <summary>
     /// The applicant's recent activity as notifications (H03) — derived from
     /// their own records, newest first. There is no separate notifications
     /// store yet; these are the events the applicant would expect to see.

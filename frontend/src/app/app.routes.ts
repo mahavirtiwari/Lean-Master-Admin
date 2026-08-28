@@ -95,9 +95,8 @@ export const routes: Routes = [
   {
     path: 'msme/certificates',
     canActivate: [authGuard],
-    data: { title: 'My Certificates', glyph: '🏅' },
     loadComponent: () =>
-      import('./features/registration/msme-coming-soon.component').then((m) => m.MsmeComingSoonComponent),
+      import('./features/registration/msme-certificates.component').then((m) => m.MsmeCertificatesComponent),
   },
   {
     path: 'msme/documents',
@@ -108,9 +107,8 @@ export const routes: Routes = [
   {
     path: 'msme/payments',
     canActivate: [authGuard],
-    data: { title: 'Payments', glyph: '₹' },
     loadComponent: () =>
-      import('./features/registration/msme-coming-soon.component').then((m) => m.MsmeComingSoonComponent),
+      import('./features/registration/msme-payments.component').then((m) => m.MsmePaymentsComponent),
   },
   {
     path: 'msme/profile',
@@ -121,9 +119,8 @@ export const routes: Routes = [
   {
     path: 'msme/help',
     canActivate: [authGuard],
-    data: { title: 'Help & Support', glyph: '💬' },
     loadComponent: () =>
-      import('./features/registration/msme-coming-soon.component').then((m) => m.MsmeComingSoonComponent),
+      import('./features/registration/msme-help.component').then((m) => m.MsmeHelpComponent),
   },
 
   {

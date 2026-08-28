@@ -25,9 +25,8 @@ import { AuthService } from '../../core/auth.service';
 
         <span class="mh-spacer"></span>
 
-        <button class="mh-link" type="button" (click)="help()">Help</button>
-
         @if (mode() === 'app') {
+          <button class="mh-link" type="button" (click)="help()">Help</button>
           <button class="mh-bell" type="button" aria-label="Notifications">
             <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
               <path d="M9 2.5a4.2 4.2 0 0 0-4.2 4.2v3l-1.3 2.3h11L13.2 9.7v-3A4.2 4.2 0 0 0 9 2.5ZM7.3 14a1.8 1.8 0 0 0 3.4 0"
@@ -55,7 +54,10 @@ import { AuthService } from '../../core/auth.service';
             }
           </div>
         } @else {
-          <a class="mh-signin" (click)="signIn()">Sign in ›</a>
+          <button class="mh-link" type="button" (click)="manual()">User Manual</button>
+          <span class="mh-sep">|</span>
+          <button class="mh-link" type="button" (click)="help()">Help</button>
+          <button class="mh-signin" type="button" (click)="signIn()">Sign in</button>
         }
       </div>
     </header>
@@ -86,10 +88,10 @@ import { AuthService } from '../../core/auth.service';
 
       .mh-link {
         background: none; border: none; cursor: pointer;
-        font-size: 13px; color: #5d6b62; padding: 6px 4px;
+        font-size: 12.4px; font-weight: 500; color: #47554c; padding: 6px 4px;
       }
-      .mh-lang { color: #1b4f8a; }
-      .mh-link:hover { color: #16211a; }
+      .mh-link:hover { text-decoration: underline; color: #16211a; }
+      .mh-sep { color: #c6d3cb; }
 
       .mh-bell { position: relative; background: none; border: none; cursor: pointer; padding: 6px; line-height: 0; }
       .mh-dot { position: absolute; top: 4px; right: 4px; width: 7px; height: 7px; border-radius: 50%; background: #d64545; border: 1.5px solid #fff; }
@@ -114,7 +116,12 @@ import { AuthService } from '../../core/auth.service';
       .mh-signout { width: 100%; text-align: left; padding: 12px 16px; background: none; border: none; cursor: pointer; font-size: 13px; font-weight: 600; color: #b91c1c; }
       .mh-signout:hover { background: #fdf1f1; }
 
-      .mh-signin { cursor: pointer; font-size: 14px; font-weight: 700; color: #1b4f8a; padding: 6px 4px; }
+      .mh-signin {
+        height: 34px; padding: 0 18px; border-radius: 6px;
+        border: 1px solid #1b4f8a; background: #1b4f8a; color: #fff;
+        font-size: 13.4px; font-weight: 600; cursor: pointer;
+      }
+      .mh-signin:hover { background: #163f6f; border-color: #163f6f; }
 
       @media (max-width: 700px) {
         .mh-inner { padding: 0 120px 0 16px; gap: 12px; height: 72px; }
@@ -147,6 +154,10 @@ export class MsmeMastheadComponent {
 
   help(): void {
     window.open('https://ndie.qcin.org/contact-us/', '_blank', 'noopener,noreferrer');
+  }
+
+  manual(): void {
+    window.open('https://lean.msme.gov.in/Home/RegisteredMSME', '_blank', 'noopener,noreferrer');
   }
 
   signIn(): void {

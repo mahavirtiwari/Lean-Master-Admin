@@ -185,6 +185,90 @@ public sealed class AuthController(
     }
 
     /// <summary>
+    /// Lists the LEAN accounts a reset may target for the value entered on the
+    /// forgot-password screen (A05). A Udyam number resolves to every LEAN ID
+    /// registered under it — one row per plant — so the applicant can pick the
+    /// plant whose password to reset; a LEAN ID resolves to just itself.
+    ///
+    /// This does disclose that a Udyam (or LEAN ID) has accounts, and their
+    /// masked SPOC addresses — which the scheme's design intends, since the
+    /// applicant owns the Udyam printed on their certificate. It is rate-limited
+    /// and returns only masked emails, never a full address.
+    /// </summary>
+    [HttpPost("forgot-password/accounts")]
+    [AllowAnonymous]
+    [EnableRateLimiting("auth")]
+    public async Task<IActionResult> ForgotPasswordAccounts(
+        [FromBody] ForgotPasswordRequest request, CancellationToken ct)
+    {
+        var identifier = (request.UserId ?? string.Empty).Trim();
+        if (identifier.Length == 0)
+        {
+            return Ok(new { udyam = (string?)null, accounts = Array.Empty<object>() });
+        }
+
+        var isUdyam = identifier.StartsWith("UDYAM", StringComparison.OrdinalIgnoreCase);
+
+        var baseQuery = db.Enterprises.AsNoTracking().Where(e => e.IsActive && e.LeanId != null);
+        baseQuery = isUdyam
+            ? baseQuery.Where(e => e.UdyamRegistrationNo == identifier)
+            : baseQuery.Where(e => e.LeanId == identifier);
+
+        var rows = await baseQuery
+            .OrderBy(e => e.LeanId)
+            .Select(e => new
+            {
+                e.LeanId,
+                UnitName = db.EnterprisePlants
+                    .Where(p => p.EnterprisePlantId == e.SelectedPlantId)
+                    .Select(p => p.UnitName)
+                    .FirstOrDefault(),
+                Address = db.EnterprisePlants
+                    .Where(p => p.EnterprisePlantId == e.SelectedPlantId)
+                    .Select(p => p.AddressLine)
+                    .FirstOrDefault(),
+                Email = db.Users
+                    .Where(u => u.Id == e.PrimaryUserId
+                                && u.StatusId == (byte)UserStatusId.Active
+                                && !u.IsDeleted)
+                    .Select(u => u.Email)
+                    .FirstOrDefault(),
+            })
+            .ToListAsync(ct);
+
+        var accounts = rows.Select(r => new
+        {
+            leanId = r.LeanId,
+            unitName = r.UnitName ?? string.Empty,
+            address = r.Address ?? string.Empty,
+            maskedEmail = MaskEmail(r.Email),
+        });
+
+        return Ok(new { udyam = isUdyam ? identifier : null, accounts });
+    }
+
+    /// <summary>Masks an e-mail for display — sp••••@sh••••••••.in.</summary>
+    private static string MaskEmail(string? email)
+    {
+        if (string.IsNullOrWhiteSpace(email) || !email.Contains('@'))
+        {
+            return "the SPOC email on file";
+        }
+
+        var at = email.IndexOf('@');
+        var local = email[..at];
+        var domainFull = email[(at + 1)..];
+        var dot = domainFull.LastIndexOf('.');
+        var domain = dot > 0 ? domainFull[..dot] : domainFull;
+        var tld = dot > 0 ? domainFull[dot..] : string.Empty;
+
+        static string Keep(string s, int keep) =>
+            s.Length <= keep ? s : s[..keep] + new string('•', Math.Clamp(s.Length - keep, 2, 8));
+
+        return $"{Keep(local, 2)}@{Keep(domain, 2)}{tld}";
+    }
+
+    /// <summary>
     /// Starts a password reset. Always returns 200, whether or not the address
     /// is known — the response must not reveal which accounts exist.
     /// </summary>

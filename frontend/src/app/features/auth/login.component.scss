@@ -382,16 +382,25 @@
 
 .label-row {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: 12px;
 }
 
-
+// A plain text link, not a button box: reset the default button chrome so it
+// sits flush on the label row rather than as a raised, bordered control.
 .forgot {
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
   font-size: 10.6px;
   font-weight: 600;
+  line-height: 1;
   color: var(--blue);
+}
+.forgot:hover {
+  text-decoration: underline;
 }
 
 .signin-card .input {

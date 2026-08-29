@@ -38,17 +38,6 @@
 .bz-link:hover { text-decoration: underline; }
 
 // ---- the LMS card: where the courses and the exam actually run ----
-.bz-lms { display: flex; align-items: center; gap: 14px; border-left: 3px solid #1b4f8a; }
-.bz-lms-ic {
-  flex: none; width: 34px; height: 34px; border-radius: 9px; background: #eff4fa; color: #1b4f8a;
-  display: flex; align-items: center; justify-content: center;
-}
-.bz-lms-ic svg { width: 17px; height: 17px; }
-.bz-lms-text { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.bz-lms-name { font-size: 13.6px; font-weight: 700; color: #16211a; }
-.bz-lms-url { font-size: 11.4px; color: #1b4f8a; }
-.bz-lms .bz-link { align-self: flex-start; margin-top: 6px; }
-
 // ---- C01a: nothing seated yet ----
 .bz-empty { text-align: center; padding: 34px 24px 26px; }
 .bz-empty-ic {
@@ -143,12 +132,13 @@
 .bz-add-sub { font-size: 11.4px; color: #93a29a; margin: 3px 0 14px; }
 
 .bz-note {
-  display: flex; gap: 9px; align-items: flex-start;
+  display: flex; gap: 9px; align-items: flex-start; flex-wrap: wrap;
   background: #eff4fa; border: 1px solid #cfe0f1; border-radius: 10px;
   padding: 13px 16px; font-size: 11.6px; color: #385e86; line-height: 1.5;
 }
 .bz-note-ic { color: #1b4f8a; display: flex; }
 .bz-note-ic svg { width: 15px; height: 15px; }
+.bz-note .bz-link { flex-basis: 100%; margin-left: 24px; }
 
 // ---- C01d: the course list and the one exam, over the screen ----
 .bz-scrim { position: fixed; inset: 0; background: rgba(16, 33, 26, 0.45); z-index: 40; }

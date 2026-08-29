@@ -17,24 +17,6 @@
         @if (loading()) {
           <div class="bz-card bz-loading">Loading…</div>
         } @else if (data(); as d) {
-          <!-- The LMS the courses and the exam actually run on. -->
-          <section class="bz-card bz-lms">
-            <span class="bz-lms-ic">
-              <svg viewBox="0 0 16 16" aria-hidden="true">
-                <path d="M6.6 9.4a2.8 2.8 0 0 0 4.2.3l1.7-1.7a2.8 2.8 0 0 0-4-4l-1 1" fill="none"
-                      stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
-                <path d="M9.4 6.6a2.8 2.8 0 0 0-4.2-.3L3.5 8a2.8 2.8 0 0 0 4 4l1-1" fill="none"
-                      stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
-              </svg>
-            </span>
-            <div class="bz-lms-text">
-              <div class="bz-lms-name">{{ d.lmsName }}</div>
-              <div class="bz-lms-url">{{ d.lmsUrl.replace('https://', '') }}</div>
-              <button class="bz-link" type="button" (click)="coursesOpen.set(true)">View Details</button>
-            </div>
-            <button class="bz-btn bz-btn-blue" type="button" (click)="openLms()">Open LMS</button>
-          </section>
-
           @if (!hasParticipants()) {
             <!-- C01a — nobody seated yet. -->
             <section class="bz-card bz-empty">
@@ -166,6 +148,7 @@
               LEAN Bronze is free. Certificates are issued to each participant once they pass the exam
               on the LMS.
             }
+            <button class="bz-link" type="button" (click)="coursesOpen.set(true)">View Details</button>
           </div>
         } @else {
           <div class="bz-card bz-loading">LEAN Bronze could not be loaded. Please try again.</div>

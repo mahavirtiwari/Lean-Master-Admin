@@ -1,6 +1,8 @@
 import { HttpClient } from '@angular/common/http';
 import { Component, computed, inject, signal } from '@angular/core';
 import { MsmePageNavComponent } from './msme-page-nav.component';
+import { MsmeLoadErrorComponent } from './msme-load-error.component';
+import { httpErrorMessage } from '../../shared/http-error';
 
 import { environment } from '../../../environments/environment';
 import { MsmeMastheadComponent } from './msme-masthead.component';
@@ -25,7 +27,7 @@ interface DocRow {
  */
 @Component({
   selector: 'app-msme-documents',
-  imports: [MsmeMastheadComponent, MsmeSectionMenuComponent, MsmeSidebarComponent, MsmePageNavComponent],
+  imports: [MsmeMastheadComponent, MsmeSectionMenuComponent, MsmeSidebarComponent, MsmePageNavComponent, MsmeLoadErrorComponent],
   template: `
     <app-msme-masthead mode="app" />
     <app-msme-section-menu />
@@ -44,6 +46,8 @@ interface DocRow {
           <div class="dc-body">
             @if (loading()) {
               <div class="dc-card dc-loading">Loading documents…</div>
+            } @else if (loadError(); as msg) {
+              <app-msme-load-error [message]="msg" (retry)="load()" />
             } @else {
               <div class="dc-block-head">
                 <h2 class="dc-title">Documents</h2>
@@ -157,6 +161,7 @@ export class MsmeDocumentsComponent {
 
   readonly rows = signal<DocRow[]>([]);
   readonly loading = signal(true);
+  readonly loadError = signal<string | null>(null);
 
   readonly documents = computed(() => this.rows().filter((r) => r.kind === 'document'));
   readonly videos = computed(() => this.rows().filter((r) => r.kind === 'video'));
@@ -167,9 +172,13 @@ export class MsmeDocumentsComponent {
 
   load(): void {
     this.loading.set(true);
+    this.loadError.set(null);
     this.http.get<DocRow[]>(`${this.base}/msme/documents`).subscribe({
       next: (r) => { this.rows.set(r ?? []); this.loading.set(false); },
-      error: () => this.loading.set(false),
+      error: (e: unknown) => {
+        this.loadError.set(httpErrorMessage(e));
+        this.loading.set(false);
+      },
     });
   }
 

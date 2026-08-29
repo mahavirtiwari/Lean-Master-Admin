@@ -2,6 +2,8 @@ import { HttpClient } from '@angular/common/http';
 import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { MsmePageNavComponent } from './msme-page-nav.component';
+import { MsmeLoadErrorComponent } from './msme-load-error.component';
+import { httpErrorMessage } from '../../shared/http-error';
 
 import { environment } from '../../../environments/environment';
 import { MsmeMastheadComponent } from './msme-masthead.component';
@@ -32,7 +34,7 @@ interface Dashboard {
  */
 @Component({
   selector: 'app-msme-certificates',
-  imports: [MsmeMastheadComponent, MsmeSectionMenuComponent, MsmeSidebarComponent, RouterLink, MsmePageNavComponent],
+  imports: [MsmeMastheadComponent, MsmeSectionMenuComponent, MsmeSidebarComponent, RouterLink, MsmePageNavComponent, MsmeLoadErrorComponent],
   template: `
     <app-msme-masthead mode="app" />
     <app-msme-section-menu />
@@ -53,6 +55,8 @@ interface Dashboard {
 
             @if (loading()) {
               <div class="ct-card ct-loading">Loading…</div>
+            } @else if (loadError(); as msg) {
+              <app-msme-load-error [message]="msg" (retry)="load()" />
             } @else {
               <!-- The pledge, taken at registration, is the one certificate
                    every registered enterprise holds. -->
@@ -243,6 +247,7 @@ export class MsmeCertificatesComponent {
   readonly levels = signal<Level[]>([]);
   readonly bronze = signal<BronzeData | null>(null);
   readonly loading = signal(true);
+  readonly loadError = signal<string | null>(null);
 
   /**
    * Bronze appears once at least one participant has earned a certificate —
@@ -279,9 +284,13 @@ export class MsmeCertificatesComponent {
 
   load(): void {
     this.loading.set(true);
+    this.loadError.set(null);
     this.http.get<Dashboard>(`${this.base}/msme/dashboard`).subscribe({
       next: (d) => { this.levels.set(d.levels ?? []); this.loading.set(false); },
-      error: () => this.loading.set(false),
+      error: (e: unknown) => {
+        this.loadError.set(httpErrorMessage(e));
+        this.loading.set(false);
+      },
     });
 
     // Bronze holds several certificates, one per participant, so its detail

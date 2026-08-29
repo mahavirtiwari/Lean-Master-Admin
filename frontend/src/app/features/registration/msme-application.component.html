@@ -13,6 +13,8 @@
 <div class="wrap">
   @if (loading()) {
     <div class="loading">Loading your application…</div>
+  } @else if (loadError(); as msg) {
+    <app-msme-load-error [message]="msg" (retry)="load()" />
   } @else if (!submitted()) {
     <!-- Nothing submitted yet: the application is filled on the mobile app. -->
     <section class="card notice-card">

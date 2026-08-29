@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Component, OnDestroy, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
+import { httpErrorMessage } from '../../shared/http-error';
 
 import { environment } from '../../../environments/environment';
 import { MsmeMastheadComponent } from './msme-masthead.component';
@@ -236,9 +237,11 @@ export class MsmeResetPasswordComponent implements OnDestroy {
         if (list.length === 1) this.selected.set(list[0].leanId);
         this.sendReset(value);
       },
-      error: () => {
+      error: (e: unknown) => {
         this.busy.set(false);
-        this.error.set('That could not be checked. Try again in a moment.');
+        // "could not be checked" for every failure told people their Udyam
+        // number was the problem when the portal simply could not reach the API.
+        this.error.set(httpErrorMessage(e, 'That could not be checked. Try again in a moment.'));
       },
     });
   }
@@ -255,9 +258,9 @@ export class MsmeResetPasswordComponent implements OnDestroy {
         this.stage.set('sent');
         this.startCountdown();
       },
-      error: () => {
+      error: (e: unknown) => {
         this.busy.set(false);
-        this.error.set('The reset could not be started. Check your connection and try again.');
+        this.error.set(httpErrorMessage(e, 'The reset could not be started. Please try again.'));
       },
     });
   }

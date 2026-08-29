@@ -3,6 +3,8 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { istDateTime } from '../../shared/when';
 import { MsmePageNavComponent } from './msme-page-nav.component';
+import { MsmeLoadErrorComponent } from './msme-load-error.component';
+import { httpErrorMessage } from '../../shared/http-error';
 
 import { environment } from '../../../environments/environment';
 import { MsmeMastheadComponent } from './msme-masthead.component';
@@ -39,7 +41,7 @@ interface Submission {
  */
 @Component({
   selector: 'app-msme-application',
-  imports: [MsmeMastheadComponent, MsmeSectionMenuComponent, MsmePageNavComponent],
+  imports: [MsmeMastheadComponent, MsmeSectionMenuComponent, MsmePageNavComponent, MsmeLoadErrorComponent],
   templateUrl: './msme-application.component.html',
   styleUrl: './msme-application.component.scss',
 })
@@ -49,6 +51,7 @@ export class MsmeApplicationComponent {
   private readonly base = environment.apiBase;
 
   readonly loading = signal(true);
+  readonly loadError = signal<string | null>(null);
   readonly config = signal<AppConfig | null>(null);
   readonly submission = signal<Submission | null>(null);
 
@@ -118,6 +121,7 @@ export class MsmeApplicationComponent {
 
   load(): void {
     this.loading.set(true);
+    this.loadError.set(null);
     this.http.get<AppConfig>(`${this.base}/msme/application/config`).subscribe({
       next: (cfg) => {
         this.config.set(cfg);
@@ -126,10 +130,16 @@ export class MsmeApplicationComponent {
             this.submission.set(sub);
             this.loading.set(false);
           },
-          error: () => this.loading.set(false),
+          error: (e: unknown) => {
+        this.loadError.set(httpErrorMessage(e));
+        this.loading.set(false);
+      },
         });
       },
-      error: () => this.loading.set(false),
+      error: (e: unknown) => {
+      this.loadError.set(httpErrorMessage(e));
+      this.loading.set(false);
+    },
     });
   }
 

@@ -2,6 +2,8 @@ import { DecimalPipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Component, inject, signal } from '@angular/core';
 import { MsmePageNavComponent } from './msme-page-nav.component';
+import { MsmeLoadErrorComponent } from './msme-load-error.component';
+import { httpErrorMessage } from '../../shared/http-error';
 
 import { environment } from '../../../environments/environment';
 import { MsmeMastheadComponent } from './msme-masthead.component';
@@ -24,7 +26,7 @@ interface PaymentRow {
  */
 @Component({
   selector: 'app-msme-payments',
-  imports: [MsmeMastheadComponent, MsmeSectionMenuComponent, MsmeSidebarComponent, DecimalPipe, MsmePageNavComponent],
+  imports: [MsmeMastheadComponent, MsmeSectionMenuComponent, MsmeSidebarComponent, DecimalPipe, MsmePageNavComponent, MsmeLoadErrorComponent],
   template: `
     <app-msme-masthead mode="app" />
     <app-msme-section-menu />
@@ -45,6 +47,8 @@ interface PaymentRow {
 
             @if (loading()) {
               <div class="py-card py-loading">Loading…</div>
+            } @else if (loadError(); as msg) {
+              <app-msme-load-error [message]="msg" (retry)="load()" />
             } @else if (rows().length === 0) {
               <div class="py-card py-empty">
                 No payments yet. Your LEAN Silver invoice and receipt will appear here after you pay.
@@ -109,6 +113,7 @@ export class MsmePaymentsComponent {
 
   readonly rows = signal<PaymentRow[]>([]);
   readonly loading = signal(true);
+  readonly loadError = signal<string | null>(null);
 
   constructor() {
     this.load();
@@ -116,9 +121,13 @@ export class MsmePaymentsComponent {
 
   load(): void {
     this.loading.set(true);
+    this.loadError.set(null);
     this.http.get<{ payments: PaymentRow[] }>(`${this.base}/msme/payments`).subscribe({
       next: (r) => { this.rows.set(r.payments ?? []); this.loading.set(false); },
-      error: () => this.loading.set(false),
+      error: (e: unknown) => {
+        this.loadError.set(httpErrorMessage(e));
+        this.loading.set(false);
+      },
     });
   }
 

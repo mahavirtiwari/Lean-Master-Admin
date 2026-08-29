@@ -16,6 +16,8 @@
       <div class="bz-body">
         @if (loading()) {
           <div class="bz-card bz-loading">Loading…</div>
+        } @else if (loadError(); as msg) {
+          <app-msme-load-error [message]="msg" (retry)="load()" />
         } @else if (data(); as d) {
           @if (!hasParticipants()) {
             <!-- C01a — nobody seated yet. -->

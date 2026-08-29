@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Component, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { MsmeAppBannerComponent } from './msme-app-banner.component';
+import { httpErrorMessage } from '../../shared/http-error';
 
 import { environment } from '../../../environments/environment';
 import { AuthService } from '../../core/auth.service';
@@ -298,7 +299,7 @@ export class MsmeDashboardComponent {
         this.error.set(
           response.status === 404
             ? 'No enterprise is linked to this account. Please contact the helpline.'
-            : 'Your dashboard could not be loaded. Please try again.',
+            : httpErrorMessage(response, 'Your dashboard could not be loaded. Please try again.'),
         );
       },
     });

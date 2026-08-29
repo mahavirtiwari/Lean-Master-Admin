@@ -3,6 +3,8 @@ import { Component, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { istDate, istDateTime } from '../../shared/when';
 import { MsmePageNavComponent } from './msme-page-nav.component';
+import { MsmeLoadErrorComponent } from './msme-load-error.component';
+import { httpErrorMessage } from '../../shared/http-error';
 
 import { environment } from '../../../environments/environment';
 import { MsmeMastheadComponent } from './msme-masthead.component';
@@ -74,7 +76,7 @@ interface HistoryRow {
  */
 @Component({
   selector: 'app-msme-profile',
-  imports: [MsmeMastheadComponent, MsmeSectionMenuComponent, MsmeSidebarComponent, MsmePageNavComponent],
+  imports: [MsmeMastheadComponent, MsmeSectionMenuComponent, MsmeSidebarComponent, MsmePageNavComponent, MsmeLoadErrorComponent],
   template: `
     <app-msme-masthead mode="app" />
     <app-msme-section-menu />
@@ -94,6 +96,8 @@ interface HistoryRow {
           <div class="pf-body">
             @if (loading()) {
               <div class="pf-card pf-loading">Loading your profile…</div>
+            } @else if (loadError(); as msg) {
+              <app-msme-load-error [message]="msg" (retry)="load()" />
             } @else if (data(); as p) {
               <h2 class="pf-section-title">Profile</h2>
 
@@ -316,6 +320,7 @@ export class MsmeProfileComponent {
   readonly data = signal<Profile | null>(null);
   readonly history = signal<HistoryRow[]>([]);
   readonly loading = signal(true);
+  readonly loadError = signal<string | null>(null);
   readonly saving = signal(false);
 
   readonly editSpoc = signal(false);
@@ -331,9 +336,14 @@ export class MsmeProfileComponent {
   }
 
   load(): void {
+    this.loading.set(true);
+    this.loadError.set(null);
     this.http.get<Profile>(`${this.base}/msme/profile`).subscribe({
       next: (p) => { this.data.set(p); this.loading.set(false); },
-      error: () => this.loading.set(false),
+      error: (e: unknown) => {
+        this.loadError.set(httpErrorMessage(e));
+        this.loading.set(false);
+      },
     });
 
     this.http.get<HistoryRow[]>(`${this.base}/msme/profile/history`).subscribe({

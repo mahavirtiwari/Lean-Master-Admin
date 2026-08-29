@@ -2,6 +2,8 @@ import { HttpClient } from '@angular/common/http';
 import { Component, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { MsmePageNavComponent } from './msme-page-nav.component';
+import { MsmeLoadErrorComponent } from './msme-load-error.component';
+import { httpErrorMessage } from '../../shared/http-error';
 
 import { environment } from '../../../environments/environment';
 import { MsmeMastheadComponent } from './msme-masthead.component';
@@ -46,7 +48,7 @@ export interface BronzeData {
  */
 @Component({
   selector: 'app-msme-bronze',
-  imports: [MsmeMastheadComponent, MsmeSectionMenuComponent, MsmeSidebarComponent, RouterLink, MsmePageNavComponent],
+  imports: [MsmeMastheadComponent, MsmeSectionMenuComponent, MsmeSidebarComponent, RouterLink, MsmePageNavComponent, MsmeLoadErrorComponent],
   templateUrl: './msme-bronze.component.html',
   styleUrl: './msme-bronze.component.scss',
 })
@@ -57,6 +59,7 @@ export class MsmeBronzeComponent {
 
   readonly data = signal<BronzeData | null>(null);
   readonly loading = signal(true);
+  readonly loadError = signal<string | null>(null);
   readonly coursesOpen = signal(false);
 
   /** Which participant's details are being sent, and how it went. */
@@ -82,9 +85,14 @@ export class MsmeBronzeComponent {
   }
 
   load(): void {
+    this.loading.set(true);
+    this.loadError.set(null);
     this.http.get<BronzeData>(`${this.base}/msme/bronze`).subscribe({
       next: (d) => { this.data.set(d); this.loading.set(false); },
-      error: () => this.loading.set(false),
+      error: (e: unknown) => {
+        this.loadError.set(httpErrorMessage(e));
+        this.loading.set(false);
+      },
     });
   }
 

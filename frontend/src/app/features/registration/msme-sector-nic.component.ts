@@ -2,6 +2,8 @@ import { HttpClient } from '@angular/common/http';
 import { Component, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { MsmePageNavComponent } from './msme-page-nav.component';
+import { MsmeLoadErrorComponent } from './msme-load-error.component';
+import { httpErrorMessage } from '../../shared/http-error';
 
 import { environment } from '../../../environments/environment';
 import { MsmeMastheadComponent } from './msme-masthead.component';
@@ -40,7 +42,7 @@ interface ActivitiesResponse {
  */
 @Component({
   selector: 'app-msme-sector-nic',
-  imports: [MsmeMastheadComponent, MsmeSectionMenuComponent, MsmeSidebarComponent, MsmePageNavComponent],
+  imports: [MsmeMastheadComponent, MsmeSectionMenuComponent, MsmeSidebarComponent, MsmePageNavComponent, MsmeLoadErrorComponent],
   template: `
     <app-msme-masthead mode="app" />
     <app-msme-section-menu />
@@ -66,6 +68,8 @@ interface ActivitiesResponse {
 
             @if (loading()) {
               <div class="sn-card sn-loading">Loading…</div>
+            } @else if (loadError(); as msg) {
+              <app-msme-load-error [message]="msg" (retry)="load()" />
             } @else if (data(); as d) {
               <section class="sn-card">
                 <h2 class="sn-h">Source of record</h2>
@@ -244,6 +248,7 @@ export class MsmeSectorNicComponent {
 
   readonly data = signal<ActivitiesResponse | null>(null);
   readonly loading = signal(true);
+  readonly loadError = signal<string | null>(null);
   readonly chosen = signal<number | null>(null);
   readonly saving = signal(false);
   readonly note = signal<string | null>(null);
@@ -254,13 +259,18 @@ export class MsmeSectorNicComponent {
   }
 
   load(): void {
+    this.loading.set(true);
+    this.loadError.set(null);
     this.http.get<ActivitiesResponse>(`${this.base}/msme/profile/activities`).subscribe({
       next: (d) => {
         this.data.set(d);
         this.chosen.set(d.selectedActivityId);
         this.loading.set(false);
       },
-      error: () => this.loading.set(false),
+      error: (e: unknown) => {
+        this.loadError.set(httpErrorMessage(e));
+        this.loading.set(false);
+      },
     });
   }
 

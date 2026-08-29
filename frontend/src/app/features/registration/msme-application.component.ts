@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Component, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
+import { istDateTime } from '../../shared/when';
 
 import { environment } from '../../../environments/environment';
 import { MsmeMastheadComponent } from './msme-masthead.component';
@@ -131,5 +132,10 @@ export class MsmeApplicationComponent {
   }
   dashboard(): void {
     void this.router.navigate(['/msme/dashboard']);
+  }
+
+  /** The submission stamp, in Indian time. */
+  when(iso: string): string {
+    return istDateTime(iso);
   }
 }

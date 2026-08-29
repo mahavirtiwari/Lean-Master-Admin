@@ -160,28 +160,6 @@ public sealed class MsmeProfileController(
         return Ok(new { message = "SPOC contact updated." });
     }
 
-    /// <summary>The associations the applicant maintains themselves.</summary>
-    [HttpPut("associations")]
-    public async Task<IActionResult> UpdateAssociations(
-        [FromBody] AssociationsRequest request, CancellationToken ct)
-    {
-        var e = await MineAsync(true, ct);
-        if (e is null) return NotFound(new { message = "No enterprise is linked to this account." });
-
-        Track(e.EnterpriseId, "Associations", "Industry association", e.IndustryAssociation, request.IndustryAssociation);
-        Track(e.EnterpriseId, "Associations", "Member ID", e.AssociationMemberId, request.AssociationMemberId);
-        Track(e.EnterpriseId, "Associations", "OEM / PSU", e.OemPsuName, request.OemPsuName);
-        Track(e.EnterpriseId, "Associations", "Vendor ID", e.VendorId, request.VendorId);
-
-        e.IndustryAssociation = Clean(request.IndustryAssociation);
-        e.AssociationMemberId = Clean(request.AssociationMemberId);
-        e.OemPsuName = Clean(request.OemPsuName);
-        e.VendorId = Clean(request.VendorId);
-
-        await db.SaveChangesAsync(ct);
-        return Ok(new { message = "Scheme associations updated." });
-    }
-
     /// <summary>
     /// The activities on this enterprise's Udyam record, for the sector and NIC
     /// screen. Sector and NIC belong to Udyam — the applicant does not type
@@ -194,7 +172,7 @@ public sealed class MsmeProfileController(
         var e = await MineAsync(false, ct);
         if (e is null) return NotFound(new { message = "No enterprise is linked to this account." });
 
-        var options = await db.EnterpriseActivities.AsNoTracking()
+        var rows = await db.EnterpriseActivities.AsNoTracking()
             .Where(a => a.EnterpriseId == e.EnterpriseId)
             .OrderBy(a => a.EnterpriseActivityId)
             .Select(a => new
@@ -207,6 +185,23 @@ public sealed class MsmeProfileController(
                 selected = a.EnterpriseActivityId == e.SelectedActivityId,
             })
             .ToListAsync(ct);
+
+        // Which sectors the scheme actually covers is Sectors master data, kept
+        // by the Super Admin. An activity whose NIC 2-digit is not an active
+        // sector cannot be chosen here, exactly as it could not at registration.
+        var covered = await CoveredSectorsAsync(rows.Select(r => r.NicTwoDigit), ct);
+
+        var options = rows.Select(a => new
+        {
+            a.id,
+            a.Activity,
+            a.NicTwoDigit, a.NicTwoDigitName,
+            a.NicFourDigit, a.NicFourDigitName,
+            a.NicFiveDigit, a.NicFiveDigitName,
+            a.selected,
+            eligible = a.NicTwoDigit != null && covered.ContainsKey(a.NicTwoDigit),
+            sectorName = a.NicTwoDigit != null && covered.TryGetValue(a.NicTwoDigit, out var n) ? n : null,
+        }).ToList();
 
         return Ok(new
         {
@@ -231,6 +226,17 @@ public sealed class MsmeProfileController(
         if (chosen is null)
         {
             return BadRequest(new { message = "That activity is not on this enterprise's Udyam record." });
+        }
+
+        var allowed = await CoveredSectorsAsync([chosen.NicTwoDigit], ct);
+
+        if (chosen.NicTwoDigit is null || !allowed.ContainsKey(chosen.NicTwoDigit))
+        {
+            return BadRequest(new
+            {
+                message = $"NIC {chosen.NicTwoDigit} — {chosen.NicTwoDigitName} is not a sector the " +
+                          "LEAN Scheme currently covers, so it cannot be selected.",
+            });
         }
 
         if (e.SelectedActivityId == chosen.EnterpriseActivityId)
@@ -260,7 +266,15 @@ public sealed class MsmeProfileController(
         return Ok(new { message = "Sector and NIC updated.", changed = true });
     }
 
-    /// <summary>What has been changed on this profile, newest first.</summary>
+    /// <summary>
+    /// What has been changed on this profile, newest first.
+    ///
+    /// One line per edit rather than per field: changing the activity moves four
+    /// columns at once, and four rows saying so reads as four separate edits.
+    /// The field-level detail — every old and new value — stays in
+    /// msme.EnterpriseChangeLog, which is where it is wanted if a change is ever
+    /// questioned.
+    /// </summary>
     [HttpGet("history")]
     public async Task<IActionResult> History(CancellationToken ct)
     {
@@ -270,20 +284,59 @@ public sealed class MsmeProfileController(
         var rows = await db.EnterpriseChangeLogs.AsNoTracking()
             .Where(h => h.EnterpriseId == e.EnterpriseId)
             .OrderByDescending(h => h.ChangedOnUtc)
-            .ThenByDescending(h => h.EnterpriseChangeLogId)
-            .Take(100)
+            .Take(400)
             .Select(h => new
             {
                 h.Section,
-                h.FieldName,
-                h.OldValue,
-                h.NewValue,
                 h.ChangedOnUtc,
                 changedBy = db.Users.Where(u => u.Id == h.ChangedByUserId).Select(u => u.FullName).FirstOrDefault(),
             })
             .ToListAsync(ct);
 
-        return Ok(rows);
+        // Everything written by one save shares a timestamp to the second, so
+        // that is what groups an edit back together.
+        var events = rows
+            .GroupBy(h => new { h.Section, Stamp = new DateTime(h.ChangedOnUtc.Ticks / TimeSpan.TicksPerSecond * TimeSpan.TicksPerSecond, h.ChangedOnUtc.Kind) })
+            .OrderByDescending(g => g.Key.Stamp)
+            .Take(50)
+            .Select(g => new
+            {
+                section = g.Key.Section,
+                label = Label(g.Key.Section),
+                // SQL Server hands these back with an unspecified kind, which
+                // serialises without a Z and is then read as local time — the
+                // clock the applicant sees would be wrong by the offset.
+                changedOnUtc = DateTime.SpecifyKind(g.Key.Stamp, DateTimeKind.Utc),
+                changedBy = g.Select(x => x.changedBy).FirstOrDefault(x => x != null),
+                fields = g.Count(),
+            })
+            .ToList();
+
+        return Ok(events);
+    }
+
+    private static string Label(string section) => section switch
+    {
+        "Activity" => "NIC sector updated",
+        "Spoc" => "SPOC details changed",
+        "Associations" => "Association details changed",
+        _ => section + " updated",
+    };
+
+    /// <summary>
+    /// The sectors the scheme covers, out of the NIC 2-digit codes asked about —
+    /// the Super Admin's Sectors master, which is the only place that decides it.
+    /// </summary>
+    private async Task<Dictionary<string, string>> CoveredSectorsAsync(
+        IEnumerable<string?> nicTwoDigits, CancellationToken ct)
+    {
+        var codes = nicTwoDigits.Where(c => c is not null).Select(c => c!).Distinct().ToList();
+
+        if (codes.Count == 0) return [];
+
+        return await db.Sectors.AsNoTracking()
+            .Where(x => x.IsActive && codes.Contains(x.NicCode))
+            .ToDictionaryAsync(x => x.NicCode, x => x.Name, ct);
     }
 
     /// <summary>
@@ -321,14 +374,6 @@ public sealed class SpocRequest
     [StringLength(100)] public string? Designation { get; set; }
     [Required, EmailAddress, StringLength(256)] public string Email { get; set; } = string.Empty;
     [StringLength(15)] public string? Mobile { get; set; }
-}
-
-public sealed class AssociationsRequest
-{
-    [StringLength(150)] public string? IndustryAssociation { get; set; }
-    [StringLength(60)] public string? AssociationMemberId { get; set; }
-    [StringLength(150)] public string? OemPsuName { get; set; }
-    [StringLength(60)] public string? VendorId { get; set; }
 }
 
 public sealed class SetActivityRequest

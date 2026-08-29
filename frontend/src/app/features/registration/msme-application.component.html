@@ -23,7 +23,7 @@
     </section>
   } @else {
     @if (submission()?.submittedOnUtc) {
-      <p class="submitted-on">Submitted on the mobile app · {{ submission()!.submittedOnUtc }}</p>
+      <p class="submitted-on">Submitted on the mobile app · {{ when(submission()!.submittedOnUtc!) }}</p>
     }
 
     <!-- --------------------------------------------------- basic information -->

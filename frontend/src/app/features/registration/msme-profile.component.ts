@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Component, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
+import { istDate, istDateTime } from '../../shared/when';
 
 import { environment } from '../../../environments/environment';
 import { MsmeMastheadComponent } from './msme-masthead.component';
@@ -57,11 +58,11 @@ interface Profile {
 
 interface HistoryRow {
   section: string;
-  fieldName: string;
-  oldValue: string | null;
-  newValue: string | null;
+  /** "NIC sector updated" — the edit, not the individual columns it moved. */
+  label: string;
   changedOnUtc: string;
   changedBy: string | null;
+  fields: number;
 }
 
 /**
@@ -177,40 +178,15 @@ interface HistoryRow {
                 }
               </section>
 
+              <!-- Read-only: these come from the scheme's own records, not
+                   from the applicant. -->
               <section class="pf-card">
-                <div class="pf-card-head">
-                  <h3 class="pf-h">Scheme Associations</h3>
-                  @if (!editAssoc()) {
-                    <button class="pf-edit" type="button" (click)="startAssoc(p)">Edit</button>
-                  }
-                </div>
-
-                @if (editAssoc()) {
-                  <div class="pf-two">
-                    <div class="pf-field"><span class="pf-label">INDUSTRY ASSOCIATION</span>
-                      <input class="pf-in" [value]="assocBody()" (input)="assocBody.set($any($event.target).value)" /></div>
-                    <div class="pf-field"><span class="pf-label">MEMBER ID</span>
-                      <input class="pf-in" [value]="assocMember()" (input)="assocMember.set($any($event.target).value)" /></div>
-                  </div>
-                  <div class="pf-two">
-                    <div class="pf-field"><span class="pf-label">OEM / PSU</span>
-                      <input class="pf-in" [value]="assocOem()" (input)="assocOem.set($any($event.target).value)" /></div>
-                    <div class="pf-field"><span class="pf-label">VENDOR ID</span>
-                      <input class="pf-in" [value]="assocVendor()" (input)="assocVendor.set($any($event.target).value)" /></div>
-                  </div>
-                  <div class="pf-row-actions">
-                    <button class="pf-btn pf-ghost" type="button" (click)="editAssoc.set(false)">Cancel</button>
-                    <button class="pf-btn pf-primary" type="button" [disabled]="saving()" (click)="saveAssoc()">
-                      {{ saving() ? 'Saving…' : 'Save' }}
-                    </button>
-                  </div>
-                } @else {
-                  <div class="pf-kv"><span class="pf-k">Implementing agency</span><span class="pf-v">{{ p.associations.implementingAgency || '—' }}</span></div>
-                  <div class="pf-kv"><span class="pf-k">Industry association</span><span class="pf-v">{{ p.associations.industryAssociation || '—' }}</span></div>
-                  <div class="pf-kv"><span class="pf-k">Member ID</span><span class="pf-v">{{ p.associations.associationMemberId || '—' }}</span></div>
-                  <div class="pf-kv"><span class="pf-k">OEM / PSU</span><span class="pf-v">{{ p.associations.oemPsuName || '—' }}</span></div>
-                  <div class="pf-kv"><span class="pf-k">Vendor ID</span><span class="pf-v">{{ p.associations.vendorId || '—' }}</span></div>
-                }
+                <div class="pf-card-head"><h3 class="pf-h">Association/OEM/PSU Details</h3></div>
+                <div class="pf-kv"><span class="pf-k">Implementing agency</span><span class="pf-v">{{ p.associations.implementingAgency || '—' }}</span></div>
+                <div class="pf-kv"><span class="pf-k">Industry association</span><span class="pf-v">{{ p.associations.industryAssociation || '—' }}</span></div>
+                <div class="pf-kv"><span class="pf-k">Member ID</span><span class="pf-v">{{ p.associations.associationMemberId || '—' }}</span></div>
+                <div class="pf-kv"><span class="pf-k">OEM / PSU</span><span class="pf-v">{{ p.associations.oemPsuName || '—' }}</span></div>
+                <div class="pf-kv"><span class="pf-k">Vendor ID</span><span class="pf-v">{{ p.associations.vendorId || '—' }}</span></div>
               </section>
 
               <section class="pf-card">
@@ -227,7 +203,9 @@ interface HistoryRow {
                   <button class="pf-edit" type="button" (click)="editSectorNic()">Edit</button>
                 </div>
                 @if (p.selectedActivity; as a) {
-                  <div class="pf-field"><span class="pf-label">ACTIVITY</span><div class="pf-ro">{{ a.nicFiveDigitName || a.activity || '—' }}</div></div>
+                  <!-- The major activity, not the 5-digit name: that already has its own
+                       row below, and repeating it here says nothing new. -->
+                  <div class="pf-field"><span class="pf-label">ACTIVITY</span><div class="pf-ro">{{ a.activity || a.nicFiveDigitName || '—' }}</div></div>
                   <div class="pf-kv"><span class="pf-k">NIC 2-digit</span><span class="pf-v">{{ pair(a.nicTwoDigit, a.nicTwoDigitName) }}</span></div>
                   <div class="pf-kv"><span class="pf-k">NIC 4-digit</span><span class="pf-v">{{ pair(a.nicFourDigit, a.nicFourDigitName) }}</span></div>
                   <div class="pf-kv"><span class="pf-k">NIC 5-digit</span><span class="pf-v">{{ pair(a.nicFiveDigit, a.nicFiveDigitName) }}</span></div>
@@ -240,20 +218,14 @@ interface HistoryRow {
               @if (history().length > 0) {
                 <section class="pf-card">
                   <div class="pf-card-head"><h3 class="pf-h">Change history</h3></div>
-                  @for (h of history(); track $index) {
-                    <div class="pf-hist">
-                      <span class="pf-hist-head">
-                        <span class="pf-hist-field">{{ h.fieldName }}</span>
-                        <span class="pf-hist-when">{{ formatWhen(h.changedOnUtc) }}</span>
-                      </span>
-                      <span class="pf-hist-move">
-                        <span class="pf-was">{{ h.oldValue || 'not set' }}</span>
-                        <span class="pf-arrow">→</span>
-                        <span class="pf-now">{{ h.newValue || 'cleared' }}</span>
-                      </span>
-                      @if (h.changedBy) { <span class="pf-hist-by">by {{ h.changedBy }}</span> }
-                    </div>
-                  }
+                  <ul class="pf-hist-list">
+                    @for (h of history(); track $index) {
+                      <li class="pf-hist-item">
+                        <span class="pf-hist-text">{{ h.label }} on {{ formatWhen(h.changedOnUtc) }}</span>
+                        @if (h.changedBy) { <span class="pf-hist-by">by {{ h.changedBy }}</span> }
+                      </li>
+                    }
+                  </ul>
                 </section>
               }
             } @else {
@@ -319,20 +291,12 @@ interface HistoryRow {
       .pf-primary { background: #1b4f8a; border: none; color: #fff; }
       .pf-primary:disabled { opacity: 0.55; cursor: default; }
 
-      // One entry in the change log: what moved, and where it moved to.
-      .pf-hist {
-        display: flex; flex-direction: column; gap: 4px;
-        padding: 11px 0; border-bottom: 1px solid #f0f4f1;
-      }
-      .pf-hist:last-child { border-bottom: 0; }
-      .pf-hist-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
-      .pf-hist-field { font-size: 12.4px; font-weight: 700; color: #16211a; }
-      .pf-hist-when { font-size: 11px; color: #93a29a; }
-      .pf-hist-move { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 11.8px; }
-      .pf-was { color: #93a29a; text-decoration: line-through; }
-      .pf-arrow { color: #93a29a; }
-      .pf-now { color: #0f7b45; font-weight: 600; }
-      .pf-hist-by { font-size: 10.8px; color: #93a29a; }
+      // One bullet per edit. The old and new values of every field are kept in
+      // msme.EnterpriseChangeLog; this only says that something moved, and when.
+      .pf-hist-list { margin: 0; padding-left: 18px; }
+      .pf-hist-item { font-size: 12.6px; color: #16211a; line-height: 1.6; padding: 3px 0; }
+      .pf-hist-item::marker { color: #0f7b45; }
+      .pf-hist-by { font-size: 11px; color: #93a29a; margin-left: 6px; }
     `,
   ],
 })
@@ -353,11 +317,6 @@ export class MsmeProfileComponent {
   readonly spocMobile = signal('');
   readonly spocError = signal<string | null>(null);
 
-  readonly editAssoc = signal(false);
-  readonly assocBody = signal('');
-  readonly assocMember = signal('');
-  readonly assocOem = signal('');
-  readonly assocVendor = signal('');
 
   constructor() {
     this.load();
@@ -424,43 +383,16 @@ export class MsmeProfileComponent {
     });
   }
 
-  startAssoc(p: Profile): void {
-    this.assocBody.set(p.associations.industryAssociation ?? '');
-    this.assocMember.set(p.associations.associationMemberId ?? '');
-    this.assocOem.set(p.associations.oemPsuName ?? '');
-    this.assocVendor.set(p.associations.vendorId ?? '');
-    this.editAssoc.set(true);
-  }
-
-  saveAssoc(): void {
-    if (this.saving()) return;
-    this.saving.set(true);
-
-    this.http.put(`${this.base}/msme/profile/associations`, {
-      industryAssociation: this.assocBody().trim() || null,
-      associationMemberId: this.assocMember().trim() || null,
-      oemPsuName: this.assocOem().trim() || null,
-      vendorId: this.assocVendor().trim() || null,
-    }).subscribe({
-      next: () => { this.saving.set(false); this.editAssoc.set(false); this.load(); },
-      error: () => { this.saving.set(false); this.editAssoc.set(false); },
-    });
-  }
 
   editSectorNic(): void {
     void this.router.navigate(['/msme/profile/sector-nic']);
   }
 
   formatDate(iso: string): string {
-    const d = new Date(iso);
-    if (Number.isNaN(d.getTime())) return '—';
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+    return istDate(iso);
   }
 
   formatWhen(iso: string): string {
-    const d = new Date(iso);
-    if (Number.isNaN(d.getTime())) return '';
-    return `${this.formatDate(iso)}, ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+    return istDateTime(iso);
   }
 }

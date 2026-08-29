@@ -417,7 +417,9 @@
 .cert-dot {
   position: relative; width: 14px; height: 14px; border-radius: 50%;
   border: 1px solid #d7e0da; background: #fff; flex: none;
+  display: flex; align-items: center; justify-content: center;
 }
+.cert-dot svg { width: 14px; height: 14px; }
 .cert-dot.is-on { border-color: #0f7b45; background: #0f7b45; }
 // A seat taken but not yet passed: visibly under way, not yet earned.
 .cert-dot.is-seated { border-color: #1b4f8a; background: #cfe0f1; }
@@ -441,6 +443,16 @@
 }
 .cert-apply:hover { background: #163f6f; }
 .cert-apply.is-off { background: #eef1ef; color: #93a29a; cursor: default; }
+
+// A level already under way needs no word — the artboard leaves a 30px blue
+// disc with the arrow in it where the Apply button was.
+.cert-go-btn {
+  flex: none; width: 30px; height: 30px; border-radius: 50%;
+  border: none; background: #1b4f8a; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+.cert-go-btn:hover { background: #163f6f; }
+.cert-go-btn svg { width: 16px; height: 16px; }
 
 // ---- incentive cards ----
 .inc-grid {

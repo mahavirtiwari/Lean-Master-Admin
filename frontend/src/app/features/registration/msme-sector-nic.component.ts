@@ -17,6 +17,9 @@ interface ActivityOption {
   nicFiveDigit: string | null;
   nicFiveDigitName: string | null;
   selected: boolean;
+  /** Whether the scheme covers this activity's sector — Sectors master data. */
+  eligible: boolean;
+  sectorName: string | null;
 }
 
 interface ActivitiesResponse {
@@ -79,6 +82,8 @@ interface ActivitiesResponse {
                   type="button"
                   class="sn-opt"
                   [class.is-sel]="chosen() === a.id"
+                  [class.is-blocked]="!a.eligible"
+                  [disabled]="!a.eligible"
                   (click)="chosen.set(a.id)"
                 >
                   <span class="sn-radio" [class.on]="chosen() === a.id"></span>
@@ -86,6 +91,7 @@ interface ActivitiesResponse {
                     <span class="sn-opt-head">
                       <span class="sn-opt-name">{{ a.nicFiveDigitName || a.activity || 'Activity' }}</span>
                       @if (a.selected) { <span class="sn-tag">Current</span> }
+                      @if (!a.eligible) { <span class="sn-tag is-bad">Not covered</span> }
                     </span>
 
                     @if (a.activity) {
@@ -95,6 +101,13 @@ interface ActivitiesResponse {
                     <span class="sn-nic"><span class="sn-nic-k">NIC 2-DIGIT</span><span class="sn-nic-v">{{ pair(a.nicTwoDigit, a.nicTwoDigitName) }}</span></span>
                     <span class="sn-nic"><span class="sn-nic-k">NIC 4-DIGIT</span><span class="sn-nic-v">{{ pair(a.nicFourDigit, a.nicFourDigitName) }}</span></span>
                     <span class="sn-nic"><span class="sn-nic-k">NIC 5-DIGIT</span><span class="sn-nic-v">{{ pair(a.nicFiveDigit, a.nicFiveDigitName) }}</span></span>
+
+                    @if (!a.eligible) {
+                      <span class="sn-blocked">
+                        NIC {{ a.nicTwoDigit }} is not a sector the LEAN Scheme currently covers,
+                        so this activity cannot be selected.
+                      </span>
+                    }
                   </span>
                 </button>
               } @empty {
@@ -168,6 +181,12 @@ interface ActivitiesResponse {
       }
       .sn-opt:hover { border-color: #b9ccc2; }
       .sn-opt.is-sel { border-color: #1b4f8a; background: #f6f9fc; }
+      // Outside a covered sector: shown, so the applicant can see it was
+      // considered, but not selectable.
+      .sn-opt.is-blocked { background: #fafcfb; cursor: default; opacity: 0.75; }
+      .sn-opt.is-blocked:hover { border-color: #e8efea; }
+      .sn-tag.is-bad { color: #b91c1c; background: #fdf1f1; border-color: #f3cfcf; }
+      .sn-blocked { font-size: 11px; font-weight: 600; color: #b91c1c; line-height: 1.45; }
 
       .sn-radio {
         flex: none; width: 18px; height: 18px; border-radius: 50%;
@@ -251,10 +270,11 @@ export class MsmeSectorNicComponent {
     this.noteBad.set(false);
 
     this.http.post<{ message: string }>(`${this.base}/msme/profile/activity`, { activityId: id }).subscribe({
-      next: (r) => {
+      next: () => {
         this.saving.set(false);
-        this.note.set(r.message);
-        this.load();
+        // The change is made; the place to see it is the profile, so go there
+        // rather than leaving the applicant on a form they have finished with.
+        void this.router.navigate(['/msme/profile']);
       },
       error: (e: { error?: { message?: string } }) => {
         this.saving.set(false);

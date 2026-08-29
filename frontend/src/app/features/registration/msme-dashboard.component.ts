@@ -199,17 +199,6 @@ export class MsmeDashboardComponent {
     return '';
   }
 
-  /**
-   * What the button offers. A level already under way is not applied for again —
-   * Bronze never creates an application row, so it used to fall through to
-   * "Apply" however many people were seated.
-   */
-  actionLabel(level: { state: string; applicationNo: string | null }): string {
-    if (level.state === 'Certified') return 'View';
-    if (level.state === 'In progress' || level.applicationNo) return 'Continue';
-    return 'Apply';
-  }
-
   stateClass(state: string): string {
     switch (state) {
       case 'Certified': return 's-done';

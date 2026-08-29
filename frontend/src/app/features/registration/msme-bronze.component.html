@@ -61,7 +61,10 @@
             <!-- C01b — the seated people and where each has reached. -->
             <div class="bz-sec-head">
               <h2 class="bz-sec-title">Participants</h2>
-              <p class="bz-sec-sub">Each takes all {{ d.courseCount }} courses and the one exam</p>
+              <p class="bz-sec-sub">
+                Each takes all {{ d.courseCount }} courses and the one exam
+                <button class="bz-link" type="button" (click)="coursesOpen.set(true)">View Details</button>
+              </p>
             </div>
 
             @for (p of d.participants; track p.id) {
@@ -124,23 +127,6 @@
             </section>
           }
 
-          <div class="bz-note">
-            <span class="bz-note-ic">
-              <svg viewBox="0 0 16 16" aria-hidden="true">
-                <circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="1.8" />
-                <path d="M8 7.4v3.6M8 5.2v.1" fill="none" stroke="currentColor" stroke-width="1.8"
-                      stroke-linecap="round" stroke-linejoin="round" />
-              </svg>
-            </span>
-            @if (hasParticipants()) {
-              Progress and exam results are held by the LMS and shown here. Certificates are issued to
-              each participant.
-            } @else {
-              LEAN Bronze is free. Certificates are issued to each participant once they pass the exam
-              on the LMS.
-            }
-            <button class="bz-link" type="button" (click)="coursesOpen.set(true)">View Details</button>
-          </div>
         } @else {
           <div class="bz-card bz-loading">LEAN Bronze could not be loaded. Please try again.</div>
         }

@@ -1,0 +1,151 @@
+<app-msme-masthead mode="app" />
+<app-msme-section-menu />
+
+<main class="bz-ground">
+  <div class="bz-wrap">
+    <div class="bz-crumb">Home <span>›</span> Dashboard <span>›</span> LEAN Bronze</div>
+    <h1 class="bz-h1">LEAN Bronze</h1>
+    <p class="bz-h1-sub">{{ subtitle() }}</p>
+
+    <div class="bz-grid">
+      <app-msme-sidebar />
+
+      <div class="bz-body">
+        @if (loading()) {
+          <div class="bz-card bz-loading">Loading…</div>
+        } @else if (data(); as d) {
+          <!-- The LMS the courses and the exam actually run on. -->
+          <section class="bz-card bz-lms">
+            <span class="bz-lms-ic"></span>
+            <div class="bz-lms-text">
+              <div class="bz-lms-name">{{ d.lmsName }}</div>
+              <div class="bz-lms-url">{{ d.lmsUrl.replace('https://', '') }}</div>
+              <button class="bz-link" type="button" (click)="coursesOpen.set(true)">View Details</button>
+            </div>
+            <button class="bz-btn bz-btn-blue" type="button" (click)="openLms()">Open LMS</button>
+          </section>
+
+          @if (!hasParticipants()) {
+            <!-- C01a — nobody seated yet. -->
+            <section class="bz-card bz-empty">
+              <span class="bz-empty-ic"></span>
+              <h2 class="bz-empty-h">No participants yet</h2>
+              <p class="bz-empty-p">
+                Add up to {{ d.seats.total }} people from your unit. Each one takes all
+                {{ d.courseCount }} courses and the single exam on the LMS.
+              </p>
+              <button class="bz-btn bz-btn-blue bz-btn-wide" type="button" (click)="addParticipant()">
+                Add First Participant
+              </button>
+            </section>
+          }
+
+          <!-- Seats, coloured by who is sitting in them. -->
+          <section class="bz-card bz-seats">
+            <div class="bz-seats-head">
+              <span class="bz-seats-title">Seats</span>
+              <span class="bz-seats-count">{{ d.seats.used }} of {{ d.seats.total }} used</span>
+            </div>
+            <div class="bz-seatbar">
+              @for (s of seatBar(); track $index) {
+                <span class="bz-seat" [class]="seatClass(s)"></span>
+              }
+            </div>
+            <p class="bz-seats-note">{{ seatNote() }}</p>
+          </section>
+
+          @if (hasParticipants()) {
+            <!-- C01b — the seated people and where each has reached. -->
+            <div class="bz-sec-head">
+              <h2 class="bz-sec-title">Participants</h2>
+              <p class="bz-sec-sub">Each takes all {{ d.courseCount }} courses and the one exam</p>
+            </div>
+
+            @for (p of d.participants; track p.id) {
+              <section class="bz-card bz-person" [class]="'st-' + p.status.toLowerCase()">
+                <div class="bz-person-head">
+                  <span class="bz-avatar">{{ p.initials }}</span>
+                  <span class="bz-person-text">
+                    <span class="bz-person-name">{{ p.name }}</span>
+                    <span class="bz-person-sub">{{ p.coursesDone }} of {{ p.coursesTotal }} courses</span>
+                  </span>
+                  <span class="bz-chip">{{ statusLabel(p.status) }}</span>
+                </div>
+
+                <div class="bz-track"><span class="bz-fill" [style.width.%]="progress(p)"></span></div>
+
+                <div class="bz-person-foot">
+                  <span class="bz-person-note">{{ statusNote(p) }}</span>
+                  @if (p.status === 'Certified') {
+                    <a class="bz-btn bz-btn-green" [href]="d.lmsUrl" target="_blank" rel="noopener">Certificate</a>
+                  } @else {
+                    <button class="bz-btn bz-btn-blue" type="button" (click)="openLms()">Open LMS</button>
+                  }
+                </div>
+              </section>
+            }
+
+            <!-- Seats left, and the way to fill one. -->
+            <section class="bz-card bz-add">
+              @if (d.seats.left > 0) {
+                <div class="bz-add-title">{{ d.seats.left }} seat{{ d.seats.left === 1 ? '' : 's' }} available</div>
+                <p class="bz-add-sub">Anyone from your unit can be added.</p>
+                <button class="bz-btn bz-btn-green bz-btn-wide" type="button" (click)="addParticipant()">
+                  Add Participant
+                </button>
+              } @else {
+                <div class="bz-add-title">All {{ d.seats.total }} seats are taken</div>
+                <p class="bz-add-sub">Every seat is held by a participant until they finish.</p>
+              }
+            </section>
+          }
+
+          <div class="bz-note">
+            <span class="bz-note-ic">ⓘ</span>
+            @if (hasParticipants()) {
+              Progress and exam results are held by the LMS and shown here. Certificates are issued to
+              each participant.
+            } @else {
+              LEAN Bronze is free. Certificates are issued to each participant once they pass the exam
+              on the LMS.
+            }
+          </div>
+        } @else {
+          <div class="bz-card bz-loading">LEAN Bronze could not be loaded. Please try again.</div>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- C01d — the course list and the one exam, over the screen. -->
+  @if (coursesOpen() && data(); as d) {
+    <div class="bz-scrim" (click)="coursesOpen.set(false)"></div>
+    <section class="bz-modal" role="dialog" aria-label="Courses and exam">
+      <span class="bz-modal-grip"></span>
+      <header class="bz-modal-head">
+        <div>
+          <h2 class="bz-modal-title">Courses &amp; Exam</h2>
+          <p class="bz-modal-sub">{{ d.courseCount }} courses · all of it runs on the LMS</p>
+        </div>
+        <button class="bz-modal-x" type="button" (click)="coursesOpen.set(false)" aria-label="Close">✕</button>
+      </header>
+
+      <ol class="bz-courses">
+        @for (c of d.courses; track c.no) {
+          <li class="bz-course"><span class="bz-course-no">{{ c.no }}</span>{{ c.title }}</li>
+        }
+      </ol>
+
+      <div class="bz-exam-label">FINAL EXAMINATION</div>
+      <div class="bz-exam">
+        <span class="bz-exam-ic">📋</span>
+        <span class="bz-exam-text">
+          <span class="bz-exam-h">One exam, after all {{ d.courseCount }} courses</span>
+          <span class="bz-exam-p">Sat once per participant, on the LMS. There is no separate exam inside this app.</span>
+        </span>
+      </div>
+
+      <button class="bz-modal-close" type="button" (click)="coursesOpen.set(false)">Close</button>
+    </section>
+  }
+</main>

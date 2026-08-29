@@ -156,10 +156,15 @@ export class MsmeDashboardComponent {
    * submission and payment; Bronze (courses) and Gold open on the mobile app.
    */
   apply(level: { code: string; name: string }): void {
-    if (level.code === 'SILVER') {
+    const code = level.code.toUpperCase();
+    if (code.includes('SILVER')) {
       void this.router.navigate(['/msme/application']);
+    } else if (code.includes('BRONZE')) {
+      // Bronze is e-learning: it opens its own screen, where the enterprise
+      // seats participants and follows them on the LMS.
+      void this.router.navigate(['/msme/bronze']);
     } else {
-      window.alert(`${level.name} is completed on the MSME LEAN mobile app.`);
+      window.alert(`${level.name} opens once Silver is certified.`);
     }
   }
 

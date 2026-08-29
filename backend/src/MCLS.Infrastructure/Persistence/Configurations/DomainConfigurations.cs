@@ -1117,3 +1117,29 @@ internal sealed class EnterpriseActivityConfiguration : IEntityTypeConfiguration
         b.Property(x => x.NicFiveDigitName).HasMaxLength(300);
     }
 }
+
+internal sealed class BronzeCourseConfiguration : IEntityTypeConfiguration<BronzeCourse>
+{
+    public void Configure(EntityTypeBuilder<BronzeCourse> b)
+    {
+        b.ToTable("BronzeCourse", "msme");
+        b.HasKey(x => x.BronzeCourseId);
+        b.Property(x => x.Title).HasMaxLength(200).IsRequired();
+    }
+}
+
+internal sealed class BronzeParticipantConfiguration : IEntityTypeConfiguration<BronzeParticipant>
+{
+    public void Configure(EntityTypeBuilder<BronzeParticipant> b)
+    {
+        b.ToTable("BronzeParticipant", "msme");
+        b.HasKey(x => x.BronzeParticipantId);
+        b.Property(x => x.FullName).HasMaxLength(150).IsRequired();
+        b.Property(x => x.Email).HasMaxLength(256).IsRequired();
+        b.Property(x => x.Mobile).HasMaxLength(15).IsUnicode(false);
+        b.Property(x => x.PreferredLanguage).HasMaxLength(40);
+        b.Property(x => x.Status).HasMaxLength(20).IsUnicode(false).IsRequired();
+        b.Property(x => x.CertificateNo).HasMaxLength(40).IsUnicode(false);
+        b.HasIndex(x => new { x.EnterpriseId, x.Email }).IsUnique().HasFilter("[IsActive] = 1");
+    }
+}

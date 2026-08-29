@@ -1,0 +1,169 @@
+// =============================================================================
+// LEAN Bronze e-learning (C01a / C01b, with C01d as a dialog).
+// Geometry follows the deck: the 1192 content, the 300/28 sidebar gutter, and
+// cards on #E8EFEA with radius 12. The rail down a card says what it is about —
+// blue for the LMS, bronze for the seats, and the participant's own state.
+// =============================================================================
+:host { display: block; min-height: 100vh; background: #f4f7f5; }
+
+.bz-ground { padding: 24px 40px 64px; }
+.bz-wrap { max-width: 1192px; margin: 0 auto; }
+.bz-crumb { font-size: 12px; color: #93a29a; }
+.bz-crumb span { margin: 0 6px; }
+.bz-h1 { font-size: 18.5px; font-weight: 700; color: #16211a; margin: 4px 0 2px; }
+.bz-h1-sub { font-size: 12px; color: #5d6b62; margin: 0 0 18px; }
+
+.bz-grid { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 28px; align-items: start; }
+@media (max-width: 980px) { .bz-grid { grid-template-columns: minmax(0, 1fr); } }
+
+.bz-body { display: flex; flex-direction: column; gap: 14px; }
+.bz-card { background: #fff; border: 1px solid #e8efea; border-radius: 12px; padding: 20px; }
+.bz-loading { color: #93a29a; font-size: 13px; }
+
+.bz-btn {
+  border: none; border-radius: 8px; padding: 11px 22px;
+  font-size: 12.6px; font-weight: 700; cursor: pointer; text-decoration: none;
+  display: inline-flex; align-items: center; justify-content: center; flex: none;
+}
+.bz-btn-blue { background: #1b4f8a; color: #fff; }
+.bz-btn-blue:hover { background: #163f6f; }
+.bz-btn-green { background: #0f7b45; color: #fff; }
+.bz-btn-green:hover { background: #0c6338; }
+.bz-btn-wide { width: 100%; padding: 13px 22px; }
+.bz-link { background: none; border: none; padding: 0; cursor: pointer; font-size: 12px; font-weight: 700; color: #1b4f8a; }
+.bz-link:hover { text-decoration: underline; }
+
+// ---- the LMS card: where the courses and the exam actually run ----
+.bz-lms { display: flex; align-items: center; gap: 14px; border-left: 3px solid #1b4f8a; }
+.bz-lms-ic {
+  flex: none; width: 34px; height: 34px; border-radius: 9px;
+  background: #eff4fa; position: relative;
+}
+.bz-lms-ic::after {
+  content: '🔗'; position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center; font-size: 15px;
+}
+.bz-lms-text { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.bz-lms-name { font-size: 13.6px; font-weight: 700; color: #16211a; }
+.bz-lms-url { font-size: 11.4px; color: #1b4f8a; }
+.bz-lms .bz-link { align-self: flex-start; margin-top: 6px; }
+
+// ---- C01a: nothing seated yet ----
+.bz-empty { text-align: center; padding: 34px 24px 26px; }
+.bz-empty-ic {
+  display: block; width: 46px; height: 46px; margin: 0 auto 14px;
+  border-radius: 50%; background: #eef8f1; position: relative;
+}
+.bz-empty-ic::after {
+  content: '👥'; position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center; font-size: 19px;
+}
+.bz-empty-h { font-size: 15.5px; font-weight: 700; color: #16211a; margin: 0 0 6px; }
+.bz-empty-p { font-size: 12px; color: #5d6b62; line-height: 1.55; margin: 0 auto 18px; max-width: 430px; }
+
+// ---- seats: five segments on a bronze rail ----
+.bz-seats { border-left: 3px solid #c2410c; }
+.bz-seats-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.bz-seats-title { font-size: 13.4px; font-weight: 700; color: #16211a; }
+.bz-seats-count { font-size: 11.4px; color: #93a29a; }
+.bz-seatbar { display: flex; gap: 8px; margin: 14px 0 8px; }
+.bz-seat { flex: 1; height: 7px; border-radius: 4px; background: #eef1ef; }
+.bz-seat.is-certified { background: #0f7b45; }
+.bz-seat.is-learning { background: #1b4f8a; }
+.bz-seat.is-exam { background: #a16207; }
+.bz-seats-note { font-size: 11.2px; color: #93a29a; margin: 0; }
+
+// ---- participants ----
+.bz-sec-head { margin: 6px 0 -4px; }
+.bz-sec-title { font-size: 14.6px; font-weight: 700; color: #16211a; margin: 0; }
+.bz-sec-sub { font-size: 11.4px; color: #93a29a; margin: 3px 0 0; }
+
+// The rail says at a glance where this person has reached.
+.bz-person { border-left: 3px solid #c6d3cb; }
+.bz-person.st-certified { border-left-color: #0f7b45; }
+.bz-person.st-learning, .bz-person.st-notstarted { border-left-color: #1b4f8a; }
+.bz-person.st-examdue { border-left-color: #a16207; }
+
+.bz-person-head { display: flex; align-items: center; gap: 12px; }
+.bz-avatar {
+  flex: none; width: 36px; height: 36px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; background: #eef1ef; color: #5d6b62;
+}
+.st-certified .bz-avatar { background: #eef8f1; color: #0f7b45; }
+.st-learning .bz-avatar, .st-notstarted .bz-avatar { background: #eff4fa; color: #1b4f8a; }
+.st-examdue .bz-avatar { background: #fdf3ec; color: #a16207; }
+.bz-person-text { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.bz-person-name { font-size: 13.4px; font-weight: 700; color: #16211a; }
+.bz-person-sub { font-size: 11.4px; color: #93a29a; margin-top: 2px; }
+
+.bz-chip {
+  flex: none; font-size: 10.6px; font-weight: 700; padding: 4px 12px; border-radius: 999px;
+  background: #eef1ef; color: #5d6b62; border: 1px solid #e0e6e2;
+}
+.st-certified .bz-chip { background: #eef8f1; color: #0f7b45; border-color: #cfe8d8; }
+.st-learning .bz-chip, .st-notstarted .bz-chip { background: #eff4fa; color: #1b4f8a; border-color: #cfe0f1; }
+.st-examdue .bz-chip { background: #fdf3ec; color: #a16207; border-color: #f3ddc4; }
+
+.bz-track { height: 5px; border-radius: 3px; background: #eef1ef; margin: 14px 0 12px; overflow: hidden; }
+.bz-fill { display: block; height: 100%; border-radius: 3px; background: #c6d3cb; }
+.st-certified .bz-fill { background: #0f7b45; }
+.st-learning .bz-fill, .st-notstarted .bz-fill { background: #1b4f8a; }
+.st-examdue .bz-fill { background: #a16207; }
+
+.bz-person-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.bz-person-note { font-size: 11.4px; color: #93a29a; }
+
+// ---- add a participant ----
+.bz-add-title { font-size: 13.4px; font-weight: 700; color: #16211a; }
+.bz-add-sub { font-size: 11.4px; color: #93a29a; margin: 3px 0 14px; }
+
+.bz-note {
+  display: flex; gap: 9px; align-items: flex-start;
+  background: #eff4fa; border: 1px solid #cfe0f1; border-radius: 10px;
+  padding: 13px 16px; font-size: 11.6px; color: #385e86; line-height: 1.5;
+}
+.bz-note-ic { color: #1b4f8a; }
+
+// ---- C01d: the course list and the one exam, over the screen ----
+.bz-scrim { position: fixed; inset: 0; background: rgba(16, 33, 26, 0.45); z-index: 40; }
+.bz-modal {
+  position: fixed; z-index: 41; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  width: min(390px, calc(100vw - 32px)); max-height: calc(100vh - 64px); overflow-y: auto;
+  background: #fff; border-radius: 16px; padding: 14px 22px 22px;
+  box-shadow: 0 24px 60px rgba(16, 33, 26, 0.24);
+}
+.bz-modal-grip { display: block; width: 38px; height: 4px; border-radius: 2px; background: #dfe7e2; margin: 0 auto 14px; }
+.bz-modal-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.bz-modal-title { font-size: 16px; font-weight: 700; color: #16211a; margin: 0; }
+.bz-modal-sub { font-size: 11.2px; color: #93a29a; margin: 4px 0 0; }
+.bz-modal-x { background: none; border: none; font-size: 15px; color: #5d6b62; cursor: pointer; padding: 0 2px; }
+
+.bz-courses { list-style: none; margin: 16px 0 0; padding: 0; }
+.bz-course {
+  display: flex; align-items: center; gap: 12px;
+  padding: 9px 0; border-bottom: 1px solid #f0f4f1;
+  font-size: 12px; color: #16211a;
+}
+.bz-course:last-child { border-bottom: 0; }
+.bz-course-no {
+  flex: none; width: 19px; height: 19px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: #eef8f1; color: #0f7b45; font-size: 10px; font-weight: 700;
+}
+
+.bz-exam-label { font-size: 9.6px; font-weight: 700; letter-spacing: 0.7px; color: #93a29a; margin: 16px 0 8px; }
+.bz-exam {
+  display: flex; gap: 10px; align-items: flex-start;
+  background: #fffbeb; border: 1px solid #fde68a; border-radius: 10px; padding: 13px 14px;
+}
+.bz-exam-text { display: flex; flex-direction: column; gap: 3px; }
+.bz-exam-h { font-size: 12px; font-weight: 700; color: #16211a; }
+.bz-exam-p { font-size: 10.8px; color: #7c6f52; line-height: 1.5; }
+
+.bz-modal-close {
+  width: 100%; margin-top: 18px; padding: 12px;
+  background: #fff; border: 1px solid #d7e0da; border-radius: 10px;
+  font-size: 13px; font-weight: 700; color: #16211a; cursor: pointer;
+}
+.bz-modal-close:hover { background: #f7faf8; }

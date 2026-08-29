@@ -110,6 +110,21 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/registration/msme-certificates.component').then((m) => m.MsmeCertificatesComponent),
   },
+  // LEAN Bronze e-learning: the seats and their progress, and the form that
+  // fills a seat. The courses and the exam themselves run on the LMS.
+  {
+    path: 'msme/bronze',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/registration/msme-bronze.component').then((m) => m.MsmeBronzeComponent),
+  },
+  {
+    path: 'msme/bronze/add-participant',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/registration/msme-add-participant.component').then((m) => m.MsmeAddParticipantComponent),
+  },
+
   {
     path: 'msme/documents',
     canActivate: [authGuard],

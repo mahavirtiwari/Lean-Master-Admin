@@ -473,3 +473,48 @@ public class SubmissionDocument
     public string? ContentType { get; set; }
     public DateTime? UploadedOnUtc { get; set; }
 }
+
+/// <summary>
+/// One of the LEAN Bronze e-learning courses. Shared across the scheme rather
+/// than per enterprise — every participant takes the same set.
+/// </summary>
+public class BronzeCourse
+{
+    public int BronzeCourseId { get; set; }
+    public byte SortOrder { get; set; }
+    public string Title { get; set; } = string.Empty;
+    public bool IsActive { get; set; } = true;
+    public DateTime CreatedOnUtc { get; set; }
+}
+
+/// <summary>
+/// A person an enterprise nominates for LEAN Bronze. Up to five per enterprise;
+/// each takes every course and one final exam on the LMS, and each earns their
+/// own certificate — which is why an enterprise can hold several Bronze
+/// certificates.
+/// </summary>
+public class BronzeParticipant
+{
+    public int BronzeParticipantId { get; set; }
+    public int EnterpriseId { get; set; }
+
+    public string FullName { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
+    public string? Mobile { get; set; }
+
+    /// <summary>The language the LMS serves the course content in.</summary>
+    public string? PreferredLanguage { get; set; }
+
+    /// <summary>Completed courses, as the LMS reports them.</summary>
+    public byte CoursesDone { get; set; }
+
+    /// <summary>NotStarted, Learning, ExamDue or Certified.</summary>
+    public string Status { get; set; } = "NotStarted";
+
+    public DateTime? CertifiedOnUtc { get; set; }
+    public string? CertificateNo { get; set; }
+
+    public bool IsActive { get; set; } = true;
+    public DateTime CreatedOnUtc { get; set; }
+    public int? CreatedByUserId { get; set; }
+}

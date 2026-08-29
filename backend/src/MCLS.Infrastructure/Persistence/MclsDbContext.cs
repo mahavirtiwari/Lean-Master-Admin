@@ -76,6 +76,8 @@ public class MclsDbContext(DbContextOptions<MclsDbContext> options)
     public DbSet<ApplicationStatusHistory> ApplicationStatusHistory => Set<ApplicationStatusHistory>();
     public DbSet<HandholdingActivity> HandholdingActivities => Set<HandholdingActivity>();
     public DbSet<ApplicationSubmission> ApplicationSubmissions => Set<ApplicationSubmission>();
+    public DbSet<BronzeCourse> BronzeCourses => Set<BronzeCourse>();
+    public DbSet<BronzeParticipant> BronzeParticipants => Set<BronzeParticipant>();
     public DbSet<SubmissionBasicInfo> SubmissionBasicInfo => Set<SubmissionBasicInfo>();
     public DbSet<SubmissionEsgAnswer> SubmissionEsgAnswers => Set<SubmissionEsgAnswer>();
     public DbSet<SubmissionDocument> SubmissionDocuments => Set<SubmissionDocument>();

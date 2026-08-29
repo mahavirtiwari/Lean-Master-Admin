@@ -153,7 +153,9 @@ public sealed class AuthController(
     /// </summary>
     [HttpPost("change-password")]
     public async Task<IActionResult> ChangePassword(
-        [FromBody] ChangePasswordRequest request, CancellationToken ct)
+        [FromBody] ChangePasswordRequest request,
+        [FromServices] IConfiguration configuration,
+        CancellationToken ct)
     {
         if (currentUser.UserId is not { } userId) return Unauthorized();
 
@@ -179,6 +181,10 @@ public sealed class AuthController(
                 .SetProperty(u => u.PasswordChangedOnUtc, clock.UtcNow), ct);
 
         await tokens.RevokeAllForUserAsync(userId, ct);
+
+        // Same event from the account's point of view as a reset, so it gets the
+        // same notice.
+        await SendPasswordChangedAsync(user, configuration, ct);
 
         logger.LogInformation("User {UserId} changed their password; all sessions revoked.", userId);
 
@@ -315,7 +321,9 @@ public sealed class AuthController(
     [AllowAnonymous]
     [EnableRateLimiting("auth")]
     public async Task<IActionResult> ResetPassword(
-        [FromBody] ResetPasswordRequest request, CancellationToken ct)
+        [FromBody] ResetPasswordRequest request,
+        [FromServices] IConfiguration configuration,
+        CancellationToken ct)
     {
         var user = await db.Users.AsTracking()
             .SingleOrDefaultAsync(u => u.UserCode == request.UserId.Trim() && !u.IsDeleted, ct);
@@ -343,7 +351,51 @@ public sealed class AuthController(
 
         await tokens.RevokeAllForUserAsync(user.Id, ct);
 
+        await SendPasswordChangedAsync(user, configuration, ct);
+
         return Ok(new { message = "Password reset. Please sign in." });
+    }
+
+    /// <summary>
+    /// Tells an account its password changed.
+    ///
+    /// The password is not repeated: the person chose it moments ago, and a live
+    /// credential left in a mailbox is a risk without a benefit. What the mail
+    /// carries is the LEAN ID it applies to and when it happened, so somebody
+    /// whose reset link was intercepted finds out.
+    ///
+    /// A failure here must not fail the reset — the password is already changed,
+    /// and telling the caller otherwise would send them round the loop again.
+    /// </summary>
+    private async Task SendPasswordChangedAsync(
+        ApplicationUser user, IConfiguration configuration, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(user.Email)) return;
+
+        try
+        {
+            var portalUrl = configuration["Portal:BaseUrl"]?.TrimEnd('/') ?? string.Empty;
+
+            // Applicants sign in on the MSME portal, staff on the admin one.
+            var signInUrl = user.UserCode.StartsWith("LEAN", StringComparison.OrdinalIgnoreCase)
+                ? portalUrl + "/msme/login"
+                : portalUrl + "/login";
+
+            await email.QueueTemplatedAsync("USER_PASSWORD_CHANGED", user.Email!, user.Id,
+                new Dictionary<string, string>
+                {
+                    ["user_name"] = user.FullName,
+                    ["lean_id"] = user.UserCode,
+                    ["changed_on"] = clock.UtcNow.ToLocalTime()
+                        .ToString("d MMMM yyyy 'at' HH:mm", CultureInfo.InvariantCulture),
+                    ["portal_url"] = signInUrl,
+                }, ct);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex,
+                "The password-changed notice could not be queued for {UserCode}.", user.UserCode);
+        }
     }
 
     /// <summary>

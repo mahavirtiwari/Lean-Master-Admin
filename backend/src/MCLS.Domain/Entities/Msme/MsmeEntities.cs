@@ -499,10 +499,17 @@ public class BronzeParticipant
     public int EnterpriseId { get; set; }
 
     public string FullName { get; set; } = string.Empty;
+
+    /// <summary>Their role in the unit — "Plant Head", read alongside the name.</summary>
+    public string? Designation { get; set; }
+
     public string Email { get; set; } = string.Empty;
     public string? Mobile { get; set; }
 
-    /// <summary>The language the LMS serves the course content in.</summary>
+    /// <summary>
+    /// The language the LMS serves the course content in. No longer asked for on
+    /// the form; kept for the rows that already carry one.
+    /// </summary>
     public string? PreferredLanguage { get; set; }
 
     /// <summary>Completed courses, as the LMS reports them.</summary>

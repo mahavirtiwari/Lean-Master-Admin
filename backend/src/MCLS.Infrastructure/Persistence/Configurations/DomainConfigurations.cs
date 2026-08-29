@@ -1135,6 +1135,7 @@ internal sealed class BronzeParticipantConfiguration : IEntityTypeConfiguration<
         b.ToTable("BronzeParticipant", "msme");
         b.HasKey(x => x.BronzeParticipantId);
         b.Property(x => x.FullName).HasMaxLength(150).IsRequired();
+        b.Property(x => x.Designation).HasMaxLength(100);
         b.Property(x => x.Email).HasMaxLength(256).IsRequired();
         b.Property(x => x.Mobile).HasMaxLength(15).IsUnicode(false);
         b.Property(x => x.PreferredLanguage).HasMaxLength(40);

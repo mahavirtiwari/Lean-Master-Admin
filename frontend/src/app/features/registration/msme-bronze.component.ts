@@ -10,6 +10,7 @@ import { MsmeSidebarComponent } from './msme-sidebar.component';
 export interface BronzeParticipant {
   id: number;
   name: string;
+  designation: string | null;
   email: string;
   initials: string;
   coursesDone: number;

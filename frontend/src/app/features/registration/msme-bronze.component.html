@@ -83,7 +83,9 @@
                   <span class="bz-avatar">{{ p.initials }}</span>
                   <span class="bz-person-text">
                     <span class="bz-person-name">{{ p.name }}</span>
-                    <span class="bz-person-sub">{{ p.coursesDone }} of {{ p.coursesTotal }} courses</span>
+                    <span class="bz-person-sub">
+                      @if (p.designation) { {{ p.designation }} · }{{ p.coursesDone }} of {{ p.coursesTotal }} courses
+                    </span>
                   </span>
                   <span class="bz-chip">{{ statusLabel(p.status) }}</span>
                 </div>

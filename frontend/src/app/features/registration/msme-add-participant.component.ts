@@ -50,6 +50,11 @@ import type { BronzeData } from './msme-bronze.component';
               <input id="name" class="ap-input" type="text" placeholder="Participant full name"
                      [value]="name()" (input)="name.set($any($event.target).value)" />
 
+              <label class="ap-label" for="designation">DESIGNATION <span class="ap-req">*</span></label>
+              <input id="designation" class="ap-input" type="text" placeholder="e.g. Plant Head"
+                     [value]="designation()" (input)="designation.set($any($event.target).value)" />
+              <p class="ap-hint">Their role in the unit</p>
+
               <label class="ap-label" for="email">EMAIL ADDRESS <span class="ap-req">*</span></label>
               <input id="email" class="ap-input" type="email" placeholder="Enter here"
                      [value]="email()" (input)="email.set($any($event.target).value)" />
@@ -59,14 +64,6 @@ import type { BronzeData } from './msme-bronze.component';
               <input id="mobile" class="ap-input" type="tel" inputmode="numeric" placeholder="Enter here"
                      [value]="mobile()" (input)="mobile.set(digits($any($event.target).value))" />
               <p class="ap-hint">SMS alerts and reminders</p>
-
-              <label class="ap-label" for="lang">PREFERRED LANGUAGE <span class="ap-req">*</span></label>
-              <select id="lang" class="ap-input" [value]="language()"
-                      (change)="language.set($any($event.target).value)">
-                <option value="">Select the course language</option>
-                @for (l of languages; track l) { <option [value]="l">{{ l }}</option> }
-              </select>
-              <p class="ap-hint">The LMS serves the course content in this language</p>
 
               @if (error()) { <div class="ap-error" role="alert">{{ error() }}</div> }
             </section>
@@ -151,12 +148,10 @@ export class MsmeAddParticipantComponent {
   private readonly router = inject(Router);
   private readonly base = environment.apiBase;
 
-  readonly languages = ['English', 'हिन्दी (Hindi)', 'मराठी (Marathi)', 'ગુજરાતી (Gujarati)', 'தமிழ் (Tamil)', 'తెలుగు (Telugu)', 'ಕನ್ನಡ (Kannada)', 'বাংলা (Bengali)'];
-
   readonly name = signal('');
+  readonly designation = signal('');
   readonly email = signal('');
   readonly mobile = signal('');
-  readonly language = signal('');
   readonly busy = signal(false);
   readonly error = signal<string | null>(null);
 
@@ -179,20 +174,20 @@ export class MsmeAddParticipantComponent {
   submit(): void {
     if (this.busy()) return;
     if (!this.name().trim()) return this.error.set('Enter the participant’s full name.');
+    if (!this.designation().trim()) return this.error.set('Enter their designation.');
     if (!/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(this.email().trim())) {
       return this.error.set('Enter a valid email address — the certificate goes there.');
     }
     if (this.mobile() && this.mobile().length !== 10) return this.error.set('A mobile number is 10 digits.');
-    if (!this.language()) return this.error.set('Choose the course language.');
 
     this.busy.set(true);
     this.error.set(null);
 
     this.http.post(`${this.base}/msme/bronze/participants`, {
       fullName: this.name().trim(),
+      designation: this.designation().trim(),
       email: this.email().trim(),
       mobile: this.mobile() || null,
-      preferredLanguage: this.language(),
     }).subscribe({
       next: () => { this.busy.set(false); void this.router.navigate(['/msme/bronze']); },
       error: (r: { error?: { message?: string; errors?: unknown } }) => {

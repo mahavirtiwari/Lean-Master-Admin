@@ -63,6 +63,7 @@ public sealed class MsmeBronzeController(
             {
                 id = p.BronzeParticipantId,
                 name = p.FullName,
+                p.Designation,
                 p.Email,
                 p.CoursesDone,
                 p.Status,
@@ -77,6 +78,7 @@ public sealed class MsmeBronzeController(
         {
             p.id,
             p.name,
+            designation = p.Designation,
             email = p.Email,
             initials = Initials(p.name),
             coursesDone = (int)p.CoursesDone,
@@ -135,9 +137,9 @@ public sealed class MsmeBronzeController(
         {
             EnterpriseId = enterpriseId.Value,
             FullName = request.FullName.Trim(),
+            Designation = string.IsNullOrWhiteSpace(request.Designation) ? null : request.Designation.Trim(),
             Email = email,
             Mobile = string.IsNullOrWhiteSpace(request.Mobile) ? null : request.Mobile.Trim(),
-            PreferredLanguage = string.IsNullOrWhiteSpace(request.PreferredLanguage) ? null : request.PreferredLanguage.Trim(),
             Status = "NotStarted",
             CoursesDone = 0,
             IsActive = true,
@@ -164,7 +166,7 @@ public sealed class MsmeBronzeController(
 public sealed class AddBronzeParticipantRequest
 {
     [Required, StringLength(150)] public string FullName { get; set; } = string.Empty;
+    [StringLength(100)] public string? Designation { get; set; }
     [Required, EmailAddress, StringLength(256)] public string Email { get; set; } = string.Empty;
     [StringLength(15)] public string? Mobile { get; set; }
-    [StringLength(40)] public string? PreferredLanguage { get; set; }
 }

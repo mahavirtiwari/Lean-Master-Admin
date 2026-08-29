@@ -69,28 +69,6 @@
                 <div class="bz-person-head">
                   <span class="bz-avatar">{{ p.initials }}</span>
 
-                  <!-- Sits before the name, as the one thing an enterprise does
-                       for a participant who cannot get in. Only while the
-                       account is open — a closed or locked one has nothing to
-                       sign in to. -->
-                  @if (p.accountState === 'Active') {
-                    <button
-                      class="bz-resend"
-                      type="button"
-                      [disabled]="resending() === p.id"
-                      (click)="resendLogin(p)"
-                      [title]="'Resend the LEAN ID and a new password to ' + p.email"
-                      [attr.aria-label]="'Resend login details to ' + p.name"
-                    >
-                      <svg viewBox="0 0 16 16" aria-hidden="true">
-                        <rect x="2" y="3.6" width="12" height="8.8" rx="1.4" fill="none"
-                              stroke="currentColor" stroke-width="1.5" />
-                        <path d="m2.6 4.4 5.4 4 5.4-4" fill="none" stroke="currentColor"
-                              stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-                      </svg>
-                    </button>
-                  }
-
                   <span class="bz-person-text">
                     <span class="bz-person-name">{{ p.name }}</span>
                     <span class="bz-person-sub">
@@ -109,12 +87,27 @@
 
                 <div class="bz-person-foot">
                   <span class="bz-person-note">{{ statusNote(p) }}</span>
+
+                  <button class="bz-link bz-view" type="button" (click)="detailFor.set(p)">
+                    View participant details
+                  </button>
+
                   @if (p.status === 'Certified') {
                     <a class="bz-btn bz-btn-green" [href]="d.lmsUrl" target="_blank" rel="noopener">Certificate</a>
                   } @else if (p.accountState === 'Locked') {
                     <span class="bz-locked">Account locked</span>
                   } @else {
-                    <button class="bz-btn bz-btn-blue" type="button" (click)="openLms()">Open LMS</button>
+                    <!-- The participant signs in to the LMS themselves; what the
+                         enterprise can do for them from here is send the
+                         credentials again. -->
+                    <button
+                      class="bz-btn bz-btn-blue"
+                      type="button"
+                      [disabled]="resending() === p.id"
+                      (click)="resendLogin(p)"
+                    >
+                      {{ resending() === p.id ? 'Sending...' : 'Resend password' }}
+                    </button>
                   }
                 </div>
               </section>
@@ -158,6 +151,41 @@
       </div>
     </div>
   </div>
+
+  <!-- One participant, in full - what the row can only summarise. -->
+  @if (detailFor(); as p) {
+    <div class="bz-scrim" (click)="detailFor.set(null)"></div>
+    <section class="bz-modal" role="dialog" aria-label="Participant details">
+      <span class="bz-modal-grip"></span>
+      <header class="bz-modal-head">
+        <div>
+          <h2 class="bz-modal-title">{{ p.name }}</h2>
+          <p class="bz-modal-sub">{{ p.designation || 'Participant' }}</p>
+        </div>
+        <button class="bz-modal-x" type="button" (click)="detailFor.set(null)" aria-label="Close">&#10005;</button>
+      </header>
+
+      <div class="bz-dt">
+        <div class="bz-dt-row"><span class="bz-dt-k">Status</span><span class="bz-dt-v">{{ statusLabel(p.status) }}</span></div>
+        <div class="bz-dt-row"><span class="bz-dt-k">Progress</span><span class="bz-dt-v">{{ p.coursesDone }} of {{ p.coursesTotal }} courses &middot; {{ progress(p) }}%</span></div>
+        <div class="bz-dt-row"><span class="bz-dt-k">LEAN ID</span><span class="bz-dt-v">{{ p.leanId || 'Not issued yet' }}</span></div>
+        <div class="bz-dt-row"><span class="bz-dt-k">Email</span><span class="bz-dt-v">{{ p.email }}</span></div>
+        <div class="bz-dt-row"><span class="bz-dt-k">Exam attempts</span><span class="bz-dt-v">{{ p.attemptsUsed }} of {{ p.attemptsAllowed }} used</span></div>
+        <div class="bz-dt-row"><span class="bz-dt-k">Account</span><span class="bz-dt-v">{{ accountLabel(p.accountState) }}</span></div>
+        @if (p.certificateNo) {
+          <div class="bz-dt-row"><span class="bz-dt-k">Certificate</span><span class="bz-dt-v">{{ p.certificateNo }}</span></div>
+        }
+        @if (p.certifiedOn) {
+          <div class="bz-dt-row"><span class="bz-dt-k">Certified on</span><span class="bz-dt-v">{{ when(p.certifiedOn) }}</span></div>
+        }
+      </div>
+
+      <div class="bz-track bz-dt-track"><span class="bz-fill" [style.width.%]="progress(p)"></span></div>
+      <p class="bz-dt-note">{{ statusNote(p) }}</p>
+
+      <button class="bz-modal-close" type="button" (click)="detailFor.set(null)">Close</button>
+    </section>
+  }
 
   <!-- C01d — the course list and the one exam, over the screen. -->
   @if (coursesOpen() && data(); as d) {

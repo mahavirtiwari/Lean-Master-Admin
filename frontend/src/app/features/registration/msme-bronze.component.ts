@@ -4,6 +4,7 @@ import { Router, RouterLink } from '@angular/router';
 import { MsmePageNavComponent } from './msme-page-nav.component';
 import { MsmeLoadErrorComponent } from './msme-load-error.component';
 import { httpErrorMessage } from '../../shared/http-error';
+import { istDateTime } from '../../shared/when';
 
 import { environment } from '../../../environments/environment';
 import { MsmeMastheadComponent } from './msme-masthead.component';
@@ -64,6 +65,7 @@ export class MsmeBronzeComponent {
 
   /** Which participant's details are being sent, and how it went. */
   readonly resending = signal<number | null>(null);
+  readonly detailFor = signal<BronzeParticipant | null>(null);
   readonly resentFor = signal<number | null>(null);
   readonly resentNote = signal<string | null>(null);
   readonly resentBad = signal(false);
@@ -151,13 +153,31 @@ export class MsmeBronzeComponent {
     }
   }
 
+  /**
+   * Three states, as the scheme talks about them: nothing begun, under way, or
+   * finished. Learning and ExamDue are both "in progress" - the participant has
+   * started and has not finished, which is what the enterprise needs to see.
+   */
   statusLabel(s: string): string {
     switch (s) {
-      case 'Certified': return 'Certified';
-      case 'ExamDue': return 'Exam due';
-      case 'Learning': return 'Learning';
+      case 'Certified': return 'Completed';
+      case 'ExamDue':
+      case 'Learning': return 'In progress';
       default: return 'Not started';
     }
+  }
+
+  accountLabel(state: string): string {
+    switch (state) {
+      case 'Completed': return 'Closed - course finished';
+      case 'Locked': return 'Locked - all exam attempts used';
+      default: return 'Active';
+    }
+  }
+
+  /** A certification date, in Indian time. */
+  when(iso: string): string {
+    return istDateTime(iso);
   }
 
   statusNote(p: BronzeParticipant): string {

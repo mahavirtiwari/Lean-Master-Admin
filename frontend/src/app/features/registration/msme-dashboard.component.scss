@@ -10,8 +10,8 @@
 // 292 : 804 of the 1120 content width, as the artboard measures it.
 .dash-grid {
   display: grid;
-  grid-template-columns: 292px minmax(0, 1fr);
-  gap: 24px;
+  grid-template-columns: 300px minmax(0, 1fr);
+  gap: 28px;
   align-items: start;
 
   @media (max-width: 980px) {
@@ -19,7 +19,15 @@
   }
 }
 
-.dash-body { padding-top: 24px; }
+// The applicant deck lays its content on 1192 (x=160..1352 of the 1512 canvas),
+// wider than the registration wizard's 1120 that .pub-body sets. Widening it
+// here is what makes the sidebar, panel and cards land on the artboard's sizes.
+.dash-body {
+  max-width: 1192px;
+  padding-top: 24px;
+
+  @media (max-width: 1272px) { padding-left: 40px; padding-right: 40px; }
+}
 .dash-crumb { font-size: 12px; color: #93a29a; }
 .dash-crumb span { margin: 0 6px; }
 .dash-h1 { font-size: 18.5px; font-weight: 700; color: #16211a; margin: 4px 0 18px; }
@@ -336,8 +344,11 @@
   border-radius: 12px;
   overflow: hidden;
   margin-bottom: 16px;
+  // The shared .panel rule pads its box; the artboard does not — the header
+  // band runs edge to edge and the grid inside carries its own inset.
+  padding: 0;
 }
-.panel-head { padding: 16px 20px; border-bottom: 1px solid #e8efea; }
+.panel-head { padding: 13px 20px; border-bottom: 1px solid #e8efea; }
 .panel-green { border-top: 3px solid #0f7b45; }
 .panel-green .panel-head { background: #f0faf4; }
 .panel-blue { border-top: 3px solid #1b4f8a; }
@@ -358,11 +369,16 @@
 
 .cert {
   position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 252px;
   background: #fff;
   border: 1px solid #e8efea;
   border-radius: 10px;
-  padding: 26px 18px 14px;
-  text-align: center;
+  // Left 24, right 18 and a 22 top inset, as the artboard measures them; the
+  // content is left-aligned and only the tier lockup is centred.
+  padding: 22px 18px 5px 24px;
+  text-align: left;
   overflow: hidden;
 }
 .cert-cap { position: absolute; top: 0; left: 0; right: 0; height: 5px; background: #c6d3cb; }
@@ -370,48 +386,56 @@
 .cert[data-lvl="silver"] .cert-cap { background: #5d6b62; }
 .cert[data-lvl="gold"] .cert-cap { background: #a16207; }
 
-// The tier lockup from the artboard, carrying its own BRONZE/SILVER/GOLD word.
-.cert-mark { height: 58px; width: auto; object-fit: contain; display: block; margin: 6px auto 18px; }
+// 168 x 86.9 on the artboard's 266.67 card — 63% of the card, so it holds that
+// proportion if the column is ever narrower than the deck.
+.cert-mark {
+  display: block;
+  width: 168px;
+  max-width: 100%;
+  height: auto;
+  margin: 0 auto 20px;
+}
 .cert.is-locked .cert-mark { opacity: 0.55; }
 
 .cert-state {
   display: flex; align-items: center; gap: 6px;
-  font-size: 12.5px; font-weight: 700; color: #93a29a;
+  font-size: 12.4px; font-weight: 700; color: #93a29a;
 }
 .cert-state.s-done { color: #0f7b45; }
 .cert-state.s-prog { color: #1b4f8a; }
 .cert-state-ic { font-size: 12px; }
 
-// Five milestone dots joined by a hairline, as the artboard draws them.
+// Five 14px dots, edge to edge across the content width, joined by a hairline.
 .cert-track {
   position: relative; display: flex; align-items: center; justify-content: space-between;
-  margin: 14px 0 12px;
+  margin: 14px 0 10px;
 }
 .cert-track::before {
-  content: ''; position: absolute; left: 6px; right: 6px; top: 50%;
-  height: 1px; background: #e8efea;
+  content: ''; position: absolute; left: 7px; right: 7px; top: 50%;
+  height: 1px; background: #d7e0da;
 }
 .cert-dot {
-  position: relative; width: 13px; height: 13px; border-radius: 50%;
-  border: 1.5px solid #d7e0da; background: #fff;
+  position: relative; width: 14px; height: 14px; border-radius: 50%;
+  border: 1px solid #d7e0da; background: #fff; flex: none;
 }
 .cert-dot.is-on { border-color: #0f7b45; background: #0f7b45; }
 
-.cert-note { font-size: 11.5px; color: #5d6b62; line-height: 1.45; margin: 0 0 14px; text-align: left; min-height: 30px; }
-.cert-app { font-size: 11px; color: #1b4f8a; font-weight: 600; margin: 0 0 10px; text-align: left; }
+.cert-note { font-size: 11px; color: #5d6b62; line-height: 1.45; margin: 0; }
+.cert-app { font-size: 10.6px; color: #1b4f8a; font-weight: 600; margin: 6px 0 0; }
 
 .cert-foot {
   display: flex; align-items: center; justify-content: space-between; gap: 8px;
-  padding-top: 12px; border-top: 1px solid #f0f4f1;
+  margin-top: auto; padding-top: 7px; border-top: 1px solid #eef3f0;
 }
 .cert-details {
   background: none; border: none; padding: 0; cursor: pointer;
-  font-size: 11px; font-weight: 700; letter-spacing: 0.5px; color: #1b4f8a;
+  font-size: 10.2px; font-weight: 700; letter-spacing: 0.5px; color: #1b4f8a;
 }
 .cert-details:hover { text-decoration: underline; }
 .cert-apply {
+  width: 84px; height: 34px; flex: none;
   background: #1b4f8a; color: #fff; border: none; border-radius: 8px;
-  padding: 9px 20px; font-size: 12.5px; font-weight: 700; cursor: pointer;
+  font-size: 12px; font-weight: 700; cursor: pointer;
 }
 .cert-apply:hover { background: #163f6f; }
 .cert-apply.is-off { background: #eef1ef; color: #93a29a; cursor: default; }

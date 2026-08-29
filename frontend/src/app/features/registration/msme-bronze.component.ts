@@ -33,7 +33,7 @@ export interface BronzeData {
   lmsUrl: string;
   lmsName: string;
   seats: { total: number; used: number; left: number; certified: number; learning: number; examDue: number };
-  courses: { no: number; title: string }[];
+  courses: { no: number; title: string; description: string | null }[];
   courseCount: number;
   participants: BronzeParticipant[];
 }

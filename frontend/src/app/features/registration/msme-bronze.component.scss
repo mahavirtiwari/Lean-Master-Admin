@@ -159,7 +159,7 @@
 
 .bz-courses { list-style: none; margin: 16px 0 0; padding: 0; }
 .bz-course {
-  display: flex; align-items: center; gap: 12px;
+  display: flex; align-items: flex-start; gap: 12px;
   padding: 9px 0; border-bottom: 1px solid #f0f4f1;
   font-size: 12px; color: #16211a;
 }
@@ -202,3 +202,8 @@
 .bz-dt-v { font-size: 12.8px; font-weight: 600; color: #16211a; text-align: right; }
 .bz-dt-track { margin-bottom: 8px; }
 .bz-dt-note { margin: 0 0 16px; font-size: 11.6px; color: #7b8a81; }
+
+// ---- a course, with what it covers ----
+.bz-course-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.bz-course-title { font-size: 12.8px; color: #16211a; }
+.bz-course-desc { font-size: 11.2px; color: #7b8a81; line-height: 1.45; }

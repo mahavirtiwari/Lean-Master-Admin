@@ -1,0 +1,145 @@
+<app-page-intro
+  title="E-Learning"
+  subtitle="The LEAN Bronze courses every nominated participant studies before the exam"
+/>
+
+<div class="stack">
+  <!-- ------------------------------------------------------ add / edit -->
+  @if (canCreate || canEdit) {
+    <section class="card card-pad">
+      <h3 class="card-title">{{ editingId() ? 'Edit Course' : 'Add Course' }}</h3>
+      <p class="card-sub">A course is studied on the LMS; the name and description are what the enterprise sees</p>
+
+      <form class="sector-form" (ngSubmit)="save()">
+        <div class="field">
+          <label class="field-label" for="title">COURSE NAME<span class="req">*</span></label>
+          <input
+            id="title"
+            class="input"
+            type="text"
+            maxlength="200"
+            placeholder="e.g. 5S — Sort, Set, Shine, Standardise, Sustain"
+            name="title"
+            [ngModel]="form().title"
+            (ngModelChange)="form.set({ ...form(), title: $event })"
+          />
+          <div class="char-count">{{ form().title.length }} / 200</div>
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="description">DESCRIPTION</label>
+          <textarea
+            id="description"
+            class="input"
+            rows="3"
+            maxlength="1000"
+            placeholder="What the course covers"
+            name="description"
+            [ngModel]="form().description"
+            (ngModelChange)="form.set({ ...form(), description: $event })"
+          ></textarea>
+          <div class="char-count">{{ form().description.length }} / 1000</div>
+        </div>
+
+        <div class="form-actions">
+          @if (editingId()) {
+            <button class="btn btn-secondary" type="button" (click)="cancelEdit()">Cancel</button>
+          }
+          <button class="btn btn-primary" type="submit" [disabled]="saving()">
+            {{ saving() ? 'Saving…' : 'Save' }}
+          </button>
+        </div>
+      </form>
+
+      @if (formError()) {
+        <div class="field-error form-error-row">{{ formError() }}</div>
+      }
+    </section>
+  }
+
+  <!-- ----------------------------------------------------------- list -->
+  <section class="card">
+    <div class="card-head">
+      <div>
+        <h3 class="card-title">Courses</h3>
+        <p class="card-sub">{{ rows().length }} in the list · studied in this order</p>
+      </div>
+
+      <div class="head-actions">
+        <input
+          class="input input-search"
+          type="search"
+          placeholder="Search courses"
+          [ngModel]="search()"
+          (ngModelChange)="search.set($event); load()"
+          name="search"
+        />
+        @if (canExport) {
+          <button class="btn btn-secondary" type="button" (click)="export()">Export</button>
+        }
+      </div>
+    </div>
+
+    @if (loading()) {
+      <p class="card-sub card-pad">Loading…</p>
+    } @else if (loadError(); as msg) {
+      <p class="field-error card-pad">{{ msg }}</p>
+    } @else if (rows().length === 0) {
+      <app-empty
+        title="No courses yet"
+        text="Add the first course participants will study for LEAN Bronze."
+      />
+    } @else {
+      <table class="table">
+        <thead>
+          <tr>
+            <th class="col-num">#</th>
+            <th>Course</th>
+            <th>Description</th>
+            <th class="col-status">Status</th>
+            @if (canEdit) { <th class="col-actions">Actions</th> }
+          </tr>
+        </thead>
+        <tbody>
+          @for (c of rows(); track c.bronzeCourseId) {
+            <tr [class.row-inactive]="!c.isActive">
+              <td class="col-num">{{ c.sortOrder }}</td>
+              <td class="cell-strong">{{ c.title }}</td>
+              <td class="cell-muted">{{ c.description || '—' }}</td>
+              <td>
+                <span class="pill" [class.pill-off]="!c.isActive">
+                  {{ c.isActive ? 'Active' : 'Inactive' }}
+                </span>
+              </td>
+              @if (canEdit) {
+                <td class="col-actions">
+                  <button class="link-btn" type="button" (click)="edit(c)">Edit</button>
+                  <button class="link-btn" type="button" (click)="confirming.set(c)">
+                    {{ c.isActive ? 'Disable' : 'Enable' }}
+                  </button>
+                </td>
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </section>
+</div>
+
+<!-- A disabled course stops being studied but is not deleted: participants'
+     progress is counted against the active courses. -->
+@if (confirming(); as c) {
+  <app-confirm
+    [title]="c.isActive ? 'Disable this course?' : 'Enable this course?'"
+    [message]="
+      c.isActive
+        ? c.title + ' will no longer be part of the Bronze course set. Progress already recorded is kept.'
+        : c.title + ' will be part of the Bronze course set again.'
+    "
+    [confirmLabel]="c.isActive ? 'Disable' : 'Enable'"
+    [tone]="c.isActive ? 'danger' : 'primary'"
+    (confirmed)="toggleStatus()"
+    (cancelled)="confirming.set(null)"
+  />
+}

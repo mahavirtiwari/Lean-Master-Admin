@@ -61,7 +61,7 @@ public sealed class MsmeBronzeController(
         var courses = await db.BronzeCourses.AsNoTracking()
             .Where(c => c.IsActive)
             .OrderBy(c => c.SortOrder)
-            .Select(c => new { no = c.SortOrder, title = c.Title })
+            .Select(c => new { no = c.SortOrder, title = c.Title, description = c.Description })
             .ToListAsync(ct);
 
         var people = await db.BronzeParticipants.AsNoTracking()

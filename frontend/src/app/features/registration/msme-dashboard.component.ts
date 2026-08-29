@@ -214,12 +214,18 @@ export class MsmeDashboardComponent {
     return state === 'Certified' ? '✓' : state === 'Locked' ? '🔒' : '→';
   }
 
+  /**
+   * Three statuses across all three cards: not begun, under way, finished.
+   *
+   * A locked level is still one that has not been started — the padlock and the
+   * note underneath say why it cannot be yet, so spending a fourth status on it
+   * only makes the three cards harder to read against each other.
+   */
   stateLabel(state: string): string {
     switch (state) {
       case 'Certified': return 'Completed';
       case 'In progress': return 'In progress';
-      case 'Locked': return 'Locked';
-      default: return 'Not started';
+      default: return 'Yet to start';
     }
   }
 

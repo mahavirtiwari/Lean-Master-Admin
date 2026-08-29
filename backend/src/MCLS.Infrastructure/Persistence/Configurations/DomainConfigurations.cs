@@ -1130,6 +1130,7 @@ internal sealed class BronzeCourseConfiguration : IEntityTypeConfiguration<Bronz
         b.ToTable("BronzeCourse", "msme");
         b.HasKey(x => x.BronzeCourseId);
         b.Property(x => x.Title).HasMaxLength(200).IsRequired();
+        b.Property(x => x.Description).HasMaxLength(1000);
     }
 }
 

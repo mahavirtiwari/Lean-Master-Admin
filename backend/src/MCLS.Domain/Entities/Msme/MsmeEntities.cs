@@ -496,8 +496,14 @@ public class BronzeCourse
     public int BronzeCourseId { get; set; }
     public byte SortOrder { get; set; }
     public string Title { get; set; } = string.Empty;
+
+    /// <summary>What the course covers, shown to the enterprise.</summary>
+    public string? Description { get; set; }
+
     public bool IsActive { get; set; } = true;
     public DateTime CreatedOnUtc { get; set; }
+    public DateTime? ModifiedOnUtc { get; set; }
+    public int? ModifiedByUserId { get; set; }
 }
 
 /// <summary>

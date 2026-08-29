@@ -184,7 +184,13 @@
 
       <ol class="bz-courses">
         @for (c of d.courses; track c.no) {
-          <li class="bz-course"><span class="bz-course-no">{{ c.no }}</span>{{ c.title }}</li>
+          <li class="bz-course">
+            <span class="bz-course-no">{{ c.no }}</span>
+            <span class="bz-course-text">
+              <span class="bz-course-title">{{ c.title }}</span>
+              @if (c.description) { <span class="bz-course-desc">{{ c.description }}</span> }
+            </span>
+          </li>
         }
       </ol>
 

@@ -281,6 +281,12 @@ export const routes: Routes = [
           import('./features/masters/esg-checklist.component').then((m) => m.EsgChecklistComponent),
       },
       {
+        path: 'e-learning',
+        canActivate: [permissionGuard('E_LEARNING')],
+        loadComponent: () =>
+          import('./features/masters/e-learning.component').then((m) => m.ELearningComponent),
+      },
+      {
         path: 'basic-info-documents',
         canActivate: [permissionGuard('BASIC_INFO_DOCS')],
         loadComponent: () =>

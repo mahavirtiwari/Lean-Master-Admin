@@ -3,7 +3,10 @@
 
 <main class="bz-ground">
   <div class="bz-wrap">
-    <div class="bz-crumb">Home <span>›</span> Dashboard <span>›</span> LEAN Bronze</div>
+    <div class="bz-crumb-row">
+      <div class="bz-crumb">Home <span>›</span> Dashboard <span>›</span> LEAN Bronze</div>
+      <app-msme-page-nav to="/msme/dashboard" (refresh)="load()" [busy]="loading()" />
+    </div>
     <h1 class="bz-h1">LEAN Bronze</h1>
     <p class="bz-h1-sub">{{ subtitle() }}</p>
 

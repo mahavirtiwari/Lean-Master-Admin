@@ -1,5 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Component, computed, inject, signal } from '@angular/core';
+import { MsmePageNavComponent } from './msme-page-nav.component';
 
 import { environment } from '../../../environments/environment';
 import { MsmeMastheadComponent } from './msme-masthead.component';
@@ -24,14 +25,17 @@ interface DocRow {
  */
 @Component({
   selector: 'app-msme-documents',
-  imports: [MsmeMastheadComponent, MsmeSectionMenuComponent, MsmeSidebarComponent],
+  imports: [MsmeMastheadComponent, MsmeSectionMenuComponent, MsmeSidebarComponent, MsmePageNavComponent],
   template: `
     <app-msme-masthead mode="app" />
     <app-msme-section-menu />
 
     <main class="dc-ground">
       <div class="dc-wrap">
-        <div class="dc-crumb">Home <span>›</span> My Documents</div>
+        <div class="dc-crumb-row">
+          <div class="dc-crumb">Home <span>›</span> My Documents</div>
+          <app-msme-page-nav to="/msme/dashboard" (refresh)="load()" [busy]="loading()" />
+        </div>
         <h1 class="dc-h1">My Documents</h1>
 
         <div class="dc-grid">
@@ -108,6 +112,10 @@ interface DocRow {
       :host { display: block; min-height: 100vh; background: #f4f7f5; }
       .dc-ground { padding: 24px 40px 64px; }
       .dc-wrap { max-width: 1192px; margin: 0 auto; }
+      .dc-crumb-row {
+        display: flex; align-items: center;
+        gap: 12px; flex-wrap: wrap;
+      }
       .dc-crumb { font-size: 12px; color: #93a29a; }
       .dc-crumb span { margin: 0 6px; }
       .dc-h1 { font-size: 18.5px; font-weight: 700; color: #16211a; margin: 4px 0 18px; }
@@ -154,6 +162,11 @@ export class MsmeDocumentsComponent {
   readonly videos = computed(() => this.rows().filter((r) => r.kind === 'video'));
 
   constructor() {
+    this.load();
+  }
+
+  load(): void {
+    this.loading.set(true);
     this.http.get<DocRow[]>(`${this.base}/msme/documents`).subscribe({
       next: (r) => { this.rows.set(r ?? []); this.loading.set(false); },
       error: () => this.loading.set(false),

@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Component, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
+import { MsmePageNavComponent } from './msme-page-nav.component';
 
 import { environment } from '../../../environments/environment';
 import { MsmeMastheadComponent } from './msme-masthead.component';
@@ -45,7 +46,7 @@ export interface BronzeData {
  */
 @Component({
   selector: 'app-msme-bronze',
-  imports: [MsmeMastheadComponent, MsmeSectionMenuComponent, MsmeSidebarComponent, RouterLink],
+  imports: [MsmeMastheadComponent, MsmeSectionMenuComponent, MsmeSidebarComponent, RouterLink, MsmePageNavComponent],
   templateUrl: './msme-bronze.component.html',
   styleUrl: './msme-bronze.component.scss',
 })

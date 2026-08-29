@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Component, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { istDateTime } from '../../shared/when';
+import { MsmePageNavComponent } from './msme-page-nav.component';
 
 import { environment } from '../../../environments/environment';
 import { MsmeMastheadComponent } from './msme-masthead.component';
@@ -38,7 +39,7 @@ interface Submission {
  */
 @Component({
   selector: 'app-msme-application',
-  imports: [MsmeMastheadComponent, MsmeSectionMenuComponent],
+  imports: [MsmeMastheadComponent, MsmeSectionMenuComponent, MsmePageNavComponent],
   templateUrl: './msme-application.component.html',
   styleUrl: './msme-application.component.scss',
 })
@@ -112,6 +113,11 @@ export class MsmeApplicationComponent {
   }
 
   constructor() {
+    this.load();
+  }
+
+  load(): void {
+    this.loading.set(true);
     this.http.get<AppConfig>(`${this.base}/msme/application/config`).subscribe({
       next: (cfg) => {
         this.config.set(cfg);

@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Component, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
+import { MsmePageNavComponent } from './msme-page-nav.component';
 
 import { environment } from '../../../environments/environment';
 import { MsmeMastheadComponent } from './msme-masthead.component';
@@ -17,14 +18,17 @@ import type { BronzeData } from './msme-bronze.component';
  */
 @Component({
   selector: 'app-msme-add-participant',
-  imports: [MsmeMastheadComponent, MsmeSectionMenuComponent, MsmeSidebarComponent],
+  imports: [MsmeMastheadComponent, MsmeSectionMenuComponent, MsmeSidebarComponent, MsmePageNavComponent],
   template: `
     <app-msme-masthead mode="app" />
     <app-msme-section-menu />
 
     <main class="ap-ground">
       <div class="ap-wrap">
-        <div class="ap-crumb">Home <span>›</span> Dashboard <span>›</span> Add Participant</div>
+        <div class="ap-crumb-row">
+          <div class="ap-crumb">Home <span>›</span> Dashboard <span>›</span> Add Participant</div>
+          <app-msme-page-nav to="/msme/bronze" [showRefresh]="false" />
+        </div>
         <h1 class="ap-h1">Add Participant</h1>
         <p class="ap-h1-sub">LEAN Bronze</p>
 
@@ -90,6 +94,10 @@ import type { BronzeData } from './msme-bronze.component';
       :host { display: block; min-height: 100vh; background: #f4f7f5; }
       .ap-ground { padding: 24px 40px 64px; }
       .ap-wrap { max-width: 1192px; margin: 0 auto; }
+      .ap-crumb-row {
+        display: flex; align-items: center;
+        gap: 12px; flex-wrap: wrap;
+      }
       .ap-crumb { font-size: 12px; color: #93a29a; }
       .ap-crumb span { margin: 0 6px; }
       .ap-h1 { font-size: 18.5px; font-weight: 700; color: #16211a; margin: 4px 0 2px; }

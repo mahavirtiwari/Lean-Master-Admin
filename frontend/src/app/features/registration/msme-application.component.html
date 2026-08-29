@@ -2,7 +2,10 @@
 <app-msme-section-menu />
 
 <div class="app-title-block">
-  <div class="app-crumb">Home <span>›</span> My Certificates <span>›</span> LEAN Silver Application</div>
+  <div class="app-crumb-row">
+    <div class="app-crumb">Home <span>›</span> My Certificates <span>›</span> LEAN Silver Application</div>
+    <app-msme-page-nav to="/msme/certificates" (refresh)="load()" [busy]="loading()" />
+  </div>
   <h1 class="app-h1">LEAN Silver Application</h1>
   <p class="app-h1-sub">Filled on the mobile app · review and pay here</p>
 </div>

@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Component, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
+import { MsmePageNavComponent } from './msme-page-nav.component';
 
 import { environment } from '../../../environments/environment';
 import { MsmeMastheadComponent } from './msme-masthead.component';
@@ -39,14 +40,17 @@ interface ActivitiesResponse {
  */
 @Component({
   selector: 'app-msme-sector-nic',
-  imports: [MsmeMastheadComponent, MsmeSectionMenuComponent, MsmeSidebarComponent],
+  imports: [MsmeMastheadComponent, MsmeSectionMenuComponent, MsmeSidebarComponent, MsmePageNavComponent],
   template: `
     <app-msme-masthead mode="app" />
     <app-msme-section-menu />
 
     <main class="sn-ground">
       <div class="sn-wrap">
-        <div class="sn-crumb">Home <span>›</span> View Profile <span>›</span> Sector &amp; NIC</div>
+        <div class="sn-crumb-row">
+          <div class="sn-crumb">Home <span>›</span> View Profile <span>›</span> Sector &amp; NIC</div>
+          <app-msme-page-nav to="/msme/profile" [showRefresh]="false" />
+        </div>
         <h1 class="sn-h1">Sector &amp; NIC</h1>
         <p class="sn-h1-sub">Read-only from Udyam</p>
 
@@ -144,6 +148,10 @@ interface ActivitiesResponse {
       :host { display: block; min-height: 100vh; background: #f4f7f5; }
       .sn-ground { padding: 24px 40px 64px; }
       .sn-wrap { max-width: 1192px; margin: 0 auto; }
+      .sn-crumb-row {
+        display: flex; align-items: center;
+        gap: 12px; flex-wrap: wrap;
+      }
       .sn-crumb { font-size: 12px; color: #93a29a; }
       .sn-crumb span { margin: 0 6px; }
       .sn-h1 { font-size: 18.5px; font-weight: 700; color: #16211a; margin: 4px 0 2px; }
@@ -245,7 +253,7 @@ export class MsmeSectorNicComponent {
     this.load();
   }
 
-  private load(): void {
+  load(): void {
     this.http.get<ActivitiesResponse>(`${this.base}/msme/profile/activities`).subscribe({
       next: (d) => {
         this.data.set(d);

@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Component, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { istDate, istDateTime } from '../../shared/when';
+import { MsmePageNavComponent } from './msme-page-nav.component';
 
 import { environment } from '../../../environments/environment';
 import { MsmeMastheadComponent } from './msme-masthead.component';
@@ -73,14 +74,17 @@ interface HistoryRow {
  */
 @Component({
   selector: 'app-msme-profile',
-  imports: [MsmeMastheadComponent, MsmeSectionMenuComponent, MsmeSidebarComponent],
+  imports: [MsmeMastheadComponent, MsmeSectionMenuComponent, MsmeSidebarComponent, MsmePageNavComponent],
   template: `
     <app-msme-masthead mode="app" />
     <app-msme-section-menu />
 
     <main class="pf-ground">
       <div class="pf-wrap">
-        <div class="pf-crumb">Home <span>›</span> View Profile</div>
+        <div class="pf-crumb-row">
+          <div class="pf-crumb">Home <span>›</span> View Profile</div>
+          <app-msme-page-nav to="/msme/dashboard" (refresh)="load()" [busy]="loading()" />
+        </div>
         <h1 class="pf-h1">View Profile</h1>
         <p class="pf-h1-sub">Enterprise &amp; SPOC</p>
 
@@ -241,6 +245,10 @@ interface HistoryRow {
       :host { display: block; min-height: 100vh; background: #f4f7f5; }
       .pf-ground { padding: 24px 40px 64px; }
       .pf-wrap { max-width: 1192px; margin: 0 auto; }
+      .pf-crumb-row {
+        display: flex; align-items: center;
+        gap: 12px; flex-wrap: wrap;
+      }
       .pf-crumb { font-size: 12px; color: #93a29a; }
       .pf-crumb span { margin: 0 6px; }
       .pf-h1 { font-size: 18.5px; font-weight: 700; color: #16211a; margin: 4px 0 2px; }
@@ -322,7 +330,7 @@ export class MsmeProfileComponent {
     this.load();
   }
 
-  private load(): void {
+  load(): void {
     this.http.get<Profile>(`${this.base}/msme/profile`).subscribe({
       next: (p) => { this.data.set(p); this.loading.set(false); },
       error: () => this.loading.set(false),

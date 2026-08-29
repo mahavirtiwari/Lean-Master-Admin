@@ -1,7 +1,10 @@
 <app-msme-masthead mode="app" />
 
 <div class="pay-title-block">
-  <div class="pay-crumb">Home <span>›</span> Payments <span>›</span> LEAN Silver</div>
+  <div class="pay-crumb-row">
+    <div class="pay-crumb">Home <span>›</span> Payments <span>›</span> LEAN Silver</div>
+    <app-msme-page-nav to="/msme/payments" [showRefresh]="false" />
+  </div>
   <h1 class="pay-h1">Payment</h1>
   <p class="pay-h1-sub">LEAN Silver certification fee</p>
 </div>

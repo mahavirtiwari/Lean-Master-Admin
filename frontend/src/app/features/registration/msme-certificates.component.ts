@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { MsmePageNavComponent } from './msme-page-nav.component';
 
 import { environment } from '../../../environments/environment';
 import { MsmeMastheadComponent } from './msme-masthead.component';
@@ -31,14 +32,17 @@ interface Dashboard {
  */
 @Component({
   selector: 'app-msme-certificates',
-  imports: [MsmeMastheadComponent, MsmeSectionMenuComponent, MsmeSidebarComponent, RouterLink],
+  imports: [MsmeMastheadComponent, MsmeSectionMenuComponent, MsmeSidebarComponent, RouterLink, MsmePageNavComponent],
   template: `
     <app-msme-masthead mode="app" />
     <app-msme-section-menu />
 
     <main class="ct-ground">
       <div class="ct-wrap">
-        <div class="ct-crumb">Home <span>›</span> My Certificates</div>
+        <div class="ct-crumb-row">
+          <div class="ct-crumb">Home <span>›</span> My Certificates</div>
+          <app-msme-page-nav to="/msme/dashboard" (refresh)="load()" [busy]="loading()" />
+        </div>
         <h1 class="ct-h1">My Certificates</h1>
 
         <div class="ct-grid">
@@ -155,6 +159,10 @@ interface Dashboard {
       :host { display: block; min-height: 100vh; background: #f4f7f5; }
       .ct-ground { padding: 24px 40px 64px; }
       .ct-wrap { max-width: 1192px; margin: 0 auto; }
+      .ct-crumb-row {
+        display: flex; align-items: center;
+        gap: 12px; flex-wrap: wrap;
+      }
       .ct-crumb { font-size: 12px; color: #93a29a; }
       .ct-crumb span { margin: 0 6px; }
       .ct-h1 { font-size: 18.5px; font-weight: 700; color: #16211a; margin: 4px 0 18px; }
@@ -266,6 +274,11 @@ export class MsmeCertificatesComponent {
   });
 
   constructor() {
+    this.load();
+  }
+
+  load(): void {
+    this.loading.set(true);
     this.http.get<Dashboard>(`${this.base}/msme/dashboard`).subscribe({
       next: (d) => { this.levels.set(d.levels ?? []); this.loading.set(false); },
       error: () => this.loading.set(false),

@@ -1,6 +1,7 @@
 import { DecimalPipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Component, inject, signal } from '@angular/core';
+import { MsmePageNavComponent } from './msme-page-nav.component';
 
 import { environment } from '../../../environments/environment';
 import { MsmeMastheadComponent } from './msme-masthead.component';
@@ -23,14 +24,17 @@ interface PaymentRow {
  */
 @Component({
   selector: 'app-msme-payments',
-  imports: [MsmeMastheadComponent, MsmeSectionMenuComponent, MsmeSidebarComponent, DecimalPipe],
+  imports: [MsmeMastheadComponent, MsmeSectionMenuComponent, MsmeSidebarComponent, DecimalPipe, MsmePageNavComponent],
   template: `
     <app-msme-masthead mode="app" />
     <app-msme-section-menu />
 
     <main class="py-ground">
       <div class="py-wrap">
-        <div class="py-crumb">Home <span>›</span> Payments</div>
+        <div class="py-crumb-row">
+          <div class="py-crumb">Home <span>›</span> Payments</div>
+          <app-msme-page-nav to="/msme/dashboard" (refresh)="load()" [busy]="loading()" />
+        </div>
         <h1 class="py-h1">Payments</h1>
 
         <div class="py-grid">
@@ -73,6 +77,10 @@ interface PaymentRow {
       :host { display: block; min-height: 100vh; background: #f4f7f5; }
       .py-ground { padding: 24px 40px 64px; }
       .py-wrap { max-width: 1192px; margin: 0 auto; }
+      .py-crumb-row {
+        display: flex; align-items: center;
+        gap: 12px; flex-wrap: wrap;
+      }
       .py-crumb { font-size: 12px; color: #93a29a; }
       .py-crumb span { margin: 0 6px; }
       .py-h1 { font-size: 18.5px; font-weight: 700; color: #16211a; margin: 4px 0 18px; }
@@ -103,6 +111,11 @@ export class MsmePaymentsComponent {
   readonly loading = signal(true);
 
   constructor() {
+    this.load();
+  }
+
+  load(): void {
+    this.loading.set(true);
     this.http.get<{ payments: PaymentRow[] }>(`${this.base}/msme/payments`).subscribe({
       next: (r) => { this.rows.set(r.payments ?? []); this.loading.set(false); },
       error: () => this.loading.set(false),

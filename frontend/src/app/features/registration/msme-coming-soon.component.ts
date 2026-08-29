@@ -2,6 +2,7 @@ import { Component, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
+import { MsmePageNavComponent } from './msme-page-nav.component';
 
 import { MsmeMastheadComponent } from './msme-masthead.component';
 import { MsmeSectionMenuComponent } from './msme-section-menu.component';
@@ -18,14 +19,17 @@ import { MsmeSectionMenuComponent } from './msme-section-menu.component';
  */
 @Component({
   selector: 'app-msme-coming-soon',
-  imports: [MsmeMastheadComponent, MsmeSectionMenuComponent, RouterLink],
+  imports: [MsmeMastheadComponent, MsmeSectionMenuComponent, RouterLink, MsmePageNavComponent],
   template: `
     <app-msme-masthead mode="app" />
     <app-msme-section-menu />
 
     <main class="cs-ground">
       <div class="cs-wrap">
-        <div class="cs-crumb">Home <span>›</span> {{ title() }}</div>
+        <div class="cs-crumb-row">
+          <div class="cs-crumb">Home <span>›</span> {{ title() }}</div>
+          <app-msme-page-nav to="/msme/dashboard" [showRefresh]="false" />
+        </div>
         <h1 class="cs-title">{{ title() }}</h1>
 
         <section class="cs-card">
@@ -45,6 +49,10 @@ import { MsmeSectionMenuComponent } from './msme-section-menu.component';
       :host { display: block; min-height: 100vh; background: #f4f7f5; }
       .cs-ground { padding: 28px 40px 64px; }
       .cs-wrap { max-width: 1192px; margin: 0 auto; }
+      .cs-crumb-row {
+        display: flex; align-items: center;
+        gap: 12px; flex-wrap: wrap;
+      }
       .cs-crumb { font-size: 12px; color: #93a29a; }
       .cs-crumb span { margin: 0 6px; }
       .cs-title { font-size: 18.5px; font-weight: 700; color: #16211a; margin: 4px 0 20px; }

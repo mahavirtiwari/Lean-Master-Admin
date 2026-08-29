@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Component, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
+import { MsmeAppBannerComponent } from './msme-app-banner.component';
 
 import { environment } from '../../../environments/environment';
 import { AuthService } from '../../core/auth.service';
@@ -85,7 +86,7 @@ export interface MsmeDashboard {
  */
 @Component({
   selector: 'app-msme-dashboard',
-  imports: [MsmeMastheadComponent, MsmeSectionMenuComponent, MsmeSidebarComponent, RouterLink],
+  imports: [MsmeMastheadComponent, MsmeSectionMenuComponent, MsmeSidebarComponent, RouterLink, MsmeAppBannerComponent],
   templateUrl: './msme-dashboard.component.html',
   styleUrl: './msme-dashboard.component.scss',
 })
@@ -281,6 +282,12 @@ export class MsmeDashboardComponent {
   }
 
   constructor() {
+    this.load();
+  }
+
+  load(): void {
+    this.loading.set(true);
+    this.error.set(null);
     this.http.get<MsmeDashboard>(`${environment.apiBase}/msme/dashboard`).subscribe({
       next: (data) => {
         this.data.set(data);

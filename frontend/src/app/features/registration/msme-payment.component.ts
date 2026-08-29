@@ -2,6 +2,7 @@ import { DatePipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Component, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
+import { MsmePageNavComponent } from './msme-page-nav.component';
 
 import { environment } from '../../../environments/environment';
 import { MsmeMastheadComponent } from './msme-masthead.component';
@@ -31,7 +32,7 @@ type Stage = 'loading' | 'methods' | 'processing' | 'success' | 'failed' | 'noth
  */
 @Component({
   selector: 'app-msme-payment',
-  imports: [DatePipe, MsmeMastheadComponent],
+  imports: [DatePipe, MsmeMastheadComponent, MsmePageNavComponent],
   templateUrl: './msme-payment.component.html',
   styleUrl: './msme-payment.component.scss',
 })

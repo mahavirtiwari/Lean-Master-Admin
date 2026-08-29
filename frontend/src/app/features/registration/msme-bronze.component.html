@@ -16,7 +16,14 @@
         } @else if (data(); as d) {
           <!-- The LMS the courses and the exam actually run on. -->
           <section class="bz-card bz-lms">
-            <span class="bz-lms-ic"></span>
+            <span class="bz-lms-ic">
+              <svg viewBox="0 0 16 16" aria-hidden="true">
+                <path d="M6.6 9.4a2.8 2.8 0 0 0 4.2.3l1.7-1.7a2.8 2.8 0 0 0-4-4l-1 1" fill="none"
+                      stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M9.4 6.6a2.8 2.8 0 0 0-4.2-.3L3.5 8a2.8 2.8 0 0 0 4 4l1-1" fill="none"
+                      stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </span>
             <div class="bz-lms-text">
               <div class="bz-lms-name">{{ d.lmsName }}</div>
               <div class="bz-lms-url">{{ d.lmsUrl.replace('https://', '') }}</div>
@@ -28,7 +35,16 @@
           @if (!hasParticipants()) {
             <!-- C01a — nobody seated yet. -->
             <section class="bz-card bz-empty">
-              <span class="bz-empty-ic"></span>
+              <span class="bz-empty-ic">
+                <svg viewBox="0 0 16 16" aria-hidden="true">
+                  <path d="M11 14v-1.5A2.5 2.5 0 0 0 8.5 10h-4A2.5 2.5 0 0 0 2 12.5V14" fill="none"
+                        stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                  <path d="M6.5 7.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z" fill="none"
+                        stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                  <path d="M14 14v-1.5a2.5 2.5 0 0 0-1.9-2.4M10.5 2.6a2.5 2.5 0 0 1 0 4.8" fill="none"
+                        stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </span>
               <h2 class="bz-empty-h">No participants yet</h2>
               <p class="bz-empty-p">
                 Add up to {{ d.seats.total }} people from your unit. Each one takes all
@@ -101,7 +117,13 @@
           }
 
           <div class="bz-note">
-            <span class="bz-note-ic">ⓘ</span>
+            <span class="bz-note-ic">
+              <svg viewBox="0 0 16 16" aria-hidden="true">
+                <circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="1.8" />
+                <path d="M8 7.4v3.6M8 5.2v.1" fill="none" stroke="currentColor" stroke-width="1.8"
+                      stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </span>
             @if (hasParticipants()) {
               Progress and exam results are held by the LMS and shown here. Certificates are issued to
               each participant.
@@ -138,7 +160,14 @@
 
       <div class="bz-exam-label">FINAL EXAMINATION</div>
       <div class="bz-exam">
-        <span class="bz-exam-ic">📋</span>
+        <span class="bz-exam-ic">
+          <svg viewBox="0 0 16 16" aria-hidden="true">
+            <path d="M4.6 3.2h6.8v10.2H4.6zM6.6 3.2V2h2.8v1.2" fill="none" stroke="currentColor"
+                  stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M6.6 7h2.8M6.6 9.6h2.8" fill="none" stroke="currentColor" stroke-width="1.5"
+                  stroke-linecap="round" />
+          </svg>
+        </span>
         <span class="bz-exam-text">
           <span class="bz-exam-h">One exam, after all {{ d.courseCount }} courses</span>
           <span class="bz-exam-p">Sat once per participant, on the LMS. There is no separate exam inside this app.</span>

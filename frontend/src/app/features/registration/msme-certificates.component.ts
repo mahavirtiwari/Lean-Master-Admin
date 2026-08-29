@@ -52,11 +52,20 @@ interface Dashboard {
             } @else {
               <!-- The pledge taken at registration. -->
               <section class="ct-card ct-row ct-pledge">
-                <span class="ct-ic green">🏅</span>
+                <span class="ct-ic green"><svg class="ct-glyph" viewBox="0 0 16 16" aria-hidden="true">
+                    <circle cx="8" cy="10.4" r="3.6" fill="none" stroke="currentColor" stroke-width="1.8" />
+                    <path d="M5.6 7 4 1.8h8L10.4 7" fill="none" stroke="currentColor" stroke-width="1.8"
+                          stroke-linecap="round" stroke-linejoin="round" />
+                  </svg></span>
                 <span class="ct-row-body">
                   <span class="ct-row-title">LEAN Pledge</span>
                 </span>
-                <a class="ct-dl" [href]="pledgeUrl()" target="_blank" rel="noopener" aria-label="Download the pledge">⬇</a>
+                <a class="ct-dl" [href]="pledgeUrl()" target="_blank" rel="noopener" aria-label="Download the pledge"><svg class="ct-glyph" viewBox="0 0 16 16" aria-hidden="true">
+                  <path d="M3 10.5v1.8A1.7 1.7 0 0 0 4.7 14h6.6A1.7 1.7 0 0 0 13 12.3v-1.8" fill="none"
+                        stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                  <path d="M8 2.5v8M5 7.5 8 10.5l3-3" fill="none" stroke="currentColor" stroke-width="1.8"
+                        stroke-linecap="round" stroke-linejoin="round" />
+                </svg></a>
               </section>
 
               @for (l of levels(); track l.code) {
@@ -65,7 +74,11 @@ interface Dashboard {
                        the people rather than one file. -->
                   <section class="ct-card ct-level" [style.borderLeftColor]="accent(l.code)">
                     <a class="ct-level-head" routerLink="/msme/bronze">
-                      <span class="ct-ic" [style.background]="tint(l.code)">🏵️</span>
+                      <span class="ct-ic" [style.background]="tint(l.code)" [style.color]="accent(l.code)"><svg class="ct-glyph" viewBox="0 0 16 16" aria-hidden="true">
+                    <circle cx="8" cy="10.4" r="3.6" fill="none" stroke="currentColor" stroke-width="1.8" />
+                    <path d="M5.6 7 4 1.8h8L10.4 7" fill="none" stroke="currentColor" stroke-width="1.8"
+                          stroke-linecap="round" stroke-linejoin="round" />
+                  </svg></span>
                       <span class="ct-row-body">
                         <span class="ct-row-title">
                           {{ l.name }}
@@ -75,7 +88,10 @@ interface Dashboard {
                         </span>
                         <span class="ct-row-sub">Issued on passing the exam</span>
                       </span>
-                      <span class="ct-go">›</span>
+                      <span class="ct-go"><svg class="ct-chev" viewBox="0 0 8 12" aria-hidden="true">
+                        <path d="M1.4 0.9 6.6 6 1.4 11.1" fill="none" stroke="currentColor" stroke-width="1.7"
+                              stroke-linecap="round" stroke-linejoin="round" />
+                      </svg></span>
                     </a>
 
                     @for (p of certifiedPeople(); track p.id) {
@@ -83,7 +99,12 @@ interface Dashboard {
                         <span class="ct-avatar">{{ p.initials }}</span>
                         <span class="ct-person-name">{{ p.name }}</span>
                         <span class="ct-person-state">Certified</span>
-                        <a class="ct-dl" [href]="lmsUrl()" target="_blank" rel="noopener" aria-label="Download certificate">⬇</a>
+                        <a class="ct-dl ct-dl-plain" [href]="lmsUrl()" target="_blank" rel="noopener" aria-label="Download certificate"><svg class="ct-glyph" viewBox="0 0 16 16" aria-hidden="true">
+                  <path d="M3 10.5v1.8A1.7 1.7 0 0 0 4.7 14h6.6A1.7 1.7 0 0 0 13 12.3v-1.8" fill="none"
+                        stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                  <path d="M8 2.5v8M5 7.5 8 10.5l3-3" fill="none" stroke="currentColor" stroke-width="1.8"
+                        stroke-linecap="round" stroke-linejoin="round" />
+                </svg></a>
                       </div>
                     }
 
@@ -97,7 +118,11 @@ interface Dashboard {
                   </section>
                 } @else {
                   <section class="ct-card ct-row ct-level" [style.borderLeftColor]="accent(l.code)">
-                    <span class="ct-ic" [style.background]="tint(l.code)">🏵️</span>
+                    <span class="ct-ic" [style.background]="tint(l.code)" [style.color]="accent(l.code)"><svg class="ct-glyph" viewBox="0 0 16 16" aria-hidden="true">
+                    <circle cx="8" cy="10.4" r="3.6" fill="none" stroke="currentColor" stroke-width="1.8" />
+                    <path d="M5.6 7 4 1.8h8L10.4 7" fill="none" stroke="currentColor" stroke-width="1.8"
+                          stroke-linecap="round" stroke-linejoin="round" />
+                  </svg></span>
                     <span class="ct-row-body">
                       <span class="ct-row-title">{{ l.name }}</span>
                       <span class="ct-row-sub">{{ subtitle(l) }}</span>
@@ -135,7 +160,9 @@ interface Dashboard {
         flex: none; width: 36px; height: 36px; border-radius: 9px; background: #eef8f1;
         display: flex; align-items: center; justify-content: center; font-size: 16px;
       }
-      .ct-ic.green { background: #eef8f1; }
+      .ct-ic.green { background: #eef8f1; color: #0f7b45; }
+      .ct-glyph { width: 17px; height: 17px; display: block; }
+      .ct-chev { width: 8px; height: 12px; display: block; }
       .ct-row-body { flex: 1; display: flex; flex-direction: column; min-width: 0; }
       .ct-row-title { font-size: 13.4px; font-weight: 700; color: #16211a; display: flex; align-items: center; gap: 8px; }
       .ct-row-sub { font-size: 11.4px; color: #93a29a; margin-top: 2px; }
@@ -145,7 +172,7 @@ interface Dashboard {
       }
 
       .ct-level-head { display: flex; align-items: center; gap: 14px; text-decoration: none; }
-      .ct-go { color: #c2410c; font-size: 17px; font-weight: 700; }
+      .ct-go { color: #c2410c; display: flex; align-items: center; }
 
       // One certified participant, and the certificate that is theirs.
       .ct-person {
@@ -168,6 +195,9 @@ interface Dashboard {
         font-size: 14px; text-decoration: none;
       }
       .ct-dl:hover { background: #eaf5ee; }
+      // Beside "Certified" the artboard draws the icon bare, not in a button.
+      .ct-dl-plain { width: auto; height: auto; background: none; border: 0; }
+      .ct-dl-plain:hover { background: none; opacity: 0.75; }
 
       .ct-state { font-size: 11px; font-weight: 700; padding: 4px 12px; border-radius: 999px; }
       .ct-state.s-cert { background: #eef8f1; color: #0f7b45; }

@@ -44,7 +44,7 @@
 
                 <div class="cert-track">
                   @for (i of [0,1,2,3,4]; track i) {
-                    <span class="cert-dot" [class.is-on]="i < doneSteps(level)"></span>
+                    <span class="cert-dot" [class]="dotClass(level, i)"></span>
                   }
                 </div>
 
@@ -58,10 +58,8 @@
                   <button class="cert-details" type="button" (click)="viewDetails(level)">VIEW DETAILS</button>
                   @if (level.state === 'Locked') {
                     <button class="cert-apply is-off" type="button" disabled>Apply</button>
-                  } @else if (level.applicationNo) {
-                    <button class="cert-apply" type="button" (click)="apply(level)">View</button>
                   } @else {
-                    <button class="cert-apply" type="button" (click)="apply(level)">Apply</button>
+                    <button class="cert-apply" type="button" (click)="apply(level)">{{ actionLabel(level) }}</button>
                   }
                 </div>
               </article>

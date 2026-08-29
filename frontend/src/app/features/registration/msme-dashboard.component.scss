@@ -419,6 +419,8 @@
   border: 1px solid #d7e0da; background: #fff; flex: none;
 }
 .cert-dot.is-on { border-color: #0f7b45; background: #0f7b45; }
+// A seat taken but not yet passed: visibly under way, not yet earned.
+.cert-dot.is-seated { border-color: #1b4f8a; background: #cfe0f1; }
 
 .cert-note { font-size: 11px; color: #5d6b62; line-height: 1.45; margin: 0; }
 .cert-app { font-size: 10.6px; color: #1b4f8a; font-weight: 600; margin: 6px 0 0; }

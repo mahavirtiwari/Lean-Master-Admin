@@ -186,11 +186,28 @@ export class MsmeDashboardComponent {
    * not carry per-milestone progress yet, so this reads what it does know: a
    * certified level is complete, anything else has not started.
    */
-  doneSteps(level: { state: string; certified: number | null; seats: number | null }): number {
-    // Bronze fills a dot per certified participant; the assessed levels have no
-    // per-step progress to report, so they are all-or-nothing.
-    if (level.seats !== null) return Math.min(level.certified ?? 0, 5);
-    return level.state === 'Certified' ? 5 : 0;
+  /**
+   * One dot per Bronze seat: solid once that participant is certified, filled in
+   * as soon as somebody is sitting in it. Seating five people and seeing five
+   * empty circles reads as no progress at all, when in fact the seats are the
+   * progress.
+   */
+  dotClass(level: { state: string; seated: number | null; certified: number | null; seats: number | null }, i: number): string {
+    if (level.seats === null) return level.state === 'Certified' ? 'is-on' : '';
+    if (i < (level.certified ?? 0)) return 'is-on';
+    if (i < (level.seated ?? 0)) return 'is-seated';
+    return '';
+  }
+
+  /**
+   * What the button offers. A level already under way is not applied for again —
+   * Bronze never creates an application row, so it used to fall through to
+   * "Apply" however many people were seated.
+   */
+  actionLabel(level: { state: string; applicationNo: string | null }): string {
+    if (level.state === 'Certified') return 'View';
+    if (level.state === 'In progress' || level.applicationNo) return 'Continue';
+    return 'Apply';
   }
 
   stateClass(state: string): string {

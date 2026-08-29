@@ -1169,3 +1169,21 @@ internal sealed class EnterpriseChangeLogConfiguration : IEntityTypeConfiguratio
         b.HasIndex(x => new { x.EnterpriseId, x.ChangedOnUtc });
     }
 }
+
+internal sealed class PartnerVerificationConfiguration : IEntityTypeConfiguration<PartnerVerification>
+{
+    public void Configure(EntityTypeBuilder<PartnerVerification> b)
+    {
+        b.ToTable("PartnerVerification", "msme");
+        b.HasKey(x => x.PartnerVerificationId);
+        b.Property(x => x.PartnerKind).HasMaxLength(20).IsUnicode(false).IsRequired();
+        b.Property(x => x.Status).HasMaxLength(20).IsUnicode(false).IsRequired();
+        b.Property(x => x.ReferenceNo).HasMaxLength(80);
+        b.Property(x => x.DecisionRemark).HasMaxLength(500);
+
+        b.HasIndex(x => new { x.EnterpriseId, x.CertificationLevelId, x.PartnerKind }).IsUnique();
+
+        b.HasOne(x => x.Organisation).WithMany()
+            .HasForeignKey(x => x.OrganisationId).OnDelete(DeleteBehavior.Restrict);
+    }
+}

@@ -78,6 +78,18 @@ public class Enterprise : IAuditable, IConcurrencyAware
     public string? OemPsuName { get; set; }
     public string? VendorId { get; set; }
 
+    /// <summary>
+    /// The bodies the Silver intake named, as records rather than as the free
+    /// text beside them — so an application can be routed to them, and a
+    /// renamed association does not orphan the enterprises that named it.
+    /// </summary>
+    public int? ImplementingAgencyOrgId { get; set; }
+    public int? IndustryAssociationOrgId { get; set; }
+    public int? OemPsuOrgId { get; set; }
+
+    /// <summary>When the three Silver questions were answered.</summary>
+    public DateTime? SilverIntakeOnUtc { get; set; }
+
     public bool IsActive { get; set; } = true;
     public DateTime RegisteredOnUtc { get; set; }
 
@@ -596,4 +608,36 @@ public class EnterpriseChangeLog
 
     public int? ChangedByUserId { get; set; }
     public DateTime ChangedOnUtc { get; set; }
+}
+
+/// <summary>
+/// A membership or vendor claim an applicant made, put to the body it names.
+///
+/// The applicant says on the Silver intake that it belongs to an association or
+/// supplies an OEM; the body confirms or disputes it. Either approval is enough
+/// to open payment — an enterprise is not held up because one of two bodies is
+/// slow to answer.
+/// </summary>
+public class PartnerVerification
+{
+    public int PartnerVerificationId { get; set; }
+    public int EnterpriseId { get; set; }
+    public byte CertificationLevelId { get; set; }
+
+    /// <summary>Association | OemPsu.</summary>
+    public string PartnerKind { get; set; } = string.Empty;
+
+    public int OrganisationId { get; set; }
+    public Organisation Organisation { get; set; } = null!;
+
+    /// <summary>The member ID or vendor ID claimed.</summary>
+    public string? ReferenceNo { get; set; }
+
+    /// <summary>Pending | Approved | Disputed.</summary>
+    public string Status { get; set; } = "Pending";
+
+    public int? DecidedByUserId { get; set; }
+    public DateTime? DecidedOnUtc { get; set; }
+    public string? DecisionRemark { get; set; }
+    public DateTime CreatedOnUtc { get; set; }
 }

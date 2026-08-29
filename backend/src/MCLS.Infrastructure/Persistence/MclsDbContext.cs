@@ -41,6 +41,7 @@ public class MclsDbContext(DbContextOptions<MclsDbContext> options)
     public DbSet<UserStatus> UserStatuses => Set<UserStatus>();
     public DbSet<UserStatusHistory> UserStatusHistory => Set<UserStatusHistory>();
     public DbSet<Organisation> Organisations => Set<Organisation>();
+    public DbSet<PartnerVerification> PartnerVerifications => Set<PartnerVerification>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<LoginAudit> LoginAudits => Set<LoginAudit>();
 

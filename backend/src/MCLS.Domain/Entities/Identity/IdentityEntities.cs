@@ -245,6 +245,24 @@ public class Organisation : IAuditable, IConcurrencyAware
 
     public bool IsActive { get; set; } = true;
 
+    /// <summary>
+    /// Draft | Pending | Approved | Rejected.
+    ///
+    /// An Implementing Agency is created by the Super Admin and is Approved on
+    /// the spot. An Industry Association, OEM or PSU is raised by an agency and
+    /// stays out of the applicant's picker until a State Office approves it.
+    /// </summary>
+    public string ApprovalStatus { get; set; } = "Approved";
+
+    /// <summary>The agency that raised it; null for anything the Super Admin created.</summary>
+    public int? RaisedByOrganisationId { get; set; }
+
+    public int? DecidedByUserId { get; set; }
+    public DateTime? DecidedOnUtc { get; set; }
+
+    /// <summary>Why it was rejected, so the agency can fix it and resubmit.</summary>
+    public string? DecisionRemark { get; set; }
+
     public DateTime CreatedOnUtc { get; set; }
     public int? CreatedByUserId { get; set; }
     public DateTime? ModifiedOnUtc { get; set; }

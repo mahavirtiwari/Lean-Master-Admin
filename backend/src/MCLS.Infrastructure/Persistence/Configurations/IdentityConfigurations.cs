@@ -211,6 +211,8 @@ internal sealed class OrganisationConfiguration : IEntityTypeConfiguration<Organ
         b.Property(x => x.ContactEmail).HasMaxLength(256);
         b.Property(x => x.ContactPhone).HasMaxLength(20).IsUnicode(false);
         b.Property(x => x.JurisdictionScope).HasMaxLength(120);
+        b.Property(x => x.ApprovalStatus).HasMaxLength(20).IsUnicode(false).IsRequired();
+        b.Property(x => x.DecisionRemark).HasMaxLength(500);
         b.HasIndex(x => x.OrganisationCode).IsUnique();
 
         b.HasOne(x => x.AccountType).WithMany()

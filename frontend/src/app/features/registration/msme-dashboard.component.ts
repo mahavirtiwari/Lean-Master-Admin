@@ -165,6 +165,22 @@ export class MsmeDashboardComponent {
 
   // ---- certification card presentation (deck H00/H02) ----
 
+  /** The tier lockup the artboard uses on each card. */
+  badge(code: string): string {
+    const c = (code || '').toUpperCase();
+    const file = c.includes('BRONZE') ? 'lean-bronze' : c.includes('GOLD') ? 'lean-gold' : 'lean-silver';
+    return `assets/${file}.png`;
+  }
+
+  /**
+   * How many of the five milestone dots are filled. The dashboard summary does
+   * not carry per-milestone progress yet, so this reads what it does know: a
+   * certified level is complete, anything else has not started.
+   */
+  doneSteps(level: { state: string }): number {
+    return level.state === 'Certified' ? 5 : 0;
+  }
+
   stateClass(state: string): string {
     switch (state) {
       case 'Certified': return 's-done';

@@ -34,17 +34,18 @@
 
           <div class="cert-grid">
             @for (level of d.levels; track level.code) {
-              <article class="cert" [attr.data-lvl]="level.code.toLowerCase()">
+              <article class="cert" [attr.data-lvl]="level.code.toLowerCase()" [class.is-locked]="level.state === 'Locked'">
                 <span class="cert-cap"></span>
-                <img class="cert-mark" src="assets/mcls-logo.png" alt="" />
-                <div class="cert-name">{{ level.name }}</div>
+                <img class="cert-mark" [src]="badge(level.code)" [alt]="level.name" />
 
                 <div class="cert-state" [class]="stateClass(level.state)">
                   <span class="cert-state-ic">{{ stateIcon(level.state) }}</span> {{ stateLabel(level.state) }}
                 </div>
 
                 <div class="cert-track">
-                  @for (i of [0,1,2,3,4]; track i) { <span class="cert-dot"></span> }
+                  @for (i of [0,1,2,3,4]; track i) {
+                    <span class="cert-dot" [class.is-on]="i < doneSteps(level)"></span>
+                  }
                 </div>
 
                 <p class="cert-note">{{ levelNote(level) }}</p>

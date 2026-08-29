@@ -81,6 +81,29 @@
               <section class="bz-card bz-person" [class]="'st-' + p.status.toLowerCase()">
                 <div class="bz-person-head">
                   <span class="bz-avatar">{{ p.initials }}</span>
+
+                  <!-- Sits before the name, as the one thing an enterprise does
+                       for a participant who cannot get in. Only while the
+                       account is open — a closed or locked one has nothing to
+                       sign in to. -->
+                  @if (p.accountState === 'Active') {
+                    <button
+                      class="bz-resend"
+                      type="button"
+                      [disabled]="resending() === p.id"
+                      (click)="resendLogin(p)"
+                      [title]="'Resend the LEAN ID and a new password to ' + p.email"
+                      [attr.aria-label]="'Resend login details to ' + p.name"
+                    >
+                      <svg viewBox="0 0 16 16" aria-hidden="true">
+                        <rect x="2" y="3.6" width="12" height="8.8" rx="1.4" fill="none"
+                              stroke="currentColor" stroke-width="1.5" />
+                        <path d="m2.6 4.4 5.4 4 5.4-4" fill="none" stroke="currentColor"
+                              stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                      </svg>
+                    </button>
+                  }
+
                   <span class="bz-person-text">
                     <span class="bz-person-name">{{ p.name }}</span>
                     <span class="bz-person-sub">
@@ -92,6 +115,10 @@
                 </div>
 
                 <div class="bz-track"><span class="bz-fill" [style.width.%]="progress(p)"></span></div>
+
+                @if (resentFor() === p.id && resentNote()) {
+                  <p class="bz-resent" [class.is-bad]="resentBad()">{{ resentNote() }}</p>
+                }
 
                 <div class="bz-person-foot">
                   <span class="bz-person-note">{{ statusNote(p) }}</span>

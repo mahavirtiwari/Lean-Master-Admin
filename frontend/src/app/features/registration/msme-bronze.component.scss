@@ -89,6 +89,23 @@
 .st-learning .bz-avatar, .st-notstarted .bz-avatar { background: #eff4fa; color: #1b4f8a; }
 .st-examdue .bz-avatar { background: #fdf3ec; color: #a16207; }
 .bz-person-text { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+
+// Resend login details — before the name, quiet until it is wanted.
+.bz-resend {
+  flex: none; width: 30px; height: 30px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  background: #eff4fa; border: 1px solid #cfe0f1; color: #1b4f8a; cursor: pointer;
+}
+.bz-resend svg { width: 15px; height: 15px; }
+.bz-resend:hover { background: #e2ecf7; }
+.bz-resend:disabled { opacity: 0.55; cursor: default; }
+
+.bz-resent {
+  margin: 10px 0 0; padding: 9px 12px; border-radius: 8px;
+  background: #eef8f1; border: 1px solid #cfe8d8; color: #216a41;
+  font-size: 11.4px; line-height: 1.45;
+}
+.bz-resent.is-bad { background: #fdf1f1; border-color: #f3cfcf; color: #b91c1c; }
 .bz-person-name { font-size: 13.4px; font-weight: 700; color: #16211a; }
 .bz-person-sub { font-size: 11.4px; color: #93a29a; margin-top: 2px; }
 

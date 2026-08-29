@@ -58,6 +58,12 @@ export class MsmeBronzeComponent {
   readonly loading = signal(true);
   readonly coursesOpen = signal(false);
 
+  /** Which participant's details are being sent, and how it went. */
+  readonly resending = signal<number | null>(null);
+  readonly resentFor = signal<number | null>(null);
+  readonly resentNote = signal<string | null>(null);
+  readonly resentBad = signal(false);
+
   readonly hasParticipants = computed(() => (this.data()?.participants.length ?? 0) > 0);
 
   /** "Just applied" until somebody is seated, then the running subtitle. */
@@ -74,10 +80,41 @@ export class MsmeBronzeComponent {
     this.load();
   }
 
-  private load(): void {
+  load(): void {
     this.http.get<BronzeData>(`${this.base}/msme/bronze`).subscribe({
       next: (d) => { this.data.set(d); this.loading.set(false); },
       error: () => this.loading.set(false),
+    });
+  }
+
+  /**
+   * Sends the participant their LEAN ID and a fresh password.
+   *
+   * The old password cannot be read back — only its hash is kept — so this
+   * issues a new one rather than repeating the original. Their LEAN ID stays as
+   * it was, since the LMS may already know it.
+   */
+  resendLogin(p: BronzeParticipant): void {
+    if (this.resending() !== null) return;
+
+    this.resending.set(p.id);
+    this.resentFor.set(p.id);
+    this.resentNote.set(null);
+    this.resentBad.set(false);
+
+    this.http.post<{ leanId: string }>(`${this.base}/msme/bronze/participants/${p.id}/credentials`, {}).subscribe({
+      next: (r) => {
+        this.resending.set(null);
+        this.resentBad.set(false);
+        this.resentNote.set(`Sent to ${p.email} — LEAN ID ${r.leanId} with a new password.`);
+        // The id is issued on the first send, so reload to show it on the card.
+        this.load();
+      },
+      error: (e: { error?: { message?: string } }) => {
+        this.resending.set(null);
+        this.resentBad.set(true);
+        this.resentNote.set(e.error?.message ?? 'The details could not be sent. Please try again.');
+      },
     });
   }
 

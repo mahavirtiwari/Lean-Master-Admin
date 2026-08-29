@@ -1,0 +1,286 @@
+// E-Learning — the Bronze course list, in the Questionnaire Manager's idiom.
+// Same head, cards, table and pills, so the two scheme-content screens read as
+// one system rather than two: #1B4F8A for anything actionable, #0F7B45 for a
+// live state, #A16207 for one that is held back, on the same neutrals.
+
+.q-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 18px;
+
+  .q-title { margin: 0; font-size: 21px; font-weight: 700; color: #16211a; }
+  .q-sub { margin: 6px 0 0; font-size: 11.6px; color: #5d6b62; }
+  .spacer { flex: 1; }
+}
+
+.q-actions { display: flex; gap: 10px; padding-top: 4px; }
+
+.btn-solid,
+.btn-ghost {
+  height: 36px;
+  padding: 0 16px;
+  border-radius: 6px;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.btn-solid { background: #1b4f8a; border: 1px solid #1b4f8a; color: #fff; }
+.btn-solid:hover:not(:disabled) { background: #17436f; }
+.btn-solid:disabled { opacity: 0.55; cursor: default; }
+.btn-ghost { background: #fff; border: 1px solid #c6d3cb; color: #16211a; }
+.btn-ghost:hover { background: #f7faf8; }
+
+// ------------------------------------------------------------ summary ---
+.lvl-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  margin-bottom: 18px;
+
+  @media (max-width: 1000px) { grid-template-columns: minmax(0, 1fr); }
+}
+
+.lvl-card {
+  background: #fff;
+  border: 1px solid #dee7e1;
+  border-radius: 8px;
+  padding: 16px 18px;
+
+  &.is-scope { border-color: #1b4f8a; box-shadow: 0 0 0 3px rgb(27 79 138 / 8%); }
+}
+
+.lvl-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  .lvl-name { margin: 0; font-size: 13.5px; font-weight: 700; }
+  .spacer { flex: 1; }
+}
+
+.lvl-bronze { color: #c2410c; }
+
+.lvl-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 16px;
+
+  .stat-label { font-size: 9px; font-weight: 600; color: #5d6b62; letter-spacing: 0.3px; }
+  .stat-value { margin-top: 4px; font-size: 16.5px; font-weight: 700; color: #16211a; }
+}
+
+.lvl-foot { margin-top: 14px; font-size: 9.6px; color: #5d6b62; }
+
+// -------------------------------------------------------------- cards ---
+.card {
+  background: #fff;
+  border: 1px solid #dee7e1;
+  border-radius: 8px;
+  margin-bottom: 18px;
+}
+
+.card-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 18px;
+  flex-wrap: wrap;
+
+  .card-title { margin: 0; font-size: 14.5px; font-weight: 700; color: #16211a; }
+  .card-sub { margin: 4px 0 0; font-size: 10.8px; color: #5d6b62; }
+  .spacer { flex: 1; }
+}
+
+.chip-blue {
+  padding: 4px 10px;
+  border-radius: 5px;
+  background: #eff4fa;
+  border: 1px solid #c3d8ee;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #1b4f8a;
+  white-space: nowrap;
+}
+
+.q-search {
+  height: 32px;
+  min-width: 220px;
+  padding: 0 12px;
+  border: 1px solid #c6d3cb;
+  border-radius: 6px;
+  font: inherit;
+  font-size: 12px;
+  color: #16211a;
+
+  &::placeholder { color: #93a29a; }
+  &:focus { outline: none; border-color: #1b4f8a; box-shadow: 0 0 0 3px rgb(27 79 138 / 12%); }
+}
+
+// --------------------------------------------------------------- form ---
+// Name and description side by side: the description is the longer field and
+// stacking them pushed the Save button below the fold on a 14-inch screen.
+.form-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+  gap: 8px 22px;
+  padding: 0 18px 18px;
+
+  @media (max-width: 900px) { grid-template-columns: minmax(0, 1fr); }
+}
+
+.f-field { display: flex; flex-direction: column; min-width: 0; }
+
+.f-label {
+  font-size: 9.6px;
+  font-weight: 600;
+  color: #5d6b62;
+  letter-spacing: 0.3px;
+  margin-bottom: 6px;
+
+  .req { color: #b91c1c; margin-left: 2px; }
+}
+
+.f-input {
+  height: 36px;
+  padding: 0 12px;
+  border: 1px solid #c6d3cb;
+  border-radius: 6px;
+  font: inherit;
+  font-size: 12.4px;
+  color: #16211a;
+  background: #fff;
+
+  &::placeholder { color: #93a29a; }
+  &:focus { outline: none; border-color: #1b4f8a; box-shadow: 0 0 0 3px rgb(27 79 138 / 12%); }
+}
+
+.f-area { height: auto; min-height: 76px; padding: 9px 12px; resize: vertical; line-height: 1.5; }
+
+.f-count { margin-top: 5px; font-size: 9.6px; color: #93a29a; text-align: right; }
+
+.f-error {
+  grid-column: 1 / -1;
+  margin: 2px 0 0;
+  padding: 9px 12px;
+  background: #fef2f2;
+  border: 1px solid #f3cfcf;
+  border-radius: 6px;
+  font-size: 11.4px;
+  color: #b91c1c;
+}
+
+.form-foot {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 6px;
+
+  .spacer { flex: 1; }
+}
+
+// ------------------------------------------------------------- tables ---
+.tbl-wrap { overflow-x: auto; }
+
+.q-tbl {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 760px;
+
+  thead th {
+    background: #f7faf8;
+    height: 34px;
+    padding: 0 12px;
+    text-align: left;
+    font-size: 10.4px;
+    font-weight: 600;
+    color: #5d6b62;
+    white-space: nowrap;
+  }
+
+  tbody td {
+    height: 40px;
+    padding: 6px 12px;
+    border-top: 1px solid #f0f4f2;
+    font-size: 11.4px;
+    color: #47554c;
+    vertical-align: middle;
+  }
+
+  tbody tr:hover td { background: #fafcfb; }
+
+  // A disabled course stays in the list, greyed, so the order still reads.
+  tbody tr.is-off td { color: #93a29a; }
+  tbody tr.is-off .strong { color: #5d6b62; }
+
+  .num { text-align: right; width: 44px; }
+  .strong { font-weight: 600; color: #16211a; }
+  .muted { color: #5d6b62; }
+  .nowrap { white-space: nowrap; }
+
+  .preview {
+    max-width: 420px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.qid {
+  font-size: 11.4px;
+  font-weight: 600;
+  color: #47554c;
+  font-family: ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', monospace;
+}
+
+.pill {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 5px;
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.pill-ok { background: #f0faf4; border: 1px solid #b7e4c9; color: #0f7b45; }
+.pill-draft { background: #fefce8; border: 1px solid #fde68a; color: #a16207; }
+
+.link-act {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  font-size: 11.2px;
+  font-weight: 600;
+  color: #1b4f8a;
+  cursor: pointer;
+
+  &:hover { text-decoration: underline; }
+}
+
+.link-muted { color: #5d6b62; }
+.act-sep { color: #c6d3cb; margin: 0 7px; }
+
+.empty {
+  padding: 40px 18px;
+  text-align: center;
+  font-size: 12px;
+  color: #5d6b62;
+
+  &.is-bad { color: #b91c1c; }
+}
+
+.note {
+  margin: 0 18px 18px;
+  padding: 10px 14px;
+  background: #eff4fa;
+  border: 1px solid #c3d8ee;
+  border-radius: 7px;
+  font-size: 11.4px;
+  color: #47554c;
+}

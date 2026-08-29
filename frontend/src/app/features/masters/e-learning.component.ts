@@ -1,11 +1,11 @@
 import { HttpClient } from '@angular/common/http';
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { AuthService } from '../../core/auth.service';
 import { environment } from '../../../environments/environment';
 import { downloadCsv, stamp } from '../../shared/csv';
-import { ConfirmComponent, EmptyComponent, PageIntroComponent } from '../../shared/ui';
+import { ConfirmComponent } from '../../shared/ui';
 
 interface Course {
   bronzeCourseId: number;
@@ -25,8 +25,9 @@ interface Course {
  */
 @Component({
   selector: 'app-e-learning',
-  imports: [FormsModule, PageIntroComponent, EmptyComponent, ConfirmComponent],
+  imports: [FormsModule, ConfirmComponent],
   templateUrl: './e-learning.component.html',
+  styleUrl: './e-learning.component.scss',
 })
 export class ELearningComponent {
   private readonly http = inject(HttpClient);
@@ -47,6 +48,14 @@ export class ELearningComponent {
   readonly saving = signal(false);
 
   readonly confirming = signal<Course | null>(null);
+
+  readonly activeCount = computed(() => this.rows().filter((c) => c.isActive).length);
+  readonly inactiveCount = computed(() => this.rows().filter((c) => !c.isActive).length);
+
+  /** The position of the course being edited, for the card's chip. */
+  readonly editingOrder = computed(
+    () => this.rows().find((c) => c.bronzeCourseId === this.editingId())?.sortOrder ?? '',
+  );
 
   readonly canCreate = this.auth.can('E_LEARNING', 'create');
   readonly canEdit = this.auth.can('E_LEARNING', 'edit');
@@ -75,10 +84,18 @@ export class ELearningComponent {
     });
   }
 
+  /** Add New Course puts the cursor in the form rather than opening a dialog. */
+  focusForm(): void {
+    this.cancelEdit();
+    document.getElementById('title')?.focus();
+    document.getElementById('course-form')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
   edit(course: Course): void {
     this.editingId.set(course.bronzeCourseId);
     this.form.set({ title: course.title, description: course.description ?? '' });
     this.formError.set(null);
+    document.getElementById('course-form')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
 
   cancelEdit(): void {

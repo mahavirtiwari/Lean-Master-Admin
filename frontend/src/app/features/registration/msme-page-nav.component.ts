@@ -47,8 +47,12 @@ import { AppHistory } from '../../shared/app-history';
   `,
   styles: [
     `
-      // Fills the rest of the breadcrumb row, so Back lands immediately after
-      // the crumb and Refresh is pushed out to the far right.
+      // The host is the breadcrumb row's flex child, so it is the one that has
+      // to grow — styling the inner element instead leaves both buttons bunched
+      // up against the crumb.
+      :host { display: flex; flex: 1 1 auto; min-width: 0; }
+
+      // Back lands immediately after the crumb, Refresh out at the far right.
       .pg-nav {
         display: flex; align-items: center; gap: 8px;
         flex: 1 1 auto; justify-content: space-between;

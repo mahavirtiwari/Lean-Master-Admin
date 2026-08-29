@@ -85,6 +85,7 @@
                     <span class="bz-person-name">{{ p.name }}</span>
                     <span class="bz-person-sub">
                       @if (p.designation) { {{ p.designation }} · }{{ p.coursesDone }} of {{ p.coursesTotal }} courses
+                      @if (p.leanId) { <span class="bz-leanid">{{ p.leanId }}</span> }
                     </span>
                   </span>
                   <span class="bz-chip">{{ statusLabel(p.status) }}</span>
@@ -96,6 +97,8 @@
                   <span class="bz-person-note">{{ statusNote(p) }}</span>
                   @if (p.status === 'Certified') {
                     <a class="bz-btn bz-btn-green" [href]="d.lmsUrl" target="_blank" rel="noopener">Certificate</a>
+                  } @else if (p.accountState === 'Locked') {
+                    <span class="bz-locked">Account locked</span>
                   } @else {
                     <button class="bz-btn bz-btn-blue" type="button" (click)="openLms()">Open LMS</button>
                   }

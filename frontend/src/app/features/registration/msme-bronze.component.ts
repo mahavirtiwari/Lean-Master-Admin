@@ -18,6 +18,11 @@ export interface BronzeParticipant {
   status: 'NotStarted' | 'Learning' | 'ExamDue' | 'Certified';
   certifiedOn: string | null;
   certificateNo: string | null;
+  leanId: string | null;
+  attemptsUsed: number;
+  attemptsAllowed: number;
+  attemptsLeft: number;
+  accountState: 'Active' | 'Completed' | 'Locked';
 }
 
 export interface BronzeData {
@@ -110,12 +115,21 @@ export class MsmeBronzeComponent {
   }
 
   statusNote(p: BronzeParticipant): string {
+    if (p.accountState === 'Completed') return 'Exam passed · certificate e-mailed · account closed';
+    if (p.accountState === 'Locked') return `All ${p.attemptsAllowed} attempts used · account locked`;
+
     switch (p.status) {
-      case 'Certified': return 'Exam passed · certificate issued';
-      case 'ExamDue': return 'All courses done · exam pending';
+      case 'ExamDue': return this.attemptNote(p, 'All courses done · exam pending');
       case 'Learning': return 'Courses in progress on the LMS';
-      default: return 'Yet to start on the LMS';
+      default: return 'Signed up · yet to start on the LMS';
     }
+  }
+
+  /** Appends the attempts left once at least one has been spent. */
+  private attemptNote(p: BronzeParticipant, base: string): string {
+    return p.attemptsUsed > 0
+      ? `${base} · ${p.attemptsLeft} of ${p.attemptsAllowed} attempts left`
+      : base;
   }
 
   /** The line under the seat bar: what the seats are actually doing. */

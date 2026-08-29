@@ -108,6 +108,14 @@
 
 .bz-person-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .bz-person-note { font-size: 11.4px; color: #93a29a; }
+.bz-leanid {
+  display: inline-block; margin-left: 8px; padding: 1px 8px; border-radius: 4px;
+  background: #f2f6f4; color: #5d6b62; font-size: 10.4px; font-weight: 600;
+}
+.bz-locked {
+  font-size: 11.6px; font-weight: 700; color: #93a29a;
+  background: #f2f6f4; border-radius: 8px; padding: 9px 18px;
+}
 
 // ---- add a participant ----
 .bz-add-title { font-size: 13.4px; font-weight: 700; color: #16211a; }

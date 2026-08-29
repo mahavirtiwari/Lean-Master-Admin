@@ -521,6 +521,29 @@ public class BronzeParticipant
     public DateTime? CertifiedOnUtc { get; set; }
     public string? CertificateNo { get; set; }
 
+    // ---- the temporary LMS account ----
+
+    /// <summary>The LEAN ID this person signs in to the LMS with.</summary>
+    public string? LmsLoginId { get; set; }
+
+    /// <summary>
+    /// A hash only. The password is generated once, e-mailed, and never stored
+    /// in the clear — so it cannot be read back out of the portal.
+    /// </summary>
+    public string? PasswordHash { get; set; }
+
+    /// <summary>Exam attempts used. The scheme allows <see cref="MaxAttempts"/>.</summary>
+    public byte ExamAttempts { get; set; }
+    public byte MaxAttempts { get; set; } = 3;
+
+    /// <summary>
+    /// Active, Completed (passed — certificate issued) or Locked (attempts used
+    /// up). Completed and Locked both mean the account no longer works.
+    /// </summary>
+    public string AccountState { get; set; } = "Active";
+    public DateTime? DeactivatedOnUtc { get; set; }
+    public DateTime? LastAttemptOnUtc { get; set; }
+
     public bool IsActive { get; set; } = true;
     public DateTime CreatedOnUtc { get; set; }
     public int? CreatedByUserId { get; set; }

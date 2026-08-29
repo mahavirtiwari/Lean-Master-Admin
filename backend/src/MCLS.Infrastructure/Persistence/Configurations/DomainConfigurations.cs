@@ -1141,6 +1141,9 @@ internal sealed class BronzeParticipantConfiguration : IEntityTypeConfiguration<
         b.Property(x => x.PreferredLanguage).HasMaxLength(40);
         b.Property(x => x.Status).HasMaxLength(20).IsUnicode(false).IsRequired();
         b.Property(x => x.CertificateNo).HasMaxLength(40).IsUnicode(false);
+        b.Property(x => x.LmsLoginId).HasMaxLength(50).IsUnicode(false);
+        b.Property(x => x.PasswordHash).HasMaxLength(300);
+        b.Property(x => x.AccountState).HasMaxLength(20).IsUnicode(false).IsRequired();
         b.HasIndex(x => new { x.EnterpriseId, x.Email }).IsUnique().HasFilter("[IsActive] = 1");
     }
 }

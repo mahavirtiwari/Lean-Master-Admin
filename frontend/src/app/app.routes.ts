@@ -138,6 +138,12 @@ export const routes: Routes = [
       import('./features/registration/msme-payments.component').then((m) => m.MsmePaymentsComponent),
   },
   {
+    path: 'msme/profile/sector-nic',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/registration/msme-sector-nic.component').then((m) => m.MsmeSectorNicComponent),
+  },
+  {
     path: 'msme/profile',
     canActivate: [authGuard],
     loadComponent: () =>

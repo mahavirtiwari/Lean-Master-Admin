@@ -173,6 +173,18 @@ public sealed class MsmeController(
             .Select(a => a.CertificationLevelId)
             .ToHashSet();
 
+        // Bronze is e-learning: its progress is the seats, not an application.
+        // Without this the card reads "Not started" however many people are
+        // seated, because no msme.Application row is ever created for it.
+        const int bronzeSeats = 5;
+
+        var bronzeSeated = await db.BronzeParticipants.AsNoTracking()
+            .CountAsync(b => b.EnterpriseId == enterprise.EnterpriseId && b.IsActive, ct);
+
+        var bronzeCertified = await db.BronzeParticipants.AsNoTracking()
+            .CountAsync(b => b.EnterpriseId == enterprise.EnterpriseId && b.IsActive
+                          && b.Status == "Certified", ct);
+
         var levelCards = levels.Select((l, index) =>
         {
             var application = applications.FirstOrDefault(a => a.CertificationLevelId == l.CertificationLevelId);
@@ -186,12 +198,19 @@ public sealed class MsmeController(
                 l.SortOrder,
                 Delivery = l.RequiresAssessment ? "Onsite + Remote" : "E-Learning",
                 Cost = l.RequiresAssessment ? "PAID" : "FREE",
-                State = application is not null
-                    ? (application.CertifiedOnUtc != null ? "Certified" : "In progress")
-                    : open ? "Open" : "Locked",
+                State = l.Code.Contains("BRONZE", StringComparison.OrdinalIgnoreCase)
+                    ? (bronzeCertified >= bronzeSeats ? "Certified"
+                        : bronzeSeated > 0 ? "In progress"
+                        : "Open")
+                    : application is not null
+                        ? (application.CertifiedOnUtc != null ? "Certified" : "In progress")
+                        : open ? "Open" : "Locked",
                 RequiresBefore = open ? null : previous?.Name,
                 application?.ApplicationNo,
                 ApplicationStatus = application?.Status,
+                Seated = l.Code.Contains("BRONZE", StringComparison.OrdinalIgnoreCase) ? bronzeSeated : (int?)null,
+                Certified = l.Code.Contains("BRONZE", StringComparison.OrdinalIgnoreCase) ? bronzeCertified : (int?)null,
+                Seats = l.Code.Contains("BRONZE", StringComparison.OrdinalIgnoreCase) ? bronzeSeats : (int?)null,
             };
         }).ToList();
 
@@ -319,52 +338,6 @@ public sealed class MsmeController(
                 groups = incentiveGroups,
             },
         });
-    }
-
-    /// <summary>
-    /// The applicant's profile (P01): the enterprise's Udyam details, read-only,
-    /// and the SPOC contact. The Udyam fields are what the registry returned and
-    /// are not editable here — a change goes through re-validation with Udyam.
-    /// </summary>
-    [HttpGet("profile")]
-    public async Task<IActionResult> GetProfile(CancellationToken ct)
-    {
-        var userId = currentUser.UserId;
-        if (userId is null) return Unauthorized();
-
-        var profile = await db.Enterprises.AsNoTracking()
-            .Where(e => e.PrimaryUserId == userId)
-            .Select(e => new
-            {
-                enterprise = new
-                {
-                    e.Name,
-                    e.LeanId,
-                    e.UdyamRegistrationNo,
-                    e.OwnerName,
-                    e.Gender,
-                    e.SocialCategory,
-                    e.AddressLine,
-                    e.Pan,
-                    registeredOn = e.RegisteredOnUtc,
-                    e.EnterpriseSize,
-                    e.OrganisationType,
-                    activity = e.NicDescription,
-                    e.TotalEmployees,
-                },
-                spoc = new
-                {
-                    name = db.Users.Where(u => u.Id == e.PrimaryUserId).Select(u => u.FullName).FirstOrDefault(),
-                    designation = db.Users.Where(u => u.Id == e.PrimaryUserId).Select(u => u.Designation).FirstOrDefault(),
-                    email = e.ContactEmail,
-                    mobile = e.ContactMobile,
-                },
-            })
-            .FirstOrDefaultAsync(ct);
-
-        return profile is null
-            ? NotFound(new { message = "No enterprise is linked to this account." })
-            : Ok(profile);
     }
 
     /// <summary>

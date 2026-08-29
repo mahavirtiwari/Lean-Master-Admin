@@ -65,6 +65,19 @@ public class Enterprise : IAuditable, IConcurrencyAware
 
     public int? PrimaryUserId { get; set; }
 
+    // ---- scheme associations, maintained by the applicant (P01) ----
+
+    /// <summary>QCI, NPC or the partner agency delivering the scheme here.</summary>
+    public string? ImplementingAgency { get; set; }
+
+    /// <summary>An industry body the enterprise belongs to, and its member id.</summary>
+    public string? IndustryAssociation { get; set; }
+    public string? AssociationMemberId { get; set; }
+
+    /// <summary>An OEM or PSU the enterprise supplies, and its vendor id there.</summary>
+    public string? OemPsuName { get; set; }
+    public string? VendorId { get; set; }
+
     public bool IsActive { get; set; } = true;
     public DateTime RegisteredOnUtc { get; set; }
 
@@ -554,4 +567,27 @@ public class BronzeParticipant
     public bool IsActive { get; set; } = true;
     public DateTime CreatedOnUtc { get; set; }
     public int? CreatedByUserId { get; set; }
+}
+
+/// <summary>
+/// An edit an applicant made to their own profile.
+///
+/// Sector and NIC come from Udyam and the SPOC receives everything the scheme
+/// sends, so a change to either has to be explainable months later — which
+/// means keeping what it was, what it became, and who moved it.
+/// </summary>
+public class EnterpriseChangeLog
+{
+    public int EnterpriseChangeLogId { get; set; }
+    public int EnterpriseId { get; set; }
+
+    /// <summary>Spoc, Associations or Activity.</summary>
+    public string Section { get; set; } = string.Empty;
+    public string FieldName { get; set; } = string.Empty;
+
+    public string? OldValue { get; set; }
+    public string? NewValue { get; set; }
+
+    public int? ChangedByUserId { get; set; }
+    public DateTime ChangedOnUtc { get; set; }
 }

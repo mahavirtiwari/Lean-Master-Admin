@@ -270,6 +270,11 @@ internal sealed class EnterpriseConfiguration : IEntityTypeConfiguration<Enterpr
 {
     public void Configure(EntityTypeBuilder<Enterprise> b)
     {
+        b.Property(x => x.ImplementingAgency).HasMaxLength(150);
+        b.Property(x => x.IndustryAssociation).HasMaxLength(150);
+        b.Property(x => x.AssociationMemberId).HasMaxLength(60);
+        b.Property(x => x.OemPsuName).HasMaxLength(150);
+        b.Property(x => x.VendorId).HasMaxLength(60);
         b.ToTable("Enterprise", "msme");
         b.HasKey(x => x.EnterpriseId);
         b.Property(x => x.UdyamRegistrationNo).HasMaxLength(25).IsRequired().IsUnicode(false);
@@ -1147,5 +1152,19 @@ internal sealed class BronzeParticipantConfiguration : IEntityTypeConfiguration<
         b.HasIndex(x => new { x.EnterpriseId, x.Email }).IsUnique().HasFilter("[IsActive] = 1");
         b.HasIndex(x => new { x.EnterpriseId, x.SeatNo }).IsUnique()
             .HasFilter("[IsActive] = 1 AND [SeatNo] IS NOT NULL");
+    }
+}
+
+internal sealed class EnterpriseChangeLogConfiguration : IEntityTypeConfiguration<EnterpriseChangeLog>
+{
+    public void Configure(EntityTypeBuilder<EnterpriseChangeLog> b)
+    {
+        b.ToTable("EnterpriseChangeLog", "msme");
+        b.HasKey(x => x.EnterpriseChangeLogId);
+        b.Property(x => x.Section).HasMaxLength(40).IsUnicode(false).IsRequired();
+        b.Property(x => x.FieldName).HasMaxLength(80).IsRequired();
+        b.Property(x => x.OldValue).HasMaxLength(400);
+        b.Property(x => x.NewValue).HasMaxLength(400);
+        b.HasIndex(x => new { x.EnterpriseId, x.ChangedOnUtc });
     }
 }

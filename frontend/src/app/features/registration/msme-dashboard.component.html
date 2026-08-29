@@ -55,7 +55,7 @@
                 }
 
                 <div class="cert-foot">
-                  <button class="cert-details" type="button" (click)="apply(level)">VIEW DETAILS</button>
+                  <button class="cert-details" type="button" (click)="viewDetails(level)">VIEW DETAILS</button>
                   @if (level.state === 'Locked') {
                     <button class="cert-apply is-off" type="button" disabled>Apply</button>
                   } @else if (level.applicationNo) {
@@ -96,6 +96,47 @@
         </section>
       </section>
     </div>
+  }
+
+  <!-- The people behind LEAN Bronze, since the level is only as far along as
+       they are. -->
+  @if (detailOpen()) {
+    <div class="dp-scrim" (click)="detailOpen.set(false)"></div>
+    <section class="dp-modal" role="dialog" aria-label="LEAN Bronze participants">
+      <header class="dp-head">
+        <div>
+          <h2 class="dp-title">LEAN Bronze participants</h2>
+          @if (detail(); as d) {
+            <p class="dp-sub">{{ d.seats.used }} of {{ d.seats.total }} seats used · {{ d.courseCount }} courses and one exam</p>
+          }
+        </div>
+        <button class="dp-x" type="button" (click)="detailOpen.set(false)" aria-label="Close">✕</button>
+      </header>
+
+      @if (detailLoading()) {
+        <p class="dp-empty">Loading…</p>
+      } @else if (detail(); as d) {
+        @for (p of d.participants; track p.id) {
+          <div class="dp-row">
+            <span class="dp-avatar">{{ p.initials }}</span>
+            <span class="dp-body">
+              <span class="dp-name">{{ p.name }}</span>
+              <span class="dp-meta">
+                @if (p.designation) { {{ p.designation }} · }{{ p.coursesDone }} of {{ p.coursesTotal }} courses
+              </span>
+              <span class="dp-track"><span class="dp-fill" [style.width.%]="progressOf(p)"></span></span>
+            </span>
+            <span class="dp-state" [attr.data-st]="p.status">{{ participantState(p) }}</span>
+          </div>
+        } @empty {
+          <p class="dp-empty">Nobody is seated yet. Add a participant to begin.</p>
+        }
+
+        <a class="dp-open" routerLink="/msme/bronze" (click)="detailOpen.set(false)">Open LEAN Bronze ›</a>
+      } @else {
+        <p class="dp-empty">The participants could not be loaded.</p>
+      }
+    </section>
   }
 </main>
 

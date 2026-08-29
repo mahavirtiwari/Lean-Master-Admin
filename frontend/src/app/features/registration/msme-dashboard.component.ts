@@ -1,12 +1,13 @@
 import { HttpClient } from '@angular/common/http';
 import { Component, computed, inject, signal } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 
 import { environment } from '../../../environments/environment';
 import { AuthService } from '../../core/auth.service';
 import { MsmeMastheadComponent } from './msme-masthead.component';
 import { MsmeSectionMenuComponent } from './msme-section-menu.component';
 import { MsmeSidebarComponent } from './msme-sidebar.component';
+import type { BronzeData, BronzeParticipant } from './msme-bronze.component';
 
 /** What the dashboard endpoint returns. */
 export interface MsmeDashboard {
@@ -40,6 +41,9 @@ export interface MsmeDashboard {
     requiresBefore: string | null;
     applicationNo: string | null;
     applicationStatus: string | null;
+    seated: number | null;
+    certified: number | null;
+    seats: number | null;
   }[];
   incentives: {
     unlocked: boolean;
@@ -81,7 +85,7 @@ export interface MsmeDashboard {
  */
 @Component({
   selector: 'app-msme-dashboard',
-  imports: [MsmeMastheadComponent, MsmeSectionMenuComponent, MsmeSidebarComponent],
+  imports: [MsmeMastheadComponent, MsmeSectionMenuComponent, MsmeSidebarComponent, RouterLink],
   templateUrl: './msme-dashboard.component.html',
   styleUrl: './msme-dashboard.component.scss',
 })
@@ -182,7 +186,10 @@ export class MsmeDashboardComponent {
    * not carry per-milestone progress yet, so this reads what it does know: a
    * certified level is complete, anything else has not started.
    */
-  doneSteps(level: { state: string }): number {
+  doneSteps(level: { state: string; certified: number | null; seats: number | null }): number {
+    // Bronze fills a dot per certified participant; the assessed levels have no
+    // per-step progress to report, so they are all-or-nothing.
+    if (level.seats !== null) return Math.min(level.certified ?? 0, 5);
     return level.state === 'Certified' ? 5 : 0;
   }
 
@@ -208,9 +215,53 @@ export class MsmeDashboardComponent {
     }
   }
 
-  levelNote(level: { state: string; requiresBefore: string | null; cost: string }): string {
+  levelNote(level: { state: string; requiresBefore: string | null; cost: string; seated: number | null; certified: number | null; seats: number | null }): string {
     if (level.state === 'Locked' && level.requiresBefore) return `Needs a valid ${level.requiresBefore} certificate`;
+
+    // Bronze says where its seats have got to, which is the only progress it has.
+    if (level.seats !== null && (level.seated ?? 0) > 0) {
+      return `${level.certified ?? 0} of ${level.seated} certified · ${level.seats} seats`;
+    }
+
     return level.cost === 'FREE' ? 'Five self-paced courses, exam each' : 'Handholding, then assessment';
+  }
+
+  // ---- the participants behind the Bronze card (VIEW DETAILS) ----
+
+  readonly detailOpen = signal(false);
+  readonly detailLoading = signal(false);
+  readonly detail = signal<BronzeData | null>(null);
+
+  /**
+   * VIEW DETAILS on Bronze opens the people, because the level is only ever as
+   * far along as they are. The other levels have no participants, so it opens
+   * the level itself.
+   */
+  viewDetails(level: { code: string; name: string; seats: number | null }): void {
+    if (level.seats === null) return this.apply(level);
+
+    this.detailOpen.set(true);
+
+    if (this.detail() === null) {
+      this.detailLoading.set(true);
+      this.http.get<BronzeData>(`${environment.apiBase}/msme/bronze`).subscribe({
+        next: (d) => { this.detail.set(d); this.detailLoading.set(false); },
+        error: () => this.detailLoading.set(false),
+      });
+    }
+  }
+
+  progressOf(p: BronzeParticipant): number {
+    return p.coursesTotal === 0 ? 0 : Math.round((p.coursesDone / p.coursesTotal) * 100);
+  }
+
+  participantState(p: BronzeParticipant): string {
+    switch (p.status) {
+      case 'Certified': return 'Certified';
+      case 'ExamDue': return 'Exam due';
+      case 'Learning': return 'Learning';
+      default: return 'Not started';
+    }
   }
 
   /** A glyph for an incentive group, from its code — matching the deck's icons. */

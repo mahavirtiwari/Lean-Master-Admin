@@ -1,5 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Component, inject, signal } from '@angular/core';
+import { Router } from '@angular/router';
 
 import { environment } from '../../../environments/environment';
 import { MsmeMastheadComponent } from './msme-masthead.component';
@@ -21,13 +22,46 @@ interface Profile {
     organisationType: string | null;
     activity: string | null;
     totalEmployees: number | null;
+    udyamSyncedOn: string | null;
   };
-  spoc: {
-    name: string | null;
-    designation: string | null;
-    email: string | null;
-    mobile: string | null;
+  spoc: { name: string | null; designation: string | null; email: string | null; mobile: string | null };
+  awareness: {
+    attended: boolean | null;
+    agency: string | null;
+    programCode: string | null;
+    venue: string | null;
+    heldOn: string | null;
   };
+  associations: {
+    implementingAgency: string | null;
+    industryAssociation: string | null;
+    associationMemberId: string | null;
+    oemPsuName: string | null;
+    vendorId: string | null;
+  };
+  plant: {
+    unitName: string | null;
+    address: string | null;
+    pincode: string | null;
+    state: string | null;
+    district: string | null;
+  } | null;
+  selectedActivity: {
+    enterpriseActivityId: number;
+    activity: string | null;
+    nicTwoDigit: string | null; nicTwoDigitName: string | null;
+    nicFourDigit: string | null; nicFourDigitName: string | null;
+    nicFiveDigit: string | null; nicFiveDigitName: string | null;
+  } | null;
+}
+
+interface HistoryRow {
+  section: string;
+  fieldName: string;
+  oldValue: string | null;
+  newValue: string | null;
+  changedOnUtc: string;
+  changedBy: string | null;
 }
 
 /**
@@ -58,6 +92,8 @@ interface Profile {
             } @else if (data(); as p) {
               <h2 class="pf-section-title">Profile</h2>
 
+              <!-- Udyam's record. Shown, never edited here: changing it in the
+                   portal would put the two out of step. -->
               <section class="pf-card">
                 <div class="pf-card-head">
                   <div>
@@ -87,16 +123,139 @@ interface Profile {
                 </div>
               </section>
 
+              <!-- The SPOC receives everything the scheme sends, so it is the
+                   applicant's to keep current. -->
               <section class="pf-card">
                 <div class="pf-card-head">
                   <h3 class="pf-h">SPOC Contact Details</h3>
-                  <span class="pf-editnote">Edited on the mobile app</span>
+                  @if (!editSpoc()) {
+                    <button class="pf-edit" type="button" (click)="startSpoc(p)">Edit</button>
+                  }
                 </div>
-                <div class="pf-kv"><span class="pf-k">Name</span><span class="pf-v">{{ p.spoc.name || '—' }}</span></div>
-                <div class="pf-kv"><span class="pf-k">Designation</span><span class="pf-v">{{ p.spoc.designation || '—' }}</span></div>
-                <div class="pf-kv"><span class="pf-k">Email</span><span class="pf-v">{{ p.spoc.email || '—' }}</span></div>
-                <div class="pf-kv"><span class="pf-k">Mobile</span><span class="pf-v">{{ p.spoc.mobile || '—' }}</span></div>
+
+                @if (editSpoc()) {
+                  <div class="pf-two">
+                    <div class="pf-field"><span class="pf-label">NAME</span>
+                      <input class="pf-in" [value]="spocName()" (input)="spocName.set($any($event.target).value)" /></div>
+                    <div class="pf-field"><span class="pf-label">DESIGNATION</span>
+                      <input class="pf-in" [value]="spocDesignation()" (input)="spocDesignation.set($any($event.target).value)" /></div>
+                  </div>
+                  <div class="pf-two">
+                    <div class="pf-field"><span class="pf-label">EMAIL</span>
+                      <input class="pf-in" type="email" [value]="spocEmail()" (input)="spocEmail.set($any($event.target).value)" /></div>
+                    <div class="pf-field"><span class="pf-label">MOBILE</span>
+                      <input class="pf-in" inputmode="numeric" [value]="spocMobile()" (input)="spocMobile.set(digits($any($event.target).value))" /></div>
+                  </div>
+                  @if (spocError()) { <p class="pf-err">{{ spocError() }}</p> }
+                  <div class="pf-row-actions">
+                    <button class="pf-btn pf-ghost" type="button" (click)="editSpoc.set(false)">Cancel</button>
+                    <button class="pf-btn pf-primary" type="button" [disabled]="saving()" (click)="saveSpoc()">
+                      {{ saving() ? 'Saving…' : 'Save' }}
+                    </button>
+                  </div>
+                } @else {
+                  <div class="pf-kv"><span class="pf-k">Name</span><span class="pf-v">{{ p.spoc.name || '—' }}</span></div>
+                  <div class="pf-kv"><span class="pf-k">Designation</span><span class="pf-v">{{ p.spoc.designation || '—' }}</span></div>
+                  <div class="pf-kv"><span class="pf-k">Email</span><span class="pf-v">{{ p.spoc.email || '—' }}</span></div>
+                  <div class="pf-kv"><span class="pf-k">Mobile</span><span class="pf-v">{{ p.spoc.mobile || '—' }}</span></div>
+                }
               </section>
+
+              <section class="pf-card">
+                <div class="pf-card-head">
+                  <h3 class="pf-h">Awareness Program Participation</h3>
+                </div>
+                <div class="pf-kv"><span class="pf-k">Participated</span><span class="pf-v">{{ p.awareness.attended ? 'Yes' : 'No' }}</span></div>
+                @if (p.awareness.programCode) {
+                  <div class="pf-kv"><span class="pf-k">Program ID</span><span class="pf-v">{{ p.awareness.programCode }}</span></div>
+                }
+                @if (p.awareness.venue) {
+                  <div class="pf-kv"><span class="pf-k">Venue</span><span class="pf-v">{{ p.awareness.venue }}</span></div>
+                }
+                @if (p.awareness.heldOn) {
+                  <div class="pf-kv"><span class="pf-k">Held on</span><span class="pf-v">{{ formatDate(p.awareness.heldOn) }}</span></div>
+                }
+              </section>
+
+              <section class="pf-card">
+                <div class="pf-card-head">
+                  <h3 class="pf-h">Scheme Associations</h3>
+                  @if (!editAssoc()) {
+                    <button class="pf-edit" type="button" (click)="startAssoc(p)">Edit</button>
+                  }
+                </div>
+
+                @if (editAssoc()) {
+                  <div class="pf-two">
+                    <div class="pf-field"><span class="pf-label">INDUSTRY ASSOCIATION</span>
+                      <input class="pf-in" [value]="assocBody()" (input)="assocBody.set($any($event.target).value)" /></div>
+                    <div class="pf-field"><span class="pf-label">MEMBER ID</span>
+                      <input class="pf-in" [value]="assocMember()" (input)="assocMember.set($any($event.target).value)" /></div>
+                  </div>
+                  <div class="pf-two">
+                    <div class="pf-field"><span class="pf-label">OEM / PSU</span>
+                      <input class="pf-in" [value]="assocOem()" (input)="assocOem.set($any($event.target).value)" /></div>
+                    <div class="pf-field"><span class="pf-label">VENDOR ID</span>
+                      <input class="pf-in" [value]="assocVendor()" (input)="assocVendor.set($any($event.target).value)" /></div>
+                  </div>
+                  <div class="pf-row-actions">
+                    <button class="pf-btn pf-ghost" type="button" (click)="editAssoc.set(false)">Cancel</button>
+                    <button class="pf-btn pf-primary" type="button" [disabled]="saving()" (click)="saveAssoc()">
+                      {{ saving() ? 'Saving…' : 'Save' }}
+                    </button>
+                  </div>
+                } @else {
+                  <div class="pf-kv"><span class="pf-k">Implementing agency</span><span class="pf-v">{{ p.associations.implementingAgency || '—' }}</span></div>
+                  <div class="pf-kv"><span class="pf-k">Industry association</span><span class="pf-v">{{ p.associations.industryAssociation || '—' }}</span></div>
+                  <div class="pf-kv"><span class="pf-k">Member ID</span><span class="pf-v">{{ p.associations.associationMemberId || '—' }}</span></div>
+                  <div class="pf-kv"><span class="pf-k">OEM / PSU</span><span class="pf-v">{{ p.associations.oemPsuName || '—' }}</span></div>
+                  <div class="pf-kv"><span class="pf-k">Vendor ID</span><span class="pf-v">{{ p.associations.vendorId || '—' }}</span></div>
+                }
+              </section>
+
+              <section class="pf-card">
+                <div class="pf-card-head"><h3 class="pf-h">Selected Plant Location</h3></div>
+                <div class="pf-kv"><span class="pf-k">Plant name</span><span class="pf-v">{{ p.plant?.unitName || '—' }}</span></div>
+                <div class="pf-field"><span class="pf-label">PLANT ADDRESS</span><div class="pf-ro">{{ plantAddress(p) }}</div></div>
+              </section>
+
+              <!-- Sector and NIC are Udyam's, so this opens the screen that
+                   re-picks from the Udyam record rather than a text box. -->
+              <section class="pf-card">
+                <div class="pf-card-head">
+                  <h3 class="pf-h">Selected Plant Activity</h3>
+                  <button class="pf-edit" type="button" (click)="editSectorNic()">Edit</button>
+                </div>
+                @if (p.selectedActivity; as a) {
+                  <div class="pf-field"><span class="pf-label">ACTIVITY</span><div class="pf-ro">{{ a.nicFiveDigitName || a.activity || '—' }}</div></div>
+                  <div class="pf-kv"><span class="pf-k">NIC 2-digit</span><span class="pf-v">{{ pair(a.nicTwoDigit, a.nicTwoDigitName) }}</span></div>
+                  <div class="pf-kv"><span class="pf-k">NIC 4-digit</span><span class="pf-v">{{ pair(a.nicFourDigit, a.nicFourDigitName) }}</span></div>
+                  <div class="pf-kv"><span class="pf-k">NIC 5-digit</span><span class="pf-v">{{ pair(a.nicFiveDigit, a.nicFiveDigitName) }}</span></div>
+                } @else {
+                  <p class="pf-none">No activity selected yet.</p>
+                }
+              </section>
+
+              <!-- What has been changed, so an edit can be explained later. -->
+              @if (history().length > 0) {
+                <section class="pf-card">
+                  <div class="pf-card-head"><h3 class="pf-h">Change history</h3></div>
+                  @for (h of history(); track $index) {
+                    <div class="pf-hist">
+                      <span class="pf-hist-head">
+                        <span class="pf-hist-field">{{ h.fieldName }}</span>
+                        <span class="pf-hist-when">{{ formatWhen(h.changedOnUtc) }}</span>
+                      </span>
+                      <span class="pf-hist-move">
+                        <span class="pf-was">{{ h.oldValue || 'not set' }}</span>
+                        <span class="pf-arrow">→</span>
+                        <span class="pf-now">{{ h.newValue || 'cleared' }}</span>
+                      </span>
+                      @if (h.changedBy) { <span class="pf-hist-by">by {{ h.changedBy }}</span> }
+                    </div>
+                  }
+                </section>
+              }
             } @else {
               <div class="pf-card pf-loading">Your profile could not be loaded. Please try again.</div>
             }
@@ -138,21 +297,158 @@ interface Profile {
       .pf-kv:last-child { border-bottom: 0; }
       .pf-k { font-size: 13px; color: #5d6b62; }
       .pf-v { font-size: 13px; font-weight: 600; color: #16211a; text-align: right; }
+      .pf-none { font-size: 12.4px; color: #93a29a; margin: 0; }
+
+      .pf-edit {
+        background: none; border: none; padding: 0; cursor: pointer;
+        font-size: 12px; font-weight: 700; color: #1b4f8a;
+      }
+      .pf-edit:hover { text-decoration: underline; }
+
+      .pf-in {
+        width: 100%; box-sizing: border-box; padding: 10px 12px;
+        border: 1px solid #d7e0da; border-radius: 8px; background: #fff;
+        font-size: 13px; color: #16211a; font-family: inherit;
+      }
+      .pf-in:focus { outline: none; border-color: #1b4f8a; }
+      .pf-err { font-size: 12px; color: #b91c1c; margin: 6px 0 0; }
+
+      .pf-row-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 14px; }
+      .pf-btn { border-radius: 8px; padding: 10px 22px; font-size: 12.6px; font-weight: 700; cursor: pointer; }
+      .pf-ghost { background: #fff; border: 1px solid #d7e0da; color: #16211a; }
+      .pf-primary { background: #1b4f8a; border: none; color: #fff; }
+      .pf-primary:disabled { opacity: 0.55; cursor: default; }
+
+      // One entry in the change log: what moved, and where it moved to.
+      .pf-hist {
+        display: flex; flex-direction: column; gap: 4px;
+        padding: 11px 0; border-bottom: 1px solid #f0f4f1;
+      }
+      .pf-hist:last-child { border-bottom: 0; }
+      .pf-hist-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+      .pf-hist-field { font-size: 12.4px; font-weight: 700; color: #16211a; }
+      .pf-hist-when { font-size: 11px; color: #93a29a; }
+      .pf-hist-move { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 11.8px; }
+      .pf-was { color: #93a29a; text-decoration: line-through; }
+      .pf-arrow { color: #93a29a; }
+      .pf-now { color: #0f7b45; font-weight: 600; }
+      .pf-hist-by { font-size: 10.8px; color: #93a29a; }
     `,
   ],
 })
 export class MsmeProfileComponent {
   private readonly http = inject(HttpClient);
+  private readonly router = inject(Router);
   private readonly base = environment.apiBase;
 
   readonly data = signal<Profile | null>(null);
+  readonly history = signal<HistoryRow[]>([]);
   readonly loading = signal(true);
+  readonly saving = signal(false);
+
+  readonly editSpoc = signal(false);
+  readonly spocName = signal('');
+  readonly spocDesignation = signal('');
+  readonly spocEmail = signal('');
+  readonly spocMobile = signal('');
+  readonly spocError = signal<string | null>(null);
+
+  readonly editAssoc = signal(false);
+  readonly assocBody = signal('');
+  readonly assocMember = signal('');
+  readonly assocOem = signal('');
+  readonly assocVendor = signal('');
 
   constructor() {
+    this.load();
+  }
+
+  private load(): void {
     this.http.get<Profile>(`${this.base}/msme/profile`).subscribe({
       next: (p) => { this.data.set(p); this.loading.set(false); },
       error: () => this.loading.set(false),
     });
+
+    this.http.get<HistoryRow[]>(`${this.base}/msme/profile/history`).subscribe({
+      next: (h) => this.history.set(h ?? []),
+      error: () => this.history.set([]),
+    });
+  }
+
+  digits(v: string): string {
+    return v.replace(/\D+/g, '').slice(0, 10);
+  }
+
+  pair(code: string | null, name: string | null): string {
+    if (!code) return '—';
+    return name ? `${code} — ${name}` : code;
+  }
+
+  plantAddress(p: Profile): string {
+    const q = p.plant;
+    if (!q) return '—';
+    return [q.address, q.district, q.state, q.pincode].filter(Boolean).join(', ') || '—';
+  }
+
+  startSpoc(p: Profile): void {
+    this.spocName.set(p.spoc.name ?? '');
+    this.spocDesignation.set(p.spoc.designation ?? '');
+    this.spocEmail.set(p.spoc.email ?? '');
+    this.spocMobile.set(p.spoc.mobile ?? '');
+    this.spocError.set(null);
+    this.editSpoc.set(true);
+  }
+
+  saveSpoc(): void {
+    if (this.saving()) return;
+    if (!this.spocName().trim()) return this.spocError.set('Enter the SPOC name.');
+    if (!/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(this.spocEmail().trim())) {
+      return this.spocError.set('Enter a valid email — the scheme writes to this address.');
+    }
+    if (this.spocMobile() && this.spocMobile().length !== 10) {
+      return this.spocError.set('A mobile number is 10 digits.');
+    }
+
+    this.saving.set(true);
+    this.http.put(`${this.base}/msme/profile/spoc`, {
+      name: this.spocName().trim(),
+      designation: this.spocDesignation().trim() || null,
+      email: this.spocEmail().trim(),
+      mobile: this.spocMobile() || null,
+    }).subscribe({
+      next: () => { this.saving.set(false); this.editSpoc.set(false); this.load(); },
+      error: (e: { error?: { message?: string } }) => {
+        this.saving.set(false);
+        this.spocError.set(e.error?.message ?? 'The SPOC could not be saved.');
+      },
+    });
+  }
+
+  startAssoc(p: Profile): void {
+    this.assocBody.set(p.associations.industryAssociation ?? '');
+    this.assocMember.set(p.associations.associationMemberId ?? '');
+    this.assocOem.set(p.associations.oemPsuName ?? '');
+    this.assocVendor.set(p.associations.vendorId ?? '');
+    this.editAssoc.set(true);
+  }
+
+  saveAssoc(): void {
+    if (this.saving()) return;
+    this.saving.set(true);
+
+    this.http.put(`${this.base}/msme/profile/associations`, {
+      industryAssociation: this.assocBody().trim() || null,
+      associationMemberId: this.assocMember().trim() || null,
+      oemPsuName: this.assocOem().trim() || null,
+      vendorId: this.assocVendor().trim() || null,
+    }).subscribe({
+      next: () => { this.saving.set(false); this.editAssoc.set(false); this.load(); },
+      error: () => { this.saving.set(false); this.editAssoc.set(false); },
+    });
+  }
+
+  editSectorNic(): void {
+    void this.router.navigate(['/msme/profile/sector-nic']);
   }
 
   formatDate(iso: string): string {
@@ -160,5 +456,11 @@ export class MsmeProfileComponent {
     if (Number.isNaN(d.getTime())) return '—';
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+  }
+
+  formatWhen(iso: string): string {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return '';
+    return `${this.formatDate(iso)}, ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
   }
 }

@@ -99,7 +99,7 @@ import { environment } from '../../../environments/environment';
 
       .mb-badge {
         display: inline-flex; align-items: center; gap: 9px;
-        height: 44px; padding: 0 14px;
+        height: 48px; padding: 0 14px;
         border-radius: 7px; background: #000; color: #fff;
         text-decoration: none;
       }
@@ -113,12 +113,17 @@ import { environment } from '../../../environments/environment';
       .mb-small { font-size: 8.5px; letter-spacing: 0.04em; text-transform: none; }
       .mb-big { font-size: 15px; font-weight: 600; letter-spacing: 0.01em; }
 
+      // A white card, 95px square once its padding and rule are counted, with
+      // a quiet zone around the code so a camera can still find its corners.
       .mb-qr {
-        display: block; width: 62px; height: 62px; flex: none;
-        padding: 4px; border-radius: 6px; background: #fff;
+        display: block; width: 81px; height: 81px; flex: none;
+        padding: 6px; border-radius: 4px;
+        background: #fff; border: 1px solid #d7e5da;
       }
       .mb-qr ::ng-deep svg { display: block; width: 100%; height: 100%; }
 
+      // A phone cannot scan its own screen, and that is the only device this
+      // width implies — the badges are the way in there.
       @media (max-width: 900px) {
         .mb-band { gap: 14px; }
         .mb-qr { display: none; }
@@ -132,14 +137,17 @@ export class MsmeAppBannerComponent {
   readonly links = environment.mobileApp;
   readonly qr = signal<SafeHtml | null>(null);
 
-  /** The QR points at the direct download first, then whichever store exists. */
+  /**
+   * The QR points at the direct download first, then whichever store exists.
+   * With none of them set it falls back to the portal itself, so scanning
+   * still lands somewhere real rather than leaving a blank square.
+   */
   readonly qrTarget = computed(
-    () => this.links.apk || this.links.android || this.links.ios || '',
+    () => this.links.apk || this.links.android || this.links.ios || window.location.origin,
   );
 
   constructor() {
     const target = this.qrTarget();
-    if (!target) return;
 
     // Loaded on demand: the encoder is only needed once the links are set, and
     // it has no business in the initial bundle of every applicant screen.

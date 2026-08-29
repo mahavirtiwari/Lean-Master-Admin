@@ -22,6 +22,15 @@
 
 .bz-body { display: flex; flex-direction: column; gap: 14px; }
 .bz-card { background: #fff; border: 1px solid #e8efea; border-radius: 12px; padding: 20px; }
+
+// The deck draws the rail as a straight 4px line flush with the card's left
+// edge. border-left cannot be that: the card's own radius bends it round the
+// corners, which is what made it read as a hairline rather than a rail.
+.bz-seats, .bz-person { position: relative; overflow: hidden; }
+.bz-seats::before, .bz-person::before {
+  content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+  background: var(--rail, #c6d3cb);
+}
 .bz-loading { color: #93a29a; font-size: 13px; }
 
 .bz-btn {
@@ -30,6 +39,8 @@
   display: inline-flex; align-items: center; justify-content: center; flex: none;
 }
 .bz-btn-blue { background: #1b4f8a; color: #fff; }
+.bz-btn-ghost { background: #fff; color: #1b4f8a; border: 1px solid #cfe0f1; }
+.bz-btn-ghost:hover { background: #f4f8fc; }
 .bz-btn-blue:hover { background: #163f6f; }
 .bz-btn-green { background: #0f7b45; color: #fff; }
 .bz-btn-green:hover { background: #0c6338; }
@@ -50,7 +61,7 @@
 .bz-empty-p { font-size: 12px; color: #5d6b62; line-height: 1.55; margin: 0 auto 18px; max-width: 430px; }
 
 // ---- seats: five segments on a bronze rail ----
-.bz-seats { border-left: 3px solid #c2410c; }
+.bz-seats { --rail: #c2410c; }
 .bz-seats-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
 .bz-seats-title { font-size: 13.4px; font-weight: 700; color: #16211a; }
 .bz-seats-count { font-size: 11.4px; color: #93a29a; }
@@ -67,10 +78,13 @@
 .bz-sec-sub { font-size: 11.4px; color: #93a29a; margin: 3px 0 0; }
 
 // The rail says at a glance where this person has reached.
-.bz-person { border-left: 3px solid #c6d3cb; }
-.bz-person.st-certified { border-left-color: #0f7b45; }
-.bz-person.st-learning, .bz-person.st-notstarted { border-left-color: #1b4f8a; }
-.bz-person.st-examdue { border-left-color: #a16207; }
+// Rail colours as the artboard sets them: green once certified, blue while the
+// courses are running, amber when only the exam is left. The chip says
+// "In progress" for the middle two, so the rail is what still tells them apart.
+.bz-person { --rail: #c6d3cb; }
+.bz-person.st-certified { --rail: #0f7b45; }
+.bz-person.st-learning { --rail: #1b4f8a; }
+.bz-person.st-examdue { --rail: #a16207; }
 
 .bz-person-head { display: flex; align-items: center; gap: 12px; }
 .bz-avatar {
@@ -99,8 +113,7 @@
   font-size: 11.4px; line-height: 1.45;
 }
 .bz-resent.is-bad { background: #fdf1f1; border-color: #f3cfcf; color: #b91c1c; }
-.bz-person-name { font-size: 13.4px; font-weight: 700; color: #16211a; }
-.bz-person-sub { font-size: 11.4px; color: #93a29a; margin-top: 2px; }
+.bz-person-name { font-size: 14px; font-weight: 700; color: #16211a; text-transform: uppercase; letter-spacing: 0.01em; }
 
 .bz-chip {
   flex: none; font-size: 10.6px; font-weight: 700; padding: 4px 12px; border-radius: 999px;
@@ -120,10 +133,6 @@
 
 .bz-person-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .bz-person-note { font-size: 11.4px; color: #93a29a; }
-.bz-leanid {
-  display: inline-block; margin-left: 8px; padding: 1px 8px; border-radius: 4px;
-  background: #f2f6f4; color: #5d6b62; font-size: 10.4px; font-weight: 600;
-}
 .bz-locked {
   font-size: 11.6px; font-weight: 700; color: #93a29a;
   background: #f2f6f4; border-radius: 8px; padding: 9px 18px;
@@ -188,7 +197,7 @@
 .bz-modal-close:hover { background: #f7faf8; }
 
 // ---- the row's own actions ----
-.bz-view { margin-left: auto; }
+
 
 // ---- one participant, in full ----
 .bz-dt { display: flex; flex-direction: column; margin: 4px 0 14px; }

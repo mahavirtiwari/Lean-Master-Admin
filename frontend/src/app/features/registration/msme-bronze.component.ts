@@ -163,7 +163,7 @@ export class MsmeBronzeComponent {
       case 'Certified': return 'Completed';
       case 'ExamDue':
       case 'Learning': return 'In progress';
-      default: return 'Not started';
+      default: return 'Yet to start';
     }
   }
 

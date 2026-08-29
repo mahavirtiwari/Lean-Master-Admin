@@ -71,10 +71,6 @@
 
                   <span class="bz-person-text">
                     <span class="bz-person-name">{{ p.name }}</span>
-                    <span class="bz-person-sub">
-                      @if (p.designation) { {{ p.designation }} · }{{ p.coursesDone }} of {{ p.coursesTotal }} courses
-                      @if (p.leanId) { <span class="bz-leanid">{{ p.leanId }}</span> }
-                    </span>
                   </span>
                   <span class="bz-chip">{{ statusLabel(p.status) }}</span>
                 </div>
@@ -86,19 +82,19 @@
                 }
 
                 <div class="bz-person-foot">
-                  <span class="bz-person-note">{{ statusNote(p) }}</span>
-
-                  <button class="bz-link bz-view" type="button" (click)="detailFor.set(p)">
-                    View participant details
+                  <button class="bz-btn bz-btn-ghost" type="button" (click)="detailFor.set(p)">
+                    View Participant Details
                   </button>
 
                   @if (p.status === 'Certified') {
-                    <a class="bz-btn bz-btn-green" [href]="d.lmsUrl" target="_blank" rel="noopener">Certificate</a>
+                    <a class="bz-btn bz-btn-green" [href]="d.lmsUrl" target="_blank" rel="noopener">
+                      Download Certificate
+                    </a>
                   } @else if (p.accountState === 'Locked') {
                     <span class="bz-locked">Account locked</span>
                   } @else {
                     <!-- The participant signs in to the LMS themselves; what the
-                         enterprise can do for them from here is send the
+                         enterprise can do for one who cannot get in is send the
                          credentials again. -->
                     <button
                       class="bz-btn bz-btn-blue"

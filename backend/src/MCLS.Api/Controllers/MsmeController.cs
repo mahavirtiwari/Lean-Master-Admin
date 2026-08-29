@@ -389,6 +389,9 @@ public sealed class MsmeController(
                 d.Title,
                 d.Description,
                 d.VideoUrl,
+                // The library groups by certification level — General, LEAN
+                // Bronze and so on — and the deck tints each row by it.
+                Category = d.Category != null ? d.Category.Name : null,
                 VersionId = d.CurrentVersionId,
                 ContentType = d.CurrentVersion != null ? d.CurrentVersion.ContentType : null,
                 FileName = d.CurrentVersion != null ? d.CurrentVersion.OriginalFileName : null,
@@ -401,6 +404,7 @@ public sealed class MsmeController(
             r.Title,
             r.Description,
             r.FileName,
+            r.Category,
             kind = r.VideoUrl != null ? "video" : "document",
             url = r.VideoUrl ?? $"/api/registration/applicant-documents/{r.DocumentId}/{r.VersionId}",
         }));

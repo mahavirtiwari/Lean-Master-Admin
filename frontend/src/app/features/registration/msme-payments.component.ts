@@ -76,7 +76,7 @@ interface PaymentRow {
       .py-crumb { font-size: 12px; color: #93a29a; }
       .py-crumb span { margin: 0 6px; }
       .py-h1 { font-size: 18.5px; font-weight: 700; color: #16211a; margin: 4px 0 18px; }
-      .py-grid { display: grid; grid-template-columns: 292px minmax(0, 1fr); gap: 24px; align-items: start; }
+      .py-grid { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 28px; align-items: start; }
       @media (max-width: 980px) { .py-grid { grid-template-columns: minmax(0, 1fr); } }
       .py-body { display: flex; flex-direction: column; gap: 12px; }
       .py-title { font-size: 16px; font-weight: 700; color: #16211a; margin: 0 0 2px; }

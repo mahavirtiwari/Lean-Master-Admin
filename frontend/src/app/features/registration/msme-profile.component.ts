@@ -115,7 +115,7 @@ interface Profile {
       .pf-h1 { font-size: 18.5px; font-weight: 700; color: #16211a; margin: 4px 0 2px; }
       .pf-h1-sub { font-size: 13px; color: #5d6b62; margin: 0 0 18px; }
 
-      .pf-grid { display: grid; grid-template-columns: 292px minmax(0, 1fr); gap: 24px; align-items: start; }
+      .pf-grid { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 28px; align-items: start; }
       @media (max-width: 980px) { .pf-grid { grid-template-columns: minmax(0, 1fr); } }
 
       .pf-body { display: flex; flex-direction: column; gap: 14px; }

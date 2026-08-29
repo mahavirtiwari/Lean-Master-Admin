@@ -193,6 +193,16 @@ public sealed class PartnerOrganisationsController(
 
         if (organisation is null) return NotFound(new { message = "That organisation does not exist." });
 
+        if (!await MayDecideAsync(organisation, ct))
+        {
+            return StatusCode(403, new
+            {
+                message = organisation.StateId is null
+                    ? "This body operates nationally, so it is decided centrally rather than by a State Office."
+                    : "This body operates in another state, so its own State Office decides it.",
+            });
+        }
+
         if (organisation.ApprovalStatus == "Approved" && request.Approve)
         {
             return Conflict(new { message = "That organisation is already approved." });
@@ -306,6 +316,30 @@ public sealed class PartnerOrganisationsController(
     }
 
     // ------------------------------------------------------------- helpers ---
+
+    /// <summary>
+    /// Whether this user may decide this body.
+    ///
+    /// Routing is by the body's own state, so the Gujarat office decides a
+    /// Gujarat association and cannot decide a Maharashtra one. A body with no
+    /// state operates nationally and has no State Office to route to, so it
+    /// falls to the central roles. Without this the filters would only be a
+    /// suggestion — any State Office could approve anything.
+    /// </summary>
+    private async Task<bool> MayDecideAsync(Organisation organisation, CancellationToken ct)
+    {
+        var roleCode = await db.Users.AsNoTracking()
+            .Where(u => u.Id == currentUser.UserId)
+            .Select(u => u.Role!.Code)
+            .FirstOrDefaultAsync(ct);
+
+        // The central roles decide anything, including the national bodies no
+        // State Office owns.
+        if (roleCode is "SUPER_ADMIN" or "OPERATIONS_ADMIN" or "MINISTRY_REVIEWER") return true;
+
+        // Anyone else is a State Office, and only for their own state.
+        return organisation.StateId is not null && organisation.StateId == currentUser.StateId;
+    }
 
     private async Task<int?> MyOrganisationIdAsync(CancellationToken ct)
     {

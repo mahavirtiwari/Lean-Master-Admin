@@ -1,0 +1,223 @@
+<div class="si-scrim" (click)="closed.emit()"></div>
+
+<section class="si-modal" role="dialog" aria-label="Apply for LEAN Silver">
+  <header class="si-head">
+    <div>
+      <p class="si-eyebrow">APPLYING FOR LEAN SILVER</p>
+      <h2 class="si-title">{{ showStatus() ? statusHeadline() : 'Apply for LEAN Silver' }}</h2>
+      <p class="si-sub">
+        {{ showStatus() ? statusSub() : 'Three questions decide who verifies your application' }}
+      </p>
+    </div>
+    <button class="si-x" type="button" (click)="closed.emit()" aria-label="Close">&#10005;</button>
+  </header>
+
+  @if (loading()) {
+    <p class="si-empty">Loading…</p>
+  } @else if (loadError(); as msg) {
+    <div class="si-body">
+      <p class="si-error">{{ msg }}</p>
+      <button class="si-btn si-btn-ghost" type="button" (click)="load()">Try again</button>
+    </div>
+  } @else if (showStatus()) {
+    <!-- ------------------------------------------------ C02d / C02e status -->
+    <div class="si-body">
+      @if (claimOf('Association'); as c) {
+        <div class="si-claim">
+          <div class="si-claim-top">
+            <span class="si-claim-kind">Industry Association</span>
+            <span class="si-pill" [class]="'is-' + c.status.toLowerCase()">{{ c.status }}</span>
+          </div>
+          <div class="si-claim-name">{{ c.partnerName }}</div>
+          <div class="si-claim-ref"><span>Member ID</span>{{ c.referenceNo || '—' }}</div>
+          @if (c.decisionRemark) {
+            <p class="si-claim-remark">{{ c.decisionRemark }}</p>
+          }
+        </div>
+      }
+
+      @if (claimOf('OemPsu'); as c) {
+        <div class="si-claim">
+          <div class="si-claim-top">
+            <span class="si-claim-kind">OEM / PSU</span>
+            <span class="si-pill" [class]="'is-' + c.status.toLowerCase()">{{ c.status }}</span>
+          </div>
+          <div class="si-claim-name">{{ c.partnerName }}</div>
+          <div class="si-claim-ref"><span>Vendor ID</span>{{ c.referenceNo || '—' }}</div>
+          @if (c.decisionRemark) {
+            <p class="si-claim-remark">{{ c.decisionRemark }}</p>
+          }
+        </div>
+      }
+
+      <div class="si-note" [class.is-go]="intake()?.canProceed">{{ statusNote() }}</div>
+
+      <div class="si-foot">
+        <button class="si-btn si-btn-ghost" type="button" (click)="reopen()">Change answers</button>
+        <span class="si-spacer"></span>
+        <button
+          class="si-btn si-btn-primary"
+          type="button"
+          [disabled]="!intake()?.canProceed"
+          (click)="proceed.emit()"
+        >
+          Proceed to Payment
+        </button>
+      </div>
+    </div>
+  } @else {
+    <!-- ------------------------------------------------ C02a / C02b questions -->
+    <div class="si-body">
+      <!-- 1 -->
+      <div class="si-q">
+        <span class="si-q-no">1</span>
+        <div class="si-q-text">
+          <h3 class="si-q-title">Select Implementing Agency</h3>
+          <p class="si-q-hint">The body that will run your handholding and assessment</p>
+
+          <label class="si-label">IMPLEMENTING AGENCY<span class="si-req">*</span></label>
+          <button class="si-select" type="button" (click)="openPicker('agency')">
+            <span [class.is-placeholder]="!agencyName()">
+              {{ agencyName() || 'Select the implementing agency' }}
+            </span>
+            <svg viewBox="0 0 16 16" aria-hidden="true">
+              <path d="m4 6 4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.7"
+                    stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- 2 -->
+      <div class="si-q">
+        <span class="si-q-no">2</span>
+        <div class="si-q-text">
+          <h3 class="si-q-title">Are you associated with any Industry Association?</h3>
+
+          <div class="si-yn">
+            <button class="si-radio" type="button" [class.on]="hasAssociation() === true"
+                    (click)="hasAssociation.set(true)">
+              <span class="si-dot"></span>Yes
+            </button>
+            <button class="si-radio" type="button" [class.on]="hasAssociation() === false"
+                    (click)="hasAssociation.set(false)">
+              <span class="si-dot"></span>No
+            </button>
+          </div>
+
+          @if (hasAssociation()) {
+            <label class="si-label">INDUSTRY ASSOCIATION<span class="si-req">*</span></label>
+            <button class="si-select" type="button" (click)="openPicker('association')">
+              <span [class.is-placeholder]="!associationName()">
+                {{ associationName() || 'Type to search the list' }}
+              </span>
+              <svg viewBox="0 0 16 16" aria-hidden="true">
+                <circle cx="7.2" cy="7.2" r="4.4" fill="none" stroke="currentColor" stroke-width="1.7" />
+                <path d="m10.6 10.6 3 3" fill="none" stroke="currentColor" stroke-width="1.7"
+                      stroke-linecap="round" />
+              </svg>
+            </button>
+
+            <label class="si-label">MEMBER ID<span class="si-req">*</span></label>
+            <input class="si-input" type="text" maxlength="80" placeholder="e.g. CII/WR/MH/2019/44821"
+                   name="memberId" [ngModel]="memberId()" (ngModelChange)="memberId.set($event)" />
+          } @else {
+            <p class="si-q-hint">Choose Yes to name the association and give your Member ID.</p>
+          }
+        </div>
+      </div>
+
+      <!-- 3 -->
+      <div class="si-q">
+        <span class="si-q-no">3</span>
+        <div class="si-q-text">
+          <h3 class="si-q-title">Are you associated with any OEM or PSU?</h3>
+
+          <div class="si-yn">
+            <button class="si-radio" type="button" [class.on]="hasOemPsu() === true"
+                    (click)="hasOemPsu.set(true)">
+              <span class="si-dot"></span>Yes
+            </button>
+            <button class="si-radio" type="button" [class.on]="hasOemPsu() === false"
+                    (click)="hasOemPsu.set(false)">
+              <span class="si-dot"></span>No
+            </button>
+          </div>
+
+          @if (hasOemPsu()) {
+            <label class="si-label">OEM / PSU<span class="si-req">*</span></label>
+            <button class="si-select" type="button" (click)="openPicker('oemPsu')">
+              <span [class.is-placeholder]="!oemPsuName()">
+                {{ oemPsuName() || 'Type to search the list' }}
+              </span>
+              <svg viewBox="0 0 16 16" aria-hidden="true">
+                <circle cx="7.2" cy="7.2" r="4.4" fill="none" stroke="currentColor" stroke-width="1.7" />
+                <path d="m10.6 10.6 3 3" fill="none" stroke="currentColor" stroke-width="1.7"
+                      stroke-linecap="round" />
+              </svg>
+            </button>
+
+            <label class="si-label">VENDOR ID<span class="si-req">*</span></label>
+            <input class="si-input" type="text" maxlength="80" placeholder="e.g. TML-VEND-0099143"
+                   name="vendorId" [ngModel]="vendorId()" (ngModelChange)="vendorId.set($event)" />
+          } @else {
+            <p class="si-q-hint">Choose Yes to name the OEM or PSU and give your Vendor ID.</p>
+          }
+        </div>
+      </div>
+
+      <div class="si-note">
+        Your application goes to the association and the OEM/PSU you name. Payment opens as soon as
+        either of them approves.
+      </div>
+
+      @if (formError()) {
+        <p class="si-error">{{ formError() }}</p>
+      }
+
+      <div class="si-foot">
+        <button class="si-btn si-btn-ghost" type="button" (click)="closed.emit()">Back</button>
+        <span class="si-spacer"></span>
+        <button class="si-btn si-btn-primary" type="button" [disabled]="saving()" (click)="submit()">
+          {{ saving() ? 'Submitting…' : 'Submit for Verification' }}
+        </button>
+      </div>
+    </div>
+  }
+</section>
+
+<!-- ------------------------------------------------------ C02c search panel -->
+@if (picker()) {
+  <div class="si-scrim is-over" (click)="picker.set(null)"></div>
+
+  <aside class="si-panel" role="dialog" [attr.aria-label]="pickerTitle()">
+    <header class="si-panel-head">
+      <h3 class="si-panel-title">{{ pickerTitle() }}</h3>
+      <button class="si-x" type="button" (click)="picker.set(null)" aria-label="Close">&#10005;</button>
+    </header>
+
+    <input
+      class="si-input si-panel-search"
+      type="search"
+      placeholder="Search associations"
+      name="pickerSearch"
+      [ngModel]="pickerSearch()"
+      (ngModelChange)="pickerSearch.set($event)"
+    />
+
+    @if (pickerRows().length === 0) {
+      <p class="si-empty">Nothing matches that search.</p>
+    } @else {
+      <ul class="si-list">
+        @for (row of pickerRows(); track row.id) {
+          <li>
+            <button class="si-row" type="button" (click)="choose(row)">
+              <span class="si-row-name">{{ row.name }}</span>
+              @if (row.scope) { <span class="si-row-scope">{{ row.scope }}</span> }
+            </button>
+          </li>
+        }
+      </ul>
+    }
+  </aside>
+}

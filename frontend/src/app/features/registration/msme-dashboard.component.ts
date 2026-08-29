@@ -3,6 +3,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { MsmeAppBannerComponent } from './msme-app-banner.component';
 import { httpErrorMessage } from '../../shared/http-error';
+import { MsmeSilverIntakeComponent } from './msme-silver-intake.component';
 
 import { environment } from '../../../environments/environment';
 import { AuthService } from '../../core/auth.service';
@@ -87,7 +88,7 @@ export interface MsmeDashboard {
  */
 @Component({
   selector: 'app-msme-dashboard',
-  imports: [MsmeMastheadComponent, MsmeSectionMenuComponent, MsmeSidebarComponent, RouterLink, MsmeAppBannerComponent],
+  imports: [MsmeMastheadComponent, MsmeSectionMenuComponent, MsmeSidebarComponent, RouterLink, MsmeAppBannerComponent, MsmeSilverIntakeComponent],
   templateUrl: './msme-dashboard.component.html',
   styleUrl: './msme-dashboard.component.scss',
 })
@@ -118,6 +119,7 @@ export class MsmeDashboardComponent {
   });
 
   readonly downloading = signal(false);
+  readonly silverIntakeOpen = signal(false);
 
   /**
    * The pledge certificate accepted at registration.
@@ -164,7 +166,10 @@ export class MsmeDashboardComponent {
   apply(level: { code: string; name: string }): void {
     const code = level.code.toUpperCase();
     if (code.includes('SILVER')) {
-      void this.router.navigate(['/msme/application']);
+      // Silver asks its three questions first (C02a): who runs the handholding,
+      // and which bodies can vouch for the enterprise. Payment is downstream of
+      // the answers, so the application screen is not where this starts.
+      this.silverIntakeOpen.set(true);
     } else if (code.includes('BRONZE')) {
       // Bronze is e-learning: it opens its own screen, where the enterprise
       // seats participants and follows them on the LMS.
@@ -172,6 +177,12 @@ export class MsmeDashboardComponent {
     } else {
       window.alert(`${level.name} opens once Silver is certified.`);
     }
+  }
+
+  /** The intake is answered and a body has cleared it: on to the fee. */
+  silverVerified(): void {
+    this.silverIntakeOpen.set(false);
+    void this.router.navigate(['/msme/application']);
   }
 
   // ---- certification card presentation (deck H00/H02) ----

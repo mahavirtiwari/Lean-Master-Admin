@@ -1,0 +1,270 @@
+<header class="q-head">
+  <div>
+    <h2 class="q-title">Associations, OEMs &amp; PSUs</h2>
+    <p class="q-sub">Raised by an Implementing Agency, approved by the State Office</p>
+  </div>
+  <div class="spacer"></div>
+
+  <div class="q-actions">
+    @if (canCreate && !adding()) {
+      <button class="btn-solid" type="button" (click)="startAdd()">+ Add New Body</button>
+    }
+    @if (canExport) {
+      <button class="btn-ghost" type="button" (click)="export()">Export</button>
+    }
+  </div>
+</header>
+
+<div class="lvl-grid">
+  <section class="lvl-card">
+    <div class="lvl-top"><h3 class="lvl-name">Awaiting a decision</h3></div>
+    <div class="lvl-stat"><span class="stat-value amber">{{ pendingCount() }}</span></div>
+    <div class="lvl-foot">Pending bodies cannot be named by an applicant yet</div>
+  </section>
+
+  <section class="lvl-card">
+    <div class="lvl-top"><h3 class="lvl-name">Approved</h3></div>
+    <div class="lvl-stat"><span class="stat-value green">{{ approvedCount() }}</span></div>
+    <div class="lvl-foot">Offered to every applicant on the Silver intake</div>
+  </section>
+
+  <section class="lvl-card" [class.is-scope]="openClaims() > 0">
+    <div class="lvl-top"><h3 class="lvl-name">Claims on you</h3></div>
+    <div class="lvl-stat"><span class="stat-value blue">{{ openClaims() }}</span></div>
+    <div class="lvl-foot">Enterprises that named your organisation and are waiting</div>
+  </section>
+</div>
+
+<!-- --------------------------------------------------------------- add ---- -->
+@if (adding()) {
+  <section class="card">
+    <div class="card-top">
+      <div>
+        <h3 class="card-title">Add a body for approval</h3>
+        <p class="card-sub">It stays out of the applicant's list until a State Office approves it</p>
+      </div>
+      <div class="spacer"></div>
+      <span class="chip-amber">Will be raised as Pending</span>
+    </div>
+
+    <form class="form-grid" (ngSubmit)="save()">
+      <div class="f-field">
+        <label class="f-label" for="kind">TYPE<span class="req">*</span></label>
+        <select id="kind" class="f-input" name="kind"
+                [ngModel]="form().kind" (ngModelChange)="form.set({ ...form(), kind: $event })">
+          <option value="Association">Industry Association</option>
+          <option value="OEM">OEM</option>
+          <option value="PSU">PSU</option>
+        </select>
+      </div>
+
+      <div class="f-field">
+        <label class="f-label" for="name">NAME<span class="req">*</span></label>
+        <input id="name" class="f-input" type="text" maxlength="250"
+               placeholder="e.g. Rajkot Engineering Association" name="name"
+               [ngModel]="form().name" (ngModelChange)="form.set({ ...form(), name: $event })" />
+      </div>
+
+      <div class="f-field">
+        <label class="f-label" for="scope">COVERAGE</label>
+        <input id="scope" class="f-input" type="text" maxlength="120"
+               placeholder="e.g. REA - Rajkot, Gujarat" name="scope"
+               [ngModel]="form().jurisdictionScope"
+               (ngModelChange)="form.set({ ...form(), jurisdictionScope: $event })" />
+      </div>
+
+      <div class="f-field">
+        <label class="f-label" for="email">CONTACT E-MAIL</label>
+        <input id="email" class="f-input" type="email" maxlength="256"
+               placeholder="Where verification requests are sent" name="email"
+               [ngModel]="form().contactEmail"
+               (ngModelChange)="form.set({ ...form(), contactEmail: $event })" />
+      </div>
+
+      @if (formError()) { <p class="f-error">{{ formError() }}</p> }
+
+      <div class="form-foot">
+        <div class="spacer"></div>
+        <button class="btn-ghost" type="button" (click)="adding.set(false)">Cancel</button>
+        <button class="btn-solid" type="submit" [disabled]="saving()">
+          {{ saving() ? 'Submitting…' : 'Submit for approval' }}
+        </button>
+      </div>
+    </form>
+  </section>
+}
+
+<!-- ------------------------------------------------------ claims on you ---- -->
+@if (claims().length > 0) {
+  <section class="card">
+    <div class="card-top">
+      <div>
+        <h3 class="card-title">Membership &amp; vendor claims</h3>
+        <p class="card-sub">Enterprises that named your organisation on a LEAN Silver application</p>
+      </div>
+    </div>
+
+    <div class="tbl-wrap">
+      <table class="q-tbl">
+        <thead>
+          <tr>
+            <th>Enterprise</th>
+            <th>Claimed as</th>
+            <th>Reference</th>
+            <th>Asked</th>
+            <th>Status</th>
+            <th class="nowrap">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (c of claims(); track c.partnerVerificationId) {
+            <tr>
+              <td class="strong">
+                {{ c.enterprise?.name || '—' }}
+                <span class="sub">{{ c.enterprise?.leanId }}</span>
+              </td>
+              <td class="muted cap">{{ claimLabel(c.partnerKind) }}</td>
+              <td class="qid">{{ c.referenceNo || '—' }}</td>
+              <td class="muted nowrap">{{ when(c.createdOnUtc) }}</td>
+              <td>
+                <span class="pill" [class]="'pill-' + c.status.toLowerCase()">{{ c.status }}</span>
+              </td>
+              <td class="nowrap">
+                @if (c.status === 'Pending') {
+                  <button class="link-act" type="button" (click)="startClaimDecision(c, true)">Confirm</button>
+                  <span class="act-sep">|</span>
+                  <button class="link-act link-danger" type="button" (click)="startClaimDecision(c, false)">
+                    Dispute
+                  </button>
+                } @else {
+                  <span class="muted">{{ when(c.decidedOnUtc) }}</span>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+}
+
+<!-- ------------------------------------------------------------- the list -- -->
+<section class="card">
+  <div class="card-top">
+    <div>
+      <h3 class="card-title">Bodies</h3>
+      <p class="card-sub">{{ rows().length }} on the list</p>
+    </div>
+    <div class="spacer"></div>
+
+    <div class="seg">
+      <button type="button" [class.on]="status() === ''" (click)="status.set(''); load()">All</button>
+      <button type="button" [class.on]="status() === 'Pending'" (click)="status.set('Pending'); load()">Pending</button>
+      <button type="button" [class.on]="status() === 'Approved'" (click)="status.set('Approved'); load()">Approved</button>
+      <button type="button" [class.on]="status() === 'Rejected'" (click)="status.set('Rejected'); load()">Rejected</button>
+    </div>
+
+    <input class="q-search" type="search" placeholder="Search bodies" name="search"
+           [ngModel]="search()" (ngModelChange)="search.set($event); load()" />
+  </div>
+
+  @if (loading()) {
+    <p class="empty">Loading…</p>
+  } @else if (loadError(); as msg) {
+    <p class="empty is-bad">{{ msg }}</p>
+  } @else if (rows().length === 0) {
+    <p class="empty">Nothing matches the current filters.</p>
+  } @else {
+    <div class="tbl-wrap">
+      <table class="q-tbl">
+        <thead>
+          <tr>
+            <th>Code</th>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Coverage</th>
+            <th>Raised by</th>
+            <th>Status</th>
+            @if (canDecide) { <th class="nowrap">Actions</th> }
+          </tr>
+        </thead>
+        <tbody>
+          @for (r of rows(); track r.organisationId) {
+            <tr>
+              <td class="qid">{{ r.organisationCode }}</td>
+              <td class="strong">
+                {{ r.name }}
+                @if (r.decisionRemark) { <span class="sub">{{ r.decisionRemark }}</span> }
+              </td>
+              <td class="muted">{{ r.kind }}</td>
+              <td class="muted">{{ r.jurisdictionScope || r.stateName || '—' }}</td>
+              <td class="muted">{{ r.raisedBy || 'Super Admin' }}</td>
+              <td>
+                <span class="pill" [class]="'pill-' + r.approvalStatus.toLowerCase()">
+                  {{ r.approvalStatus }}
+                </span>
+              </td>
+              @if (canDecide) {
+                <td class="nowrap">
+                  @if (r.approvalStatus === 'Pending') {
+                    <button class="link-act" type="button" (click)="startDecision(r, true)">Approve</button>
+                    <span class="act-sep">|</span>
+                    <button class="link-act link-danger" type="button" (click)="startDecision(r, false)">
+                      Reject
+                    </button>
+                  } @else {
+                    <span class="muted">{{ when(r.decidedOnUtc) }}</span>
+                  }
+                </td>
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>
+
+<!-- ---------------------------------------------------------- the decision -- -->
+@if (deciding() || decidingClaim()) {
+  <div class="dlg-scrim" (click)="cancelDecision()"></div>
+  <section class="dlg" role="dialog">
+    <h3 class="dlg-title">
+      @if (decidingClaim()) {
+        {{ approving() ? 'Confirm this claim?' : 'Dispute this claim?' }}
+      } @else {
+        {{ approving() ? 'Approve this body?' : 'Reject this body?' }}
+      }
+    </h3>
+
+    <p class="dlg-text">
+      @if (decidingClaim(); as c) {
+        {{ c.enterprise?.name }} claims to be a {{ claimLabel(c.partnerKind) }},
+        with {{ refLabel(c.partnerKind) }} {{ c.referenceNo || '(none given)' }}.
+      } @else if (deciding(); as r) {
+        @if (approving()) {
+          {{ r.name }} will be offered to every applicant on the LEAN Silver intake.
+        } @else {
+          {{ r.name }} stays out of the applicant's list. The agency that raised it can correct and resubmit.
+        }
+      }
+    </p>
+
+    <label class="f-label" for="remark">
+      REMARK@if (!approving()) { <span class="req">*</span> }
+    </label>
+    <textarea id="remark" class="f-input f-area" rows="3" maxlength="500" name="remark"
+              [placeholder]="approving() ? 'Optional' : 'Why it cannot be accepted'"
+              [ngModel]="remark()" (ngModelChange)="remark.set($event)"></textarea>
+
+    @if (decideError()) { <p class="f-error">{{ decideError() }}</p> }
+
+    <div class="dlg-foot">
+      <div class="spacer"></div>
+      <button class="btn-ghost" type="button" (click)="cancelDecision()">Cancel</button>
+      <button class="btn-solid" [class.is-danger]="!approving()" type="button" (click)="confirmDecision()">
+        {{ approving() ? 'Confirm' : 'Reject' }}
+      </button>
+    </div>
+  </section>
+}

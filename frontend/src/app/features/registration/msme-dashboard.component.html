@@ -187,3 +187,13 @@
     </nav>
   </div>
 </footer>
+
+<!-- C02a-C02e: the three questions Silver asks, and where each named body
+     has got to. Over the dashboard, as the deck draws it. -->
+@if (silverIntakeOpen()) {
+  <app-msme-silver-intake
+    [enterpriseName]="data()?.enterprise?.name || ''"
+    (closed)="silverIntakeOpen.set(false)"
+    (proceed)="silverVerified()"
+  />
+}

@@ -281,6 +281,14 @@ export const routes: Routes = [
           import('./features/masters/esg-checklist.component').then((m) => m.EsgChecklistComponent),
       },
       {
+        path: 'partner-organisations',
+        canActivate: [permissionGuard('PARTNER_ORGS')],
+        loadComponent: () =>
+          import('./features/masters/partner-organisations.component').then(
+            (m) => m.PartnerOrganisationsComponent,
+          ),
+      },
+      {
         path: 'e-learning',
         canActivate: [permissionGuard('E_LEARNING')],
         loadComponent: () =>

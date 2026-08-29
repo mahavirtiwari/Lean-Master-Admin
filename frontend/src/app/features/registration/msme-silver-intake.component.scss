@@ -1,0 +1,198 @@
+// Apply for LEAN Silver (C02a-C02e) — a dialog over the dashboard, on the
+// applicant palette: #1B4F8A for the action, #0F7B45 for a confirmed state,
+// #A16207 while a body has yet to answer.
+
+.si-scrim {
+  position: fixed; inset: 0; z-index: 60;
+  background: rgb(22 33 26 / 46%);
+
+  // The search panel sits over the dialog, so its own scrim has to as well.
+  &.is-over { z-index: 80; background: rgb(22 33 26 / 26%); }
+}
+
+.si-modal {
+  position: fixed; z-index: 70;
+  top: 50%; left: 50%; transform: translate(-50%, -50%);
+  width: min(660px, calc(100vw - 40px));
+  max-height: calc(100vh - 64px);
+  display: flex; flex-direction: column;
+  background: #fff; border-radius: 14px;
+  box-shadow: 0 24px 60px rgb(22 33 26 / 26%);
+  overflow: hidden;
+}
+
+.si-head {
+  display: flex; align-items: flex-start; gap: 14px;
+  padding: 22px 24px 16px;
+  border-bottom: 1px solid #f0f4f2;
+}
+
+.si-eyebrow { margin: 0 0 6px; font-size: 9.6px; font-weight: 700; letter-spacing: 0.6px; color: #93a29a; }
+.si-title { margin: 0; font-size: 18px; font-weight: 700; color: #16211a; }
+.si-sub { margin: 5px 0 0; font-size: 12px; color: #5d6b62; }
+
+.si-x {
+  margin-left: auto; flex: none;
+  width: 28px; height: 28px; border-radius: 50%;
+  border: 1px solid #e8efea; background: #fff;
+  font-size: 12px; color: #5d6b62; cursor: pointer;
+
+  &:hover { background: #f7faf8; }
+}
+
+.si-body { padding: 20px 24px 22px; overflow-y: auto; }
+.si-empty { padding: 40px 24px; text-align: center; font-size: 12.5px; color: #93a29a; }
+
+// ------------------------------------------------------------- questions ---
+.si-q {
+  display: flex; gap: 14px;
+  padding: 0 0 20px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #f0f4f2;
+
+  &:last-of-type { border-bottom: 0; }
+}
+
+.si-q-no {
+  flex: none; width: 22px; height: 22px; border-radius: 50%;
+  background: #eff4fa; color: #1b4f8a;
+  font-size: 11px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+
+.si-q-text { flex: 1; min-width: 0; }
+.si-q-title { margin: 0; font-size: 13.6px; font-weight: 700; color: #16211a; }
+.si-q-hint { margin: 6px 0 0; font-size: 11.4px; color: #93a29a; }
+
+.si-label {
+  display: block; margin: 14px 0 6px;
+  font-size: 9.6px; font-weight: 700; letter-spacing: 0.4px; color: #5d6b62;
+}
+.si-req { color: #b91c1c; margin-left: 2px; }
+
+.si-select,
+.si-input {
+  width: 100%; height: 40px; padding: 0 12px;
+  border: 1px solid #d7e0da; border-radius: 8px;
+  background: #fff; font: inherit; font-size: 12.8px; color: #16211a;
+}
+.si-input::placeholder { color: #93a29a; }
+.si-select:focus, .si-input:focus {
+  outline: none; border-color: #1b4f8a; box-shadow: 0 0 0 3px rgb(27 79 138 / 12%);
+}
+
+.si-select {
+  display: flex; align-items: center; gap: 10px; cursor: pointer; text-align: left;
+
+  span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .is-placeholder { color: #93a29a; }
+  svg { width: 15px; height: 15px; flex: none; color: #5d6b62; }
+  &:hover { border-color: #1b4f8a; }
+}
+
+.si-yn { display: flex; gap: 22px; margin-top: 12px; }
+
+.si-radio {
+  display: inline-flex; align-items: center; gap: 8px;
+  border: 0; background: none; padding: 0; cursor: pointer;
+  font: inherit; font-size: 12.8px; color: #16211a;
+}
+
+.si-dot {
+  width: 16px; height: 16px; border-radius: 50%;
+  border: 1.6px solid #c6d3cb; background: #fff;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.si-radio.on .si-dot { border-color: #1b4f8a; }
+.si-radio.on .si-dot::after {
+  content: ""; width: 8px; height: 8px; border-radius: 50%; background: #1b4f8a;
+}
+
+// ---------------------------------------------------------- the verdicts ---
+.si-claim {
+  border: 1px solid #e8efea; border-radius: 10px;
+  padding: 14px 16px; margin-bottom: 12px;
+}
+
+.si-claim-top { display: flex; align-items: center; gap: 12px; }
+.si-claim-kind { font-size: 9.6px; font-weight: 700; letter-spacing: 0.4px; color: #93a29a; }
+.si-claim-name { margin-top: 6px; font-size: 13.6px; font-weight: 700; color: #16211a; }
+
+.si-claim-ref {
+  margin-top: 6px; font-size: 11.8px; color: #5d6b62;
+  span { color: #93a29a; margin-right: 10px; }
+}
+
+.si-claim-remark {
+  margin: 10px 0 0; padding: 8px 11px;
+  background: #fdf5f5; border: 1px solid #f0d4d4; border-radius: 6px;
+  font-size: 11.4px; color: #7f1d1d;
+}
+
+.si-pill {
+  margin-left: auto; flex: none;
+  padding: 3px 11px; border-radius: 5px;
+  font-size: 10px; font-weight: 700;
+
+  &.is-approved { background: #f0faf4; border: 1px solid #b7e4c9; color: #0f7b45; }
+  &.is-pending  { background: #fefce8; border: 1px solid #fde68a; color: #a16207; }
+  &.is-disputed { background: #fef2f2; border: 1px solid #f3cfcf; color: #b91c1c; }
+}
+
+// ---------------------------------------------------------------- footer ---
+.si-note {
+  margin-top: 16px; padding: 11px 14px;
+  background: #eff4fa; border: 1px solid #c3d8ee; border-radius: 8px;
+  font-size: 11.6px; line-height: 1.5; color: #385e86;
+
+  // Once payment is open the note is the good news, not a caveat.
+  &.is-go { background: #f0faf4; border-color: #b7e4c9; color: #0f7b45; }
+}
+
+.si-error {
+  margin: 14px 0 0; padding: 10px 13px;
+  background: #fef2f2; border: 1px solid #f3cfcf; border-radius: 8px;
+  font-size: 11.8px; color: #b91c1c;
+}
+
+.si-foot { display: flex; align-items: center; gap: 12px; margin-top: 20px; }
+.si-spacer { flex: 1; }
+
+.si-btn {
+  height: 40px; padding: 0 22px; border-radius: 8px;
+  font: inherit; font-size: 12.8px; font-weight: 700; cursor: pointer;
+}
+.si-btn-primary { background: #1b4f8a; border: 1px solid #1b4f8a; color: #fff; }
+.si-btn-primary:hover:not(:disabled) { background: #163f6f; }
+.si-btn-primary:disabled { background: #cfd8d3; border-color: #cfd8d3; cursor: default; }
+.si-btn-ghost { background: #fff; border: 1px solid #d7e0da; color: #16211a; }
+.si-btn-ghost:hover { background: #f7faf8; }
+
+// ------------------------------------------------------- C02c search panel ---
+.si-panel {
+  position: fixed; z-index: 90;
+  top: 0; right: 0; bottom: 0;
+  width: min(380px, 100vw);
+  display: flex; flex-direction: column;
+  background: #fff; box-shadow: -16px 0 40px rgb(22 33 26 / 18%);
+}
+
+.si-panel-head {
+  display: flex; align-items: center; gap: 12px;
+  padding: 20px 20px 14px;
+}
+.si-panel-title { margin: 0; font-size: 15px; font-weight: 700; color: #16211a; }
+.si-panel-search { margin: 0 20px 12px; width: calc(100% - 40px); }
+
+.si-list { margin: 0; padding: 0 12px 20px; list-style: none; overflow-y: auto; }
+
+.si-row {
+  display: flex; flex-direction: column; gap: 3px; align-items: flex-start;
+  width: 100%; padding: 12px; border: 0; border-radius: 8px;
+  background: none; font: inherit; text-align: left; cursor: pointer;
+
+  &:hover { background: #f4f8fc; }
+}
+
+.si-row-name { font-size: 13px; font-weight: 600; color: #16211a; }
+.si-row-scope { font-size: 11.2px; color: #93a29a; }

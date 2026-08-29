@@ -317,6 +317,75 @@ public sealed class MsmeBronzeController(
     }
 
     /// <summary>
+    /// Issues (or re-issues) a participant's LMS credential and e-mails it.
+    ///
+    /// Covers the two cases that come up in practice: a participant seated
+    /// before credentials were issued at all, and one who has lost their
+    /// password. A new password is generated either way — the old one cannot be
+    /// read back, only replaced.
+    /// </summary>
+    [HttpPost("participants/{id:int}/credentials")]
+    public async Task<IActionResult> IssueCredentials(int id, CancellationToken ct)
+    {
+        var enterpriseId = await EnterpriseIdAsync(ct);
+        if (enterpriseId is null) return NotFound(new { message = "No enterprise is linked to this account." });
+
+        var participant = await db.BronzeParticipants.AsTracking()
+            .FirstOrDefaultAsync(p => p.BronzeParticipantId == id && p.EnterpriseId == enterpriseId && p.IsActive, ct);
+
+        if (participant is null) return NotFound(new { message = "That participant is not on this enterprise." });
+
+        if (participant.AccountState != "Active")
+        {
+            return BadRequest(new
+            {
+                message = participant.AccountState == "Completed"
+                    ? "That participant has already passed; their account is closed."
+                    : "That participant has used all their attempts; their account is locked.",
+            });
+        }
+
+        var enterprise = await db.Enterprises.AsNoTracking()
+            .Where(e => e.EnterpriseId == enterpriseId)
+            .Select(e => new { e.Name, e.LeanId })
+            .FirstAsync(ct);
+
+        var lmsUrl = await db.SystemSettings.AsNoTracking()
+            .Where(x => x.Key == "Bronze.LmsUrl")
+            .Select(x => x.Value)
+            .FirstOrDefaultAsync(ct) ?? "https://msme-leanlms.in";
+
+        var courseCount = await db.BronzeCourses.CountAsync(c => c.IsActive, ct);
+
+        // Keep an id that was already issued: it may be in use on the LMS.
+        participant.LmsLoginId ??= (enterprise.LeanId ?? "LEAN") + "-B"
+            + participant.BronzeParticipantId.ToString("D3", CultureInfo.InvariantCulture);
+
+        var password = GeneratePassword();
+        participant.PasswordHash = new PasswordHasher<BronzeParticipant>().HashPassword(participant, password);
+
+        await db.SaveChangesAsync(ct);
+
+        await emailQueue.QueueTemplatedAsync("BRONZE_PARTICIPANT_ACCOUNT", participant.Email, null,
+            new Dictionary<string, string>
+            {
+                ["participant_name"] = participant.FullName,
+                ["enterprise_name"] = enterprise.Name,
+                ["lean_id"] = participant.LmsLoginId,
+                ["password"] = password,
+                ["lms_url"] = lmsUrl,
+                ["course_count"] = courseCount.ToString(CultureInfo.InvariantCulture),
+                ["max_attempts"] = participant.MaxAttempts.ToString(CultureInfo.InvariantCulture),
+            }, ct);
+
+        return Ok(new
+        {
+            leanId = participant.LmsLoginId,
+            message = "The LEAN ID, a new password and the LMS link have been e-mailed to the participant.",
+        });
+    }
+
+    /// <summary>
     /// A readable one-time password: no ambiguous characters, and one of each
     /// class so it satisfies whatever policy the LMS applies.
     /// </summary>

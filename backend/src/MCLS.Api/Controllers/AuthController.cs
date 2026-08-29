@@ -388,7 +388,8 @@ public sealed class AuthController(
                     ["lean_id"] = user.UserCode,
                     ["changed_on"] = clock.UtcNow.ToLocalTime()
                         .ToString("d MMMM yyyy 'at' HH:mm", CultureInfo.InvariantCulture),
-                    ["portal_url"] = signInUrl,
+                    ["login_url"] = signInUrl,
+                    ["support_email"] = "consultancy.zed@qcin.org",
                 }, ct);
         }
         catch (Exception ex)

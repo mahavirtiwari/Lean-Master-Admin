@@ -114,6 +114,20 @@ public sealed class MsmeController(
                 e.NicFourDigit,
                 e.NicFiveDigit,
                 e.NicDescription,
+                e.MajorActivity,
+                // The chosen activity carries the name against each NIC level;
+                // the enterprise row only holds the codes, and the sidebar shows
+                // "25 - Manufacture of fabricated metal products" per level.
+                Chosen = db.EnterpriseActivities
+                    .Where(a => a.EnterpriseActivityId == e.SelectedActivityId)
+                    .Select(a => new
+                    {
+                        a.Activity,
+                        a.NicTwoDigitName,
+                        a.NicFourDigitName,
+                        a.NicFiveDigitName,
+                    })
+                    .FirstOrDefault(),
                 Plant = db.EnterprisePlants
                     .Where(p => p.EnterprisePlantId == e.SelectedPlantId)
                     .Select(p => new
@@ -284,6 +298,10 @@ public sealed class MsmeController(
                 nicTwoDigit = enterprise.NicTwoDigit,
                 nicFourDigit = enterprise.NicFourDigit,
                 nicFiveDigit = enterprise.NicFiveDigit,
+                nicTwoDigitName = enterprise.Chosen != null ? enterprise.Chosen.NicTwoDigitName : null,
+                nicFourDigitName = enterprise.Chosen != null ? enterprise.Chosen.NicFourDigitName : null,
+                nicFiveDigitName = enterprise.Chosen != null ? enterprise.Chosen.NicFiveDigitName : null,
+                majorActivity = enterprise.Chosen != null ? enterprise.Chosen.Activity : enterprise.MajorActivity,
                 activity = enterprise.NicDescription,
                 unit = enterprise.Plant is null ? null : new
                 {

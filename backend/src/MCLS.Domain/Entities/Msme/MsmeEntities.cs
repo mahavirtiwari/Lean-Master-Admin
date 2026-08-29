@@ -498,6 +498,13 @@ public class BronzeParticipant
     public int BronzeParticipantId { get; set; }
     public int EnterpriseId { get; set; }
 
+    /// <summary>
+    /// Which of the enterprise's seats this is, 1..5. Unique per enterprise, so
+    /// the cap is held by the database rather than by a count taken a moment
+    /// before the insert.
+    /// </summary>
+    public byte? SeatNo { get; set; }
+
     public string FullName { get; set; } = string.Empty;
 
     /// <summary>Their role in the unit — "Plant Head", read alongside the name.</summary>

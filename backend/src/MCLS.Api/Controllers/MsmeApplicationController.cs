@@ -227,7 +227,11 @@ public sealed class MsmeApplicationController(MclsDbContext db, ICurrentUser cur
         var enterpriseId = await EnterpriseIdAsync(ct);
         if (enterpriseId is null) return NotFound(new { message = "No enterprise is linked to this account." });
 
-        var submission = await db.ApplicationSubmissions
+        // AsTracking: the context is NoTracking by default, so without it the
+        // payment below would be written to a detached object and SaveChanges
+        // would quietly do nothing — the applicant would be told the fee was
+        // paid while the record still read Unpaid.
+        var submission = await db.ApplicationSubmissions.AsTracking()
             .SingleOrDefaultAsync(s => s.EnterpriseId == enterpriseId && s.CertificationLevelId == Silver, ct);
 
         if (submission is null || submission.Status != "Submitted")

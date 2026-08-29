@@ -145,7 +145,11 @@ public sealed class JwtTokenService(
     {
         var hash = SHA256.HashData(Encoding.UTF8.GetBytes(refreshToken));
 
-        var existing = await db.RefreshTokens
+        // AsTracking: this row is revoked and back-linked below, and the context
+        // is NoTracking by default. Untracked, the revocation was silently lost —
+        // which meant refresh tokens never actually rotated out and the replay
+        // check below could never fire, because nothing was ever marked revoked.
+        var existing = await db.RefreshTokens.AsTracking()
             .SingleOrDefaultAsync(t => t.TokenHash == hash, ct);
 
         if (existing is null) return null;

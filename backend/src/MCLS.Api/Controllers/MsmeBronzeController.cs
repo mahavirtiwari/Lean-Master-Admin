@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 
 namespace MCLS.Api.Controllers;
 
@@ -133,21 +134,37 @@ public sealed class MsmeBronzeController(
 
         var email = request.Email.Trim();
 
-        var used = await db.BronzeParticipants
-            .CountAsync(p => p.EnterpriseId == enterpriseId && p.IsActive, ct);
+        var taken = await db.BronzeParticipants.AsNoTracking()
+            .Where(p => p.EnterpriseId == enterpriseId && p.IsActive)
+            .Select(p => new { p.SeatNo, p.Email })
+            .ToListAsync(ct);
 
-        if (used >= Seats)
+        if (taken.Count >= Seats)
         {
             return BadRequest(new { message = $"All {Seats} seats are taken. Withdraw a participant before adding another." });
         }
 
-        var duplicate = await db.BronzeParticipants
-            .AnyAsync(p => p.EnterpriseId == enterpriseId && p.IsActive && p.Email == email, ct);
-
-        if (duplicate)
+        if (taken.Any(t => string.Equals(t.Email, email, StringComparison.OrdinalIgnoreCase)))
         {
             return BadRequest(new { message = "That email already holds a seat for this enterprise." });
         }
+
+        // Claim the lowest free number. Two requests arriving together can pick
+        // the same one; the unique index settles it and the loser is told the
+        // seats are taken rather than being seated over the cap.
+        var usedSeats = taken.Where(t => t.SeatNo.HasValue).Select(t => t.SeatNo!.Value).ToHashSet();
+        byte? seat = null;
+        for (byte n = 1; n <= Seats; n++)
+        {
+            if (!usedSeats.Contains(n)) { seat = n; break; }
+        }
+
+        if (seat is null)
+        {
+            return BadRequest(new { message = $"All {Seats} seats are taken. Withdraw a participant before adding another." });
+        }
+
+        var used = taken.Count;
 
         // The enterprise this seat belongs to, for the LEAN ID and the e-mail.
         var enterprise = await db.Enterprises.AsNoTracking()
@@ -165,6 +182,7 @@ public sealed class MsmeBronzeController(
         var participant = new BronzeParticipant
         {
             EnterpriseId = enterpriseId.Value,
+            SeatNo = seat,
             FullName = request.FullName.Trim(),
             Designation = string.IsNullOrWhiteSpace(request.Designation) ? null : request.Designation.Trim(),
             Email = email,
@@ -179,7 +197,61 @@ public sealed class MsmeBronzeController(
         };
 
         db.BronzeParticipants.Add(participant);
-        await db.SaveChangesAsync(ct);
+
+        // Losing the race for a seat number does not mean the enterprise is
+        // full — the next number may well be free — so try the remaining seats
+        // rather than turning somebody away while a seat sits empty. The index
+        // is still what guarantees the cap; this only decides how gracefully a
+        // collision is handled.
+        var seated = false;
+
+        for (var attempt = 0; attempt < Seats && !seated; attempt++)
+        {
+            try
+            {
+                await db.SaveChangesAsync(ct);
+                seated = true;
+            }
+            catch (DbUpdateException)
+            {
+                db.Entry(participant).State = EntityState.Detached;
+
+                var nowTaken = await db.BronzeParticipants.AsNoTracking()
+                    .Where(p => p.EnterpriseId == enterpriseId && p.IsActive)
+                    .Select(p => new { p.SeatNo, p.Email })
+                    .ToListAsync(ct);
+
+                if (nowTaken.Count >= Seats)
+                {
+                    return BadRequest(new { message = $"All {Seats} seats are taken. Withdraw a participant before adding another." });
+                }
+
+                if (nowTaken.Any(t => string.Equals(t.Email, email, StringComparison.OrdinalIgnoreCase)))
+                {
+                    return BadRequest(new { message = "That email already holds a seat for this enterprise." });
+                }
+
+                var busy = nowTaken.Where(t => t.SeatNo.HasValue).Select(t => t.SeatNo!.Value).ToHashSet();
+                byte? free = null;
+                for (byte n = 1; n <= Seats; n++)
+                {
+                    if (!busy.Contains(n)) { free = n; break; }
+                }
+
+                if (free is null)
+                {
+                    return BadRequest(new { message = $"All {Seats} seats are taken. Withdraw a participant before adding another." });
+                }
+
+                participant.SeatNo = free;
+                db.BronzeParticipants.Add(participant);
+            }
+        }
+
+        if (!seated)
+        {
+            return BadRequest(new { message = "The seats are busy just now. Please try again." });
+        }
 
         // The LEAN ID hangs off the enterprise's own, so a participant's id says
         // which enterprise seated them; the suffix is their row, already unique.

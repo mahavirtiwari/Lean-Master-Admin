@@ -289,17 +289,18 @@
         </div>
 
         <div class="jur-top">
-          <p class="field-hint jur-summary">{{ coverageSummary() }}</p>
+          <div class="jur-summary-wrap">
+            <p class="jur-summary">{{ coverageSummary() }}</p>
+            <p class="jur-note">
+              A state on its own covers all of it, including districts added later. Open a state
+              to name districts where the officer covers only part of it.
+            </p>
+          </div>
           <div class="spacer"></div>
-          <button class="link-act" type="button" (click)="toggleAllStates()">
+          <button class="jur-btn" type="button" (click)="toggleAllStates()">
             {{ allStatesCovered() ? 'Clear all' : 'Select all states' }}
           </button>
         </div>
-
-        <p class="field-hint jur-note">
-          A state on its own covers all of it, including districts added later. Name districts
-          only where the officer covers part of a state.
-        </p>
 
         <div class="jur-list">
           @for (s of states(); track s.stateId) {
@@ -317,17 +318,31 @@
                 <div class="spacer"></div>
 
                 @if (districtsOf(s.stateId).length > 0) {
-                  <button class="link-act jur-expand" type="button" (click)="expand(s.stateId)">
-                    {{ expandedState() === s.stateId ? 'Hide districts' : districtsOf(s.stateId).length + ' districts' }}
+                  <button
+                    class="jur-count"
+                    type="button"
+                    [class.is-open]="expandedState() === s.stateId"
+                    (click)="expand(s.stateId)"
+                    [title]="expandedState() === s.stateId ? 'Hide districts' : 'Choose districts'"
+                  >
+                    <span>{{ districtsOf(s.stateId).length }}</span>
+                    <svg viewBox="0 0 16 16" aria-hidden="true">
+                      <path d="m4 6 4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.7"
+                            stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
                   </button>
                 }
               </div>
 
               @if (expandedState() === s.stateId) {
                 <div class="jur-districts">
-                  <button class="link-act" type="button" (click)="toggleAllDistricts(s.stateId)">
-                    Select every district
-                  </button>
+                  <div class="jur-districts-head">
+                    <span class="jur-districts-label">Districts of {{ s.name }}</span>
+                    <div class="spacer"></div>
+                    <button class="jur-btn jur-btn-sm" type="button" (click)="toggleAllDistricts(s.stateId)">
+                      Select every district
+                    </button>
+                  </div>
 
                   <div class="jur-district-grid">
                     @for (d of districtsOf(s.stateId); track d.districtId) {

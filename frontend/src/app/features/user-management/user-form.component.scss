@@ -35,46 +35,131 @@
 .grant-right { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; color: #5d6b62; cursor: pointer; }
 
 // ---- section 4: the states and districts an officer covers ----
-.jur-top { display: flex; align-items: baseline; gap: 12px; margin-top: 16px; }
+// Every control here is styled locally. The first pass reached for .link-act,
+// which this component's stylesheet does not define — component styles are
+// scoped, so the class did nothing and three dozen default browser buttons
+// came through instead.
+
+.jur-top { display: flex; align-items: flex-start; gap: 16px; margin-top: 16px; }
 .jur-top .spacer { flex: 1; }
-.jur-summary { margin: 0; font-weight: 600; color: #16211a; }
-.jur-note { margin: 6px 0 14px; }
+
+.jur-summary-wrap { min-width: 0; }
+.jur-summary { margin: 0; font-size: 12.6px; font-weight: 700; color: #16211a; }
+.jur-note { margin: 5px 0 0; font-size: 11.2px; line-height: 1.5; color: #93a29a; max-width: 62ch; }
+
+.jur-btn {
+  flex: none;
+  height: 32px;
+  padding: 0 14px;
+  border: 1px solid #c6d3cb;
+  border-radius: 6px;
+  background: #fff;
+  font: inherit;
+  font-size: 11.8px;
+  font-weight: 600;
+  color: #1b4f8a;
+  cursor: pointer;
+  white-space: nowrap;
+
+  &:hover { background: #f4f8fc; border-color: #1b4f8a; }
+}
+
+.jur-btn-sm { height: 27px; padding: 0 11px; font-size: 11px; }
 
 .jur-list {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
   gap: 8px;
   align-items: start;
+  margin-top: 16px;
 }
 
 .jur-state {
   border: 1px solid #dee7e1;
   border-radius: 8px;
-  padding: 10px 12px;
+  background: #fff;
+  padding: 9px 11px;
+  transition: border-color 0.12s, background 0.12s;
 
-  // A state that is covered is marked, so the selection reads at a glance
-  // across three dozen boxes.
+  &:hover { border-color: #c6d3cb; }
+
+  // A covered state is marked, so a selection reads at a glance across
+  // three dozen boxes.
   &.is-on { border-color: #1b4f8a; background: #f6f9fc; }
 }
 
-.jur-state-head { display: flex; align-items: center; gap: 10px; }
+.jur-state-head { display: flex; align-items: center; gap: 9px; min-height: 24px; }
 .jur-state-head .spacer { flex: 1; }
-.jur-state-name { font-size: 12.4px; font-weight: 600; color: #16211a; }
 
-.jur-check { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
-.jur-expand { font-size: 10.6px; white-space: nowrap; }
+.jur-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  min-width: 0;
 
-// A state opened for its districts spans the grid, so the districts have room
-// to sit several to a row instead of one per line in a narrow card.
+  input { flex: none; margin: 0; }
+}
+
+.jur-state-name {
+  font-size: 12.2px;
+  font-weight: 600;
+  color: #16211a;
+  line-height: 1.35;
+}
+
+// The district count doubles as the way in. Quiet until it is useful, rather
+// than a second button competing with the checkbox beside it.
+.jur-count {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 22px;
+  padding: 0 7px;
+  border: 1px solid transparent;
+  border-radius: 11px;
+  background: #f2f6f4;
+  font: inherit;
+  font-size: 10.6px;
+  font-weight: 600;
+  color: #5d6b62;
+  cursor: pointer;
+
+  svg { width: 11px; height: 11px; transition: transform 0.15s; }
+  &:hover { background: #e6efe9; color: #16211a; }
+  &.is-open { background: #eff4fa; border-color: #c3d8ee; color: #1b4f8a; }
+  &.is-open svg { transform: rotate(180deg); }
+}
+
+// An opened state takes the whole row, so its districts sit several across
+// instead of one per line in a narrow card.
 .jur-state:has(.jur-districts) { grid-column: 1 / -1; }
 
-.jur-districts { margin-top: 10px; padding-top: 10px; border-top: 1px solid #f0f4f2; }
+.jur-districts { margin-top: 11px; padding-top: 11px; border-top: 1px solid #e8efea; }
+
+.jur-districts-head { display: flex; align-items: center; gap: 12px; }
+.jur-districts-head .spacer { flex: 1; }
+
+.jur-districts-label {
+  font-size: 9.6px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: #93a29a;
+}
 
 .jur-district-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
-  gap: 6px 14px;
-  margin-top: 9px;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 5px 16px;
+  margin-top: 10px;
 }
 
-.jur-district { font-size: 11.4px; color: #47554c; }
+.jur-district {
+  font-size: 11.4px;
+  color: #47554c;
+  padding: 3px 0;
+
+  &:hover { color: #16211a; }
+}

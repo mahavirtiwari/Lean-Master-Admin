@@ -436,6 +436,8 @@ public sealed class UsersController(
         // say over anything it does not hold itself — the same rule the
         // permissions screen applies, applied at the moment of creation so a
         // sub-user is never briefly given the firm's whole access.
+        await SaveJurisdictionsAsync(user.Id, request.Jurisdictions, ct);
+
         var permissionFault = await GrantOnCreateAsync(user.Id, request.Permissions, ct);
 
         if (permissionFault is not null)
@@ -542,6 +544,7 @@ public sealed class UsersController(
         }
 
         await db.SaveChangesAsync(ct);
+        await SaveJurisdictionsAsync(id, request.Jurisdictions, ct);
 
         // Only when something actually moved. An administrator who opens the
         // form, changes their mind and saves anyway has not told the holder
@@ -946,6 +949,54 @@ public sealed class UsersController(
         return Ok(new { modules });
     }
 
+    /// <summary>
+    /// Replaces the states and districts an officer covers.
+    ///
+    /// Replaced rather than merged: the form sends the whole selection, and a
+    /// merge would leave a state granted that the administrator had just
+    /// unticked. A state with no districts named is stored as one row with a
+    /// null district, which is the whole state.
+    /// </summary>
+    private async Task SaveJurisdictionsAsync(
+        int userId, List<JurisdictionSelection>? selection, CancellationToken ct)
+    {
+        if (selection is null) return;
+
+        var existing = await db.UserJurisdictions.AsTracking()
+            .Where(j => j.UserId == userId)
+            .ToListAsync(ct);
+
+        db.UserJurisdictions.RemoveRange(existing);
+
+        foreach (var state in selection)
+        {
+            var districts = state.DistrictIds ?? [];
+
+            if (districts.Count == 0)
+            {
+                db.UserJurisdictions.Add(new UserJurisdiction
+                {
+                    UserId = userId,
+                    StateId = state.StateId,
+                    DistrictId = null,
+                });
+                continue;
+            }
+
+            foreach (var districtId in districts.Distinct())
+            {
+                db.UserJurisdictions.Add(new UserJurisdiction
+                {
+                    UserId = userId,
+                    StateId = state.StateId,
+                    DistrictId = districtId,
+                });
+            }
+        }
+
+        await db.SaveChangesAsync(ct);
+    }
+
     /// <summary>Whether this caller owns the organisation an account sits in.</summary>
     private async Task<bool> OwnsAsync(int? organisationId, CancellationToken ct)
     {
@@ -1086,6 +1137,12 @@ public sealed class CreateUserRequest
     /// </summary>
     public List<short>? Permissions { get; set; }
 
+    /// <summary>
+    /// The states and districts a State Specific officer covers. An entry with
+    /// no districts means the whole state.
+    /// </summary>
+    public List<JurisdictionSelection>? Jurisdictions { get; set; }
+
     [Required, MaxLength(200)] public string FullName { get; set; } = string.Empty;
     [Required, EmailAddress, MaxLength(256)] public string Email { get; set; } = string.Empty;
     [Phone, MaxLength(30)] public string? Mobile { get; set; }
@@ -1120,6 +1177,15 @@ public sealed class CreateUserRequest
 /// type (Organisation Name / Department Name / State Department) but they are
 /// the same field underneath, so one shape serves all three.
 /// </summary>
+/// <summary>One state, and the districts of it that are covered.</summary>
+public sealed class JurisdictionSelection
+{
+    public short StateId { get; set; }
+
+    /// <summary>Empty or absent means the whole state.</summary>
+    public List<int>? DistrictIds { get; set; }
+}
+
 public sealed class OrganisationDetailsRequest
 {
     [Required, MaxLength(500)] public string Name { get; set; } = string.Empty;
@@ -1140,6 +1206,9 @@ public sealed class OrganisationDetailsRequest
 
 public sealed class UpdateUserRequest
 {
+    /// <summary>The states and districts a State Specific officer covers.</summary>
+    public List<JurisdictionSelection>? Jurisdictions { get; set; }
+
     [Required, MaxLength(200)] public string FullName { get; set; } = string.Empty;
     [Phone, MaxLength(30)] public string? Mobile { get; set; }
     [MaxLength(150)] public string? Designation { get; set; }

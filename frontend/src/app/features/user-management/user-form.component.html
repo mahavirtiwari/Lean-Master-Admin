@@ -279,5 +279,74 @@
         </button>
       </div>
     </section>
+
+    <!-- ------------------------------- 4. applicable states and districts -->
+    @if (showJurisdictions()) {
+      <section class="card card-pad">
+        <div class="step-head">
+          <span class="step-no">4</span>
+          <h3 class="step-title">Applicable States and Districts</h3>
+        </div>
+
+        <div class="jur-top">
+          <p class="field-hint jur-summary">{{ coverageSummary() }}</p>
+          <div class="spacer"></div>
+          <button class="link-act" type="button" (click)="toggleAllStates()">
+            {{ allStatesCovered() ? 'Clear all' : 'Select all states' }}
+          </button>
+        </div>
+
+        <p class="field-hint jur-note">
+          A state on its own covers all of it, including districts added later. Name districts
+          only where the officer covers part of a state.
+        </p>
+
+        <div class="jur-list">
+          @for (s of states(); track s.stateId) {
+            <div class="jur-state" [class.is-on]="stateCovered(s.stateId)">
+              <div class="jur-state-head">
+                <label class="jur-check">
+                  <input
+                    type="checkbox"
+                    [checked]="stateCovered(s.stateId)"
+                    (change)="toggleState(s.stateId)"
+                  />
+                  <span class="jur-state-name">{{ s.name }}</span>
+                </label>
+
+                <div class="spacer"></div>
+
+                @if (districtsOf(s.stateId).length > 0) {
+                  <button class="link-act jur-expand" type="button" (click)="expand(s.stateId)">
+                    {{ expandedState() === s.stateId ? 'Hide districts' : districtsOf(s.stateId).length + ' districts' }}
+                  </button>
+                }
+              </div>
+
+              @if (expandedState() === s.stateId) {
+                <div class="jur-districts">
+                  <button class="link-act" type="button" (click)="toggleAllDistricts(s.stateId)">
+                    Select every district
+                  </button>
+
+                  <div class="jur-district-grid">
+                    @for (d of districtsOf(s.stateId); track d.districtId) {
+                      <label class="jur-check jur-district">
+                        <input
+                          type="checkbox"
+                          [checked]="districtCovered(d.districtId)"
+                          (change)="toggleDistrict(s.stateId, d.districtId)"
+                        />
+                        <span>{{ d.name }}</span>
+                      </label>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </section>
+    }
   </form>
 }

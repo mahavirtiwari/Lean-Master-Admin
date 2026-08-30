@@ -319,3 +319,23 @@ public class LoginAudit
 
     public string? Browser { get; set; }
 }
+
+/// <summary>
+/// A state or district a State Specific officer covers.
+///
+/// auth.[User].StateId is where the officer sits; this is where they work, and
+/// it is a list. A null district means the whole state — present and future
+/// districts alike, so "all of Maharashtra" does not quietly stop meaning that
+/// the day a new district is created.
+/// </summary>
+public class UserJurisdiction
+{
+    public int UserJurisdictionId { get; set; }
+    public int UserId { get; set; }
+    public short StateId { get; set; }
+
+    /// <summary>Null for the whole state.</summary>
+    public int? DistrictId { get; set; }
+
+    public DateTime CreatedOnUtc { get; set; }
+}

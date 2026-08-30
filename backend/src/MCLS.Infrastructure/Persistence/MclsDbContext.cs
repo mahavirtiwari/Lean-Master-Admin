@@ -37,6 +37,7 @@ public class MclsDbContext(DbContextOptions<MclsDbContext> options)
     public DbSet<Permission> Permissions => Set<Permission>();
     public DbSet<RolePermission> RolePermissions => Set<RolePermission>();
     public DbSet<UserManagementScope> UserManagementScopes => Set<UserManagementScope>();
+    public DbSet<UserJurisdiction> UserJurisdictions => Set<UserJurisdiction>();
     public DbSet<UserPermissionOverride> UserPermissionOverrides => Set<UserPermissionOverride>();
     public DbSet<UserStatus> UserStatuses => Set<UserStatus>();
     public DbSet<UserStatusHistory> UserStatusHistory => Set<UserStatusHistory>();

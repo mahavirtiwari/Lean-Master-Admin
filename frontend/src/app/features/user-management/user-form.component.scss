@@ -33,3 +33,48 @@
 
 .grant-rights { display: flex; flex-wrap: wrap; gap: 4px 12px; margin: 9px 0 0 25px; }
 .grant-right { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; color: #5d6b62; cursor: pointer; }
+
+// ---- section 4: the states and districts an officer covers ----
+.jur-top { display: flex; align-items: baseline; gap: 12px; margin-top: 16px; }
+.jur-top .spacer { flex: 1; }
+.jur-summary { margin: 0; font-weight: 600; color: #16211a; }
+.jur-note { margin: 6px 0 14px; }
+
+.jur-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 8px;
+  align-items: start;
+}
+
+.jur-state {
+  border: 1px solid #dee7e1;
+  border-radius: 8px;
+  padding: 10px 12px;
+
+  // A state that is covered is marked, so the selection reads at a glance
+  // across three dozen boxes.
+  &.is-on { border-color: #1b4f8a; background: #f6f9fc; }
+}
+
+.jur-state-head { display: flex; align-items: center; gap: 10px; }
+.jur-state-head .spacer { flex: 1; }
+.jur-state-name { font-size: 12.4px; font-weight: 600; color: #16211a; }
+
+.jur-check { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
+.jur-expand { font-size: 10.6px; white-space: nowrap; }
+
+// A state opened for its districts spans the grid, so the districts have room
+// to sit several to a row instead of one per line in a narrow card.
+.jur-state:has(.jur-districts) { grid-column: 1 / -1; }
+
+.jur-districts { margin-top: 10px; padding-top: 10px; border-top: 1px solid #f0f4f2; }
+
+.jur-district-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 6px 14px;
+  margin-top: 9px;
+}
+
+.jur-district { font-size: 11.4px; color: #47554c; }

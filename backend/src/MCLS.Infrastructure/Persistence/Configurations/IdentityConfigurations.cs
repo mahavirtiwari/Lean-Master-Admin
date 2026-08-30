@@ -256,3 +256,13 @@ internal sealed class LoginAuditConfiguration : IEntityTypeConfiguration<LoginAu
         b.HasIndex(x => x.OccurredOnUtc);
     }
 }
+
+internal sealed class UserJurisdictionConfiguration : IEntityTypeConfiguration<UserJurisdiction>
+{
+    public void Configure(EntityTypeBuilder<UserJurisdiction> b)
+    {
+        b.ToTable("UserJurisdiction", "auth");
+        b.HasKey(x => x.UserJurisdictionId);
+        b.HasIndex(x => new { x.UserId, x.StateId, x.DistrictId }).IsUnique();
+    }
+}

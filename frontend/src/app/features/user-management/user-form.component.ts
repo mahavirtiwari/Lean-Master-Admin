@@ -110,6 +110,19 @@ export class UserFormComponent {
   readonly grantable = signal<GrantableModule[]>([]);
   readonly grantedIds = signal<Set<number>>(new Set());
 
+  /**
+   * Section 4 — the states and districts a State Specific officer covers.
+   *
+   * A state ticked with no districts named means the whole state, which is
+   * what gets stored: a state gains districts over time, and "all of
+   * Maharashtra" written out as today's districts stops meaning that the day
+   * a new one is created.
+   */
+  readonly allDistricts = signal<DistrictRef[]>([]);
+  readonly coveredStates = signal<Set<number>>(new Set());
+  readonly coveredDistricts = signal<Set<number>>(new Set());
+  readonly expandedState = signal<number | null>(null);
+
   readonly saving = signal(false);
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
@@ -152,6 +165,31 @@ export class UserFormComponent {
 
   readonly heading = computed(() => (this.isEdit() ? 'Edit User' : 'Create New User'));
 
+  /** Only State Specific officers cover a list of places. */
+  readonly showJurisdictions = computed(() => this.selectedType() === 3);
+
+  readonly allStatesCovered = computed(
+    () => this.states().length > 0 && this.coveredStates().size === this.states().length,
+  );
+
+  readonly coverageSummary = computed(() => {
+    const states = this.coveredStates().size;
+    const districts = this.coveredDistricts().size;
+
+    if (states === 0) return 'Nothing selected yet';
+
+    const whole = [...this.coveredStates()]
+      .filter((id) => !this.allDistricts().some(
+        (d) => d.stateId === id && this.coveredDistricts().has(d.districtId)))
+      .length;
+
+    const parts = [`${states} state${states === 1 ? '' : 's'}`];
+    if (districts > 0) parts.push(`${districts} named district${districts === 1 ? '' : 's'}`);
+    if (whole > 0) parts.push(`${whole} in full`);
+
+    return parts.join(' · ');
+  });
+
   /**
    * A firm creating a colleague rather than an agency creating a firm.
    *
@@ -180,6 +218,13 @@ export class UserFormComponent {
         error: () => this.grantable.set([]),
       });
     this.api.states().subscribe((states) => this.states.set(states));
+
+    // Every district at once rather than one fetch per state opened: it is a
+    // single list of a few hundred, and expanding a state should not wait.
+    this.api.districts().subscribe({
+      next: (d) => this.allDistricts.set(d),
+      error: () => this.allDistricts.set([]),
+    });
     this.api.lookupValues('AGENCY_CATEGORY').subscribe((v) => this.categories.set(v));
 
     // The effect depends on the route inputs and nothing else. The work it
@@ -294,6 +339,7 @@ export class UserFormComponent {
     this.saving.set(true);
 
     const common = {
+      ...(this.showJurisdictions() ? { jurisdictions: this.jurisdictionPayload() } : {}),
       fullName: p.fullName.trim(),
       mobile: p.mobile.trim() || null,
       designation: p.designation.trim() || null,
@@ -350,6 +396,97 @@ export class UserFormComponent {
         );
       },
     });
+  }
+
+  // ---- section 4: applicable states and districts ----
+
+  districtsOf(stateId: number): DistrictRef[] {
+    return this.allDistricts().filter((d) => d.stateId === stateId);
+  }
+
+  stateCovered(stateId: number): boolean {
+    return this.coveredStates().has(stateId);
+  }
+
+  districtCovered(districtId: number): boolean {
+    return this.coveredDistricts().has(districtId);
+  }
+
+  /** Ticking a state covers all of it; unticking it drops its districts too. */
+  toggleState(stateId: number): void {
+    const states = new Set(this.coveredStates());
+    const districts = new Set(this.coveredDistricts());
+
+    if (states.has(stateId)) {
+      states.delete(stateId);
+      for (const d of this.districtsOf(stateId)) districts.delete(d.districtId);
+    } else {
+      states.add(stateId);
+    }
+
+    this.coveredStates.set(states);
+    this.coveredDistricts.set(districts);
+  }
+
+  /**
+   * Naming a district implies the state, and clearing the last one leaves the
+   * state covered in full rather than covered by nothing.
+   */
+  toggleDistrict(stateId: number, districtId: number): void {
+    const districts = new Set(this.coveredDistricts());
+    const states = new Set(this.coveredStates());
+
+    if (districts.has(districtId)) districts.delete(districtId);
+    else {
+      districts.add(districtId);
+      states.add(stateId);
+    }
+
+    this.coveredStates.set(states);
+    this.coveredDistricts.set(districts);
+  }
+
+  toggleAllStates(): void {
+    if (this.allStatesCovered()) {
+      this.coveredStates.set(new Set());
+      this.coveredDistricts.set(new Set());
+      return;
+    }
+
+    this.coveredStates.set(new Set(this.states().map((s) => s.stateId)));
+    this.coveredDistricts.set(new Set());
+  }
+
+  /** Every district of one state at once. */
+  toggleAllDistricts(stateId: number): void {
+    const all = this.districtsOf(stateId);
+    const districts = new Set(this.coveredDistricts());
+    const on = all.every((d) => districts.has(d.districtId));
+
+    for (const d of all) {
+      if (on) districts.delete(d.districtId);
+      else districts.add(d.districtId);
+    }
+
+    const states = new Set(this.coveredStates());
+    if (!on) states.add(stateId);
+
+    this.coveredStates.set(states);
+    this.coveredDistricts.set(districts);
+  }
+
+  expand(stateId: number): void {
+    this.expandedState.set(this.expandedState() === stateId ? null : stateId);
+  }
+
+  /** The selection as the API takes it: a state, and the districts named in it. */
+  private jurisdictionPayload(): { stateId: number; districtIds: number[] }[] {
+    return [...this.coveredStates()].map((stateId) => ({
+      stateId,
+      districtIds: this.districtsOf(stateId)
+        .filter((d) => this.coveredDistricts().has(d.districtId))
+        .map((d) => d.districtId),
+    }));
   }
 
   toggleGrant(permissionId: number): void {

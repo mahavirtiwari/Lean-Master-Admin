@@ -109,11 +109,16 @@
             </thead>
             <tbody>
               @for (row of g.rows; track $index) {
-                <tr [class.is-child]="row.kind === 'child'" [class.is-off]="!row.access">
+                <tr [class.is-child]="row.kind === 'child'" [class.is-off]="!row.access"
+                    [class.is-locked]="row.locked">
                   <td class="rp-col-module">
                     @if (row.kind === 'child') { <span class="rp-bullet"></span> }
                     <span class="rp-row-name">{{ row.name }}</span>
-                    @if (row.kind === 'child' && !row.grantable) {
+                    @if (row.locked) {
+                      <span class="rp-reserved" title="The scheme's own configuration, held by the Super Admin">
+                        Super Admin only
+                      </span>
+                    } @else if (row.kind === 'child' && !row.grantable) {
                       <span class="rp-inherits" title="Follows the module above it">inherits</span>
                     }
                   </td>

@@ -291,3 +291,19 @@ tr.is-off .rp-bullet { background: #c6d3cb; }
 
   svg { width: 12px; height: 12px; }
 }
+
+// A module the Super Admin keeps: shown so the grid still reads like the
+// sidebar, but plainly not on offer.
+.rp-tbl tbody tr.is-locked .rp-row-name { color: #93a29a; }
+
+.rp-reserved {
+  margin-left: 8px;
+  padding: 1px 7px;
+  border-radius: 4px;
+  background: #fefce8;
+  border: 1px solid #fde68a;
+  font-size: 9px;
+  font-weight: 600;
+  color: #a16207;
+  white-space: nowrap;
+}

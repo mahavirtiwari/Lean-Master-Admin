@@ -97,6 +97,13 @@ public class AccountType
 /// <summary>A sidebar module. Data rather than an enum so Settings can reorder them.</summary>
 public class Module
 {
+    /// <summary>
+    /// The scheme's own configuration — what it asks, charges, offers and how
+    /// it is wired. Reserved to the Super Admin: no other role holds it, and
+    /// Edit Role &amp; Permissions will not grant it to one.
+    /// </summary>
+    public bool IsSuperAdminOnly { get; set; }
+
     public byte ModuleId { get; set; }
     public string Code { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;

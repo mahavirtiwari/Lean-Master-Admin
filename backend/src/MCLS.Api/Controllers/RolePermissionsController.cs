@@ -94,7 +94,7 @@ public sealed class RolePermissionsController(MclsDbContext db) : ControllerBase
         var modules = await db.Modules.AsNoTracking()
             .Where(m => m.IsActive)
             .OrderBy(m => m.SortOrder)
-            .Select(m => new { m.ModuleId, m.Code, m.Name })
+            .Select(m => new { m.ModuleId, m.Code, m.Name, m.IsSuperAdminOnly })
             .ToListAsync(ct);
 
         var held = await db.RolePermissions.AsNoTracking()
@@ -130,6 +130,9 @@ public sealed class RolePermissionsController(MclsDbContext db) : ControllerBase
                 module.ModuleId,
                 module.Code,
                 module.Name,
+                // Shown, so the grid still reads like the sidebar, but not on
+                // offer: the scheme's own configuration is the Super Admin's.
+                locked = module.IsSuperAdminOnly,
                 access = rights.Count > 0,
                 view = rights.Contains("view"),
                 create = rights.Contains("create"),
@@ -149,6 +152,7 @@ public sealed class RolePermissionsController(MclsDbContext db) : ControllerBase
                     kind = "child",
                     parentModuleId = module.ModuleId,
                     name = child.Label,
+                    locked = module.IsSuperAdminOnly,
                     managedAccountTypeId = managed,
                     grantable = managed != null,
                     access = managed != null ? scopeSet.Contains(managed.Value) : rights.Count > 0,
@@ -200,9 +204,27 @@ public sealed class RolePermissionsController(MclsDbContext db) : ControllerBase
 
         var wanted = new HashSet<short>();
 
+        var reserved = await db.Modules.AsNoTracking()
+            .Where(m => m.IsSuperAdminOnly)
+            .Select(m => m.ModuleId)
+            .ToListAsync(ct);
+
         foreach (var row in request.Modules ?? [])
         {
             if (!row.Access) continue;
+
+            // Refused rather than ignored: a screen that quietly drops half a
+            // save tells the administrator it worked.
+            if (reserved.Contains(row.ModuleId))
+            {
+                var name = await db.Modules.AsNoTracking()
+                    .Where(m => m.ModuleId == row.ModuleId).Select(m => m.Name).FirstOrDefaultAsync(ct);
+
+                return BadRequest(new
+                {
+                    message = $"{name} is the Super Admin's own and cannot be granted to another account type.",
+                });
+            }
 
             foreach (var right in Rights(row))
             {

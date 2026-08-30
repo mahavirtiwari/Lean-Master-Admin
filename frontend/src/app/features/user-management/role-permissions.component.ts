@@ -22,6 +22,8 @@ interface GridRow {
   name: string;
   managedAccountTypeId?: number | null;
   grantable?: boolean;
+  /** The scheme's own configuration — shown, but the Super Admin's alone. */
+  locked?: boolean;
   access: boolean;
   view: boolean;
   create: boolean;
@@ -129,7 +131,9 @@ export class RolePermissionsComponent {
 
   /** A row the administrator can actually change. */
   editable(row: GridRow): boolean {
-    return this.canEdit && (row.kind === 'module' || row.grantable === true);
+    if (!this.canEdit || row.locked) return false;
+
+    return row.kind === 'module' || row.grantable === true;
   }
 
   toggleAccess(row: GridRow): void {
@@ -187,11 +191,11 @@ export class RolePermissionsComponent {
     const g = this.grid();
     if (!g || !this.canEdit) return;
 
-    const rows = g.rows.map((r) => ({
-      ...r,
-      access: on,
-      view: on, create: on, edit: on, delete: on, export: on,
-    }));
+    const rows = g.rows.map((r) =>
+      r.locked
+        ? r
+        : { ...r, access: on, view: on, create: on, edit: on, delete: on, export: on },
+    );
 
     this.grid.set({ ...g, rows });
   }

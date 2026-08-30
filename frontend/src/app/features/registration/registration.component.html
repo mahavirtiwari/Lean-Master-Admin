@@ -496,6 +496,43 @@
           </div>
         </div>
 
+        <!-- Who will run this case. Asked here rather than assigned later: the
+             applicant knows the agency they are working with, and the choice
+             decides whose list the case appears on. -->
+        <section class="panel panel-green agency-panel">
+          <div class="aware-head">
+            <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
+              <path d="M2 13.6V6.4l4-2.2 4 2.2v7.2M10 7.2l4 2.2v4.2M1.2 13.6h13.6M5 13.6v-3h2v3"
+                    fill="none" stroke="#0F7B45" stroke-width="1.7"
+                    stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            <h3 class="aware-title">Implementing Agency</h3>
+          </div>
+
+          <p class="aware-sub">
+            The body that will run your handholding and assessment. Your application is visible to
+            the agency you name here.
+          </p>
+
+          <label class="field-label" for="regAgency">
+            IMPLEMENTING AGENCY<span class="req">*</span>
+          </label>
+          <select
+            id="regAgency"
+            class="input agency-select"
+            name="regAgency"
+            [value]="implementingAgencyId()"
+            (change)="implementingAgencyId.set($any($event.target).value)"
+          >
+            <option value="">Select the implementing agency</option>
+            @for (a of agencies(); track a.organisationId) {
+              <option [value]="a.organisationId">
+                {{ a.name }}@if (a.scope) { &nbsp;—&nbsp;{{ a.scope }} }
+              </option>
+            }
+          </select>
+        </section>
+
         <!-- x=184 y=492 w=1072 h=140 on #F0F8F3 with a #D9EBE1 edge. -->
         <section class="panel panel-green awareness">
           <div class="aware-left">

@@ -63,6 +63,13 @@ export class RegistrationService {
     return this.http.put<void>(`${this.base}/${token}/unit`, body);
   }
 
+  /** The agencies an applicant may name. Anonymous, like the rest of this. */
+  implementingAgencies(): Observable<{ organisationId: number; name: string; scope: string | null }[]> {
+    return this.http.get<{ organisationId: number; name: string; scope: string | null }[]>(
+      `${this.base}/implementing-agencies`,
+    );
+  }
+
   saveSpoc(
     token: string,
     body: {
@@ -70,6 +77,7 @@ export class RegistrationService {
       designation: string;
       mobile: string;
       email: string;
+      implementingAgencyOrgId: number;
       attendedAwareness: boolean;
       awarenessProgramId: number | null;
     },

@@ -144,6 +144,11 @@ public sealed class ApplicationsController(
             });
         }
 
+        var enterpriseAgencyId = await db.Enterprises.AsNoTracking()
+            .Where(e => e.EnterpriseId == request.EnterpriseId)
+            .Select(e => e.ImplementingAgencyOrgId)
+            .FirstOrDefaultAsync(ct);
+
         var year = DateTime.UtcNow.Year.ToString(CultureInfo.InvariantCulture);
         var applicationNo = await sequences.NextAsync("Application", year, ct);
 
@@ -153,7 +158,11 @@ public sealed class ApplicationsController(
             EnterpriseId = request.EnterpriseId,
             CertificationLevelId = request.CertificationLevelId,
             ApplicationStatusId = (byte)ApplicationStatusId.Registered,
-            ImplementingAgencyId = request.ImplementingAgencyId,
+            // The applicant named an agency when they registered, and that is
+            // who the case belongs to. Only an explicit choice here overrides
+            // it, so registering an application does not silently move a case
+            // to a different agency's list.
+            ImplementingAgencyId = request.ImplementingAgencyId ?? enterpriseAgencyId,
             RegisteredOnUtc = DateTime.UtcNow,
             CreatedByUserId = currentUser.UserId,
         };

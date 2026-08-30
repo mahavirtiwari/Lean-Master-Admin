@@ -382,6 +382,13 @@ public class Registration
     public bool? AttendedAwareness { get; set; }
     public int? AwarenessProgramId { get; set; }
 
+    /// <summary>
+    /// The Implementing Agency the applicant named while registering. Carried
+    /// to the enterprise on completion, and from there to every application it
+    /// files — which is what puts the case on that agency's list and no other.
+    /// </summary>
+    public int? ImplementingAgencyOrgId { get; set; }
+
     /// <summary>Hashed, never stored in the clear.</summary>
     public byte[]? OtpHash { get; set; }
     public DateTime? OtpSentOnUtc { get; set; }

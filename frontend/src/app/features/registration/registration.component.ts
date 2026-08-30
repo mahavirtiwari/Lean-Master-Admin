@@ -162,6 +162,15 @@ export class RegistrationComponent {
   readonly attendedAwareness = signal<boolean | null>(null);
   readonly awarenessProgramId = signal('');
 
+  /**
+   * The Implementing Agency the applicant is working with.
+   *
+   * Named here rather than assigned later by an administrator: the applicant
+   * already knows, and the choice is what decides whose caseload this becomes.
+   */
+  readonly agencies = signal<{ organisationId: number; name: string; scope: string | null }[]>([]);
+  readonly implementingAgencyId = signal<string | number>('');
+
   // ---- R6 ---------------------------------------------------------------
   readonly otp = signal(['', '', '', '', '', '']);
   readonly resendIn = signal(0);
@@ -324,6 +333,13 @@ export class RegistrationComponent {
     });
 
     this.api.awarenessPrograms().subscribe((p) => this.programs.set(p));
+
+    // Anonymous, like the rest of registration — the applicant has no account
+    // yet, and the list is public information.
+    this.api.implementingAgencies().subscribe({
+      next: (a) => this.agencies.set(a ?? []),
+      error: () => this.agencies.set([]),
+    });
   }
 
   // ------------------------------------------------------------ navigation ---
@@ -525,6 +541,10 @@ export class RegistrationComponent {
       return this.fail('Enter a valid e-mail address — the OTP and LEAN ID go to it.');
     }
 
+    if (!this.implementingAgencyId()) {
+      return this.fail('Select the implementing agency you are working with.');
+    }
+
     if (this.attendedAwareness() === null) {
       return this.fail('Tell us whether an awareness programme was attended.');
     }
@@ -541,6 +561,7 @@ export class RegistrationComponent {
         designation: this.spocDesignation().trim(),
         mobile: this.spocMobile().replace(/\D/g, '').slice(-10),
         email: this.spocEmail().trim(),
+        implementingAgencyOrgId: Number(this.implementingAgencyId()),
         attendedAwareness: this.attendedAwareness() === true,
         awarenessProgramId: this.attendedAwareness() ? Number(this.awarenessProgramId()) : null,
       })

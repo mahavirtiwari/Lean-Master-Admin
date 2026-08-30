@@ -156,6 +156,30 @@ public sealed class RegistrationController(
         }));
     }
 
+    /// <summary>
+    /// The Implementing Agencies an applicant may name.
+    ///
+    /// Anonymous, like every other step here: the applicant has no account yet.
+    /// Only active, approved agencies — a body still awaiting a decision is not
+    /// one the scheme can hand a case to.
+    /// </summary>
+    [HttpGet("implementing-agencies")]
+    public async Task<IActionResult> GetImplementingAgencies(CancellationToken ct)
+    {
+        var agencies = await db.Organisations.AsNoTracking()
+            .Where(o => o.AccountTypeId == 1 && o.IsActive && o.ApprovalStatus == "Approved")
+            .OrderBy(o => o.DisplayOrder).ThenBy(o => o.Name)
+            .Select(o => new
+            {
+                o.OrganisationId,
+                o.Name,
+                scope = o.JurisdictionScope,
+            })
+            .ToListAsync(ct);
+
+        return Ok(agencies);
+    }
+
     // ------------------------------------------------ R2: Udyam validation ---
 
     /// <summary>
@@ -378,6 +402,18 @@ public sealed class RegistrationController(
             return BadRequest(new { message = "Select which awareness programme was attended." });
         }
 
+        // Checked against the table rather than taken on trust: the id comes
+        // from an anonymous form, and it decides which agency ends up owning
+        // the case.
+        var agencyExists = await db.Organisations.AsNoTracking()
+            .AnyAsync(o => o.OrganisationId == request.ImplementingAgencyOrgId
+                        && o.AccountTypeId == 1 && o.IsActive && o.ApprovalStatus == "Approved", ct);
+
+        if (!agencyExists)
+        {
+            return BadRequest(new { message = "Select the implementing agency you are working with." });
+        }
+
         var email = request.Email.Trim().ToLowerInvariant();
 
         // One address may stand behind at most three registrations. A
@@ -437,6 +473,7 @@ public sealed class RegistrationController(
         draft.SpocEmail = email;
         draft.AttendedAwareness = request.AttendedAwareness;
         draft.AwarenessProgramId = request.AttendedAwareness ? request.AwarenessProgramId : null;
+        draft.ImplementingAgencyOrgId = request.ImplementingAgencyOrgId;
         draft.CurrentStep = Math.Max(draft.CurrentStep, (byte)6);
 
         await db.SaveChangesAsync(ct);
@@ -717,6 +754,11 @@ public sealed class RegistrationController(
                     .FirstOrDefaultAsync(ct)
                 : null;
 
+        var agencyName = draft.ImplementingAgencyOrgId is { } agencyId
+            ? await db.Organisations.AsNoTracking()
+                .Where(o => o.OrganisationId == agencyId).Select(o => o.Name).FirstOrDefaultAsync(ct)
+            : null;
+
         enterprise = new Enterprise
         {
             LeanId = leanId,
@@ -734,6 +776,12 @@ public sealed class RegistrationController(
             ContactDesignation = draft.SpocDesignation,
             ContactEmail = draft.SpocEmail,
             ContactMobile = draft.SpocMobile,
+
+            // The agency the applicant named. Every application this enterprise
+            // files inherits it, and that is what puts the case on that
+            // agency's list and nobody else's.
+            ImplementingAgencyOrgId = draft.ImplementingAgencyOrgId,
+            ImplementingAgency = agencyName,
             Pan = record.Pan,
             UdyamApplicationId = record.ApplicationId,
             OwnerName = record.OwnerName,
@@ -1307,6 +1355,9 @@ public sealed class SaveUnitRequest
 
 public sealed class SaveSpocRequest
 {
+    /// <summary>The Implementing Agency the applicant is working with.</summary>
+    [Required] public int ImplementingAgencyOrgId { get; init; }
+
     [Required, StringLength(200)]
     public string FullName { get; init; } = string.Empty;
 

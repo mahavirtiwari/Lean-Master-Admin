@@ -54,3 +54,8 @@
   color: var(--text-muted);
   margin-top: 2px;
 }
+
+// The way back from one body's accounts to the list of bodies.
+.drill-back { margin: 0 0 14px; font-size: 12px; }
+.drill-back a { color: #1b4f8a; font-weight: 600; text-decoration: none; }
+.drill-back a:hover { text-decoration: underline; }

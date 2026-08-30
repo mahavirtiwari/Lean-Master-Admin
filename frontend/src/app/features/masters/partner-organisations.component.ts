@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 
 import { AuthService } from '../../core/auth.service';
 import { environment } from '../../../environments/environment';
@@ -22,6 +23,7 @@ interface PartnerRow {
   decidedOnUtc: string | null;
   decisionRemark: string | null;
   isActive: boolean;
+  userCount: number;
 }
 
 interface VerificationRow {
@@ -53,7 +55,7 @@ interface VerificationRow {
  */
 @Component({
   selector: 'app-partner-organisations',
-  imports: [FormsModule],
+  imports: [FormsModule, RouterLink],
   templateUrl: './partner-organisations.component.html',
   styleUrl: './partner-organisations.component.scss',
 })
@@ -233,10 +235,19 @@ export class PartnerOrganisationsComponent {
     return iso ? istDateTime(iso) : '—';
   }
 
+  /** The account type whose user list a body's accounts belong to. */
+  accountTypeIdFor(): number {
+    switch (this.embeddedKind()) {
+      case 'OEM': return 4;
+      case 'PSU': return 11;
+      default: return 12;
+    }
+  }
+
   export(): void {
     downloadCsv(
       `partner-organisations-${stamp()}`,
-      ['Code', 'Name', 'Kind', 'Status', 'Coverage', 'Raised by', 'Decided on'],
+      ['Code', 'Name', 'Kind', 'Status', 'Coverage', 'Raised by', 'Users', 'Decided on'],
       this.rows().map((r) => [
         r.organisationCode,
         r.name,
@@ -244,6 +255,7 @@ export class PartnerOrganisationsComponent {
         r.approvalStatus,
         r.jurisdictionScope ?? '',
         r.raisedBy ?? 'Super Admin',
+        String(r.userCount),
         r.decidedOnUtc ? istDateTime(r.decidedOnUtc) : '',
       ]),
     );

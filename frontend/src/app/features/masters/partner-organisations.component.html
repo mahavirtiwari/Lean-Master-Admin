@@ -189,6 +189,7 @@
             <th>Type</th>
             <th>Coverage</th>
             <th>Raised by</th>
+            <th class="num">Users</th>
             <th>Status</th>
             @if (canDecide) { <th class="nowrap">Actions</th> }
           </tr>
@@ -204,6 +205,15 @@
               <td class="muted">{{ r.kind }}</td>
               <td class="muted">{{ r.jurisdictionScope || r.stateName || '—' }}</td>
               <td class="muted">{{ r.raisedBy || 'Super Admin' }}</td>
+              <td class="num">
+                @if (r.userCount > 0) {
+                  <a class="link-act"
+                     [routerLink]="['/user-management/type', accountTypeIdFor()]"
+                     [queryParams]="{ org: r.organisationId }">{{ r.userCount }}</a>
+                } @else {
+                  <span class="muted">0</span>
+                }
+              </td>
               <td>
                 <span class="pill" [class]="'pill-' + r.approvalStatus.toLowerCase()">
                   {{ r.approvalStatus }}

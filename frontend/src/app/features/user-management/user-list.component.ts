@@ -1,7 +1,7 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { PartnerOrganisationsComponent } from '../masters/partner-organisations.component';
 
 import { ApiService } from '../../core/api.service';
@@ -43,6 +43,7 @@ import {
 export class UserListComponent {
   private readonly api = inject(ApiService);
   private readonly auth = inject(AuthService);
+  private readonly route = inject(ActivatedRoute);
 
   /** Route param: /user-management/type/:accountTypeId */
   readonly accountTypeId = input.required<string>();
@@ -63,6 +64,13 @@ export class UserListComponent {
 
   readonly confirming = signal<UserRow | null>(null);
 
+  /**
+   * Set from ?org= when the Users count on a body is followed. The screen then
+   * shows that body's accounts instead of the list of bodies — one table
+   * either way, never both.
+   */
+  readonly organisationId = signal<number | null>(null);
+
   readonly canCreate = this.auth.can('USER_MGMT', 'create');
   readonly canEdit = this.auth.can('USER_MGMT', 'edit');
 
@@ -73,6 +81,14 @@ export class UserListComponent {
    * those three screens carry the raise-and-approve panel above their user
    * list. auth.AccountType: 4 OEMs, 11 PSUs, 12 Industry Associations.
    */
+  /**
+   * The bodies table replaces the user list on these three screens: an OEM is a
+   * body the scheme approves, and one that has just been raised has no accounts
+   * yet — so a list of accounts would hide exactly the rows awaiting approval.
+   * Following a body's Users count sets ?org= and swaps back to its accounts.
+   */
+  readonly showBodies = computed(() => this.partnerKind() !== null && this.organisationId() === null);
+
   readonly partnerKind = computed<'Association' | 'OEM' | 'PSU' | null>(() => {
     switch (this.typeId()) {
       case 4: return 'OEM';
@@ -118,6 +134,12 @@ export class UserListComponent {
     // the same filter signals this resets, which otherwise makes them
     // dependencies and fires the effect — and a second identical request —
     // whenever any filter changes.
+    this.route.queryParamMap.subscribe((q) => {
+      const org = q.get('org');
+      this.organisationId.set(org ? Number(org) : null);
+      if (this.partnerKind()) this.load();
+    });
+
     effect(() => {
       const id = this.typeId();
 
@@ -139,6 +161,7 @@ export class UserListComponent {
     this.api
       .users({
         accountTypeId: this.typeId(),
+        organisationId: this.organisationId() ?? undefined,
         search: this.search(),
         roleId: this.roleId(),
         statusId: this.statusTab(),

@@ -1,8 +1,14 @@
 @if (accountType(); as type) {
-  <app-page-intro [title]="type.name + ' Users'" [subtitle]="type.description ?? ''">
+  <!-- Showing bodies, the heading is the bodies; showing one body's people, it
+       says so. Creating a user is offered only on the accounts view — an
+       account has to belong to a body, so the body is chosen first. -->
+  <app-page-intro
+    [title]="showBodies() ? type.name : type.name + ' Users'"
+    [subtitle]="showBodies() ? 'Bodies the scheme recognises, and the accounts held under each' : (type.description ?? '')"
+  >
     <div class="row">
       <span class="acct-chip">Account Type: {{ type.name }}</span>
-      @if (canCreate && type.canCreateDirectly) {
+      @if (canCreate && type.canCreateDirectly && !showBodies()) {
         <a class="btn btn-primary" [routerLink]="['/user-management/type', type.accountTypeId, 'new']">
           Create New User
         </a>
@@ -10,10 +16,18 @@
     </div>
   </app-page-intro>
 
-  @if (partnerKind(); as kind) {
-    <!-- These three are bodies the scheme approves as well as accounts, so the
-         organisations and their approval sit above the people. -->
-    <app-partner-organisations [embeddedKind]="kind" />
+  @if (showBodies()) {
+    <!-- One table, not two. These three account types are bodies the scheme
+         approves, and a body raised a moment ago has no accounts yet — so a
+         list of accounts would hide exactly the rows awaiting a decision. The
+         Users count on each row leads to that body's people. -->
+    <app-partner-organisations [embeddedKind]="partnerKind()!" />
+  } @else {
+
+  @if (organisationId()) {
+    <p class="drill-back">
+      <a [routerLink]="['/user-management/type', typeId()]">&lsaquo; Back to all bodies</a>
+    </p>
   }
 
   <div class="stack">
@@ -196,4 +210,5 @@
     (confirmed)="confirmToggle()"
     (cancelled)="confirming.set(null)"
   />
+  }
 }

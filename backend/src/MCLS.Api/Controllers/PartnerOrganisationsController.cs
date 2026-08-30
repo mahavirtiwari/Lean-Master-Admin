@@ -108,6 +108,9 @@ public sealed class PartnerOrganisationsController(
                 o.DecidedOnUtc,
                 o.DecisionRemark,
                 o.IsActive,
+                // The accounts held under this body. One table lists the bodies,
+                // and this is the way through to the people under each.
+                userCount = db.Users.Count(u => u.OrganisationId == o.OrganisationId && !u.IsDeleted),
             })
             .ToListAsync(ct);
 
@@ -128,6 +131,7 @@ public sealed class PartnerOrganisationsController(
                 o.DecidedOnUtc,
                 o.DecisionRemark,
                 o.IsActive,
+                o.userCount,
             }),
         });
     }

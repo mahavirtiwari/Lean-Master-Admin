@@ -323,3 +323,5 @@
 .btn-solid.is-danger:hover:not(:disabled) { background: #991717; }
 
 .q-tbl .cap::first-letter { text-transform: uppercase; }
+
+.q-tbl .num { text-align: right; width: 64px; }

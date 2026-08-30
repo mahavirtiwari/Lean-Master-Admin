@@ -211,31 +211,61 @@ public sealed class RolePermissionsController(MclsDbContext db) : ControllerBase
             }
         }
 
+        // Only what changed. Clearing the lot and re-adding it looks simpler and
+        // does not work: RolePermission is keyed on (RoleId, PermissionId), so
+        // re-adding a grant that is still wanted collides in the change tracker
+        // with the Deleted row of the same key, and EF throws before anything
+        // reaches the database. Every realistic save keeps at least one grant,
+        // so every realistic save failed.
         var existing = await db.RolePermissions.AsTracking()
             .Where(rp => roleIds.Contains(rp.RoleId))
             .ToListAsync(ct);
 
-        db.RolePermissions.RemoveRange(existing);
+        foreach (var row in existing.Where(rp => !wanted.Contains(rp.PermissionId)))
+        {
+            db.RolePermissions.Remove(row);
+        }
 
         foreach (var roleId in roleIds)
         {
-            foreach (var permissionId in wanted)
+            var held = existing
+                .Where(rp => rp.RoleId == roleId)
+                .Select(rp => rp.PermissionId)
+                .ToHashSet();
+
+            foreach (var permissionId in wanted.Where(id => !held.Contains(id)))
             {
-                db.RolePermissions.Add(new RolePermission { RoleId = roleId, PermissionId = permissionId });
+                db.RolePermissions.Add(new RolePermission
+                {
+                    RoleId = roleId,
+                    PermissionId = permissionId,
+                    GrantedOnUtc = DateTime.UtcNow,
+                });
             }
         }
 
         // Which account types this one may administer — the User Management
-        // children on the grid.
+        // children on the grid. Keyed on (RoleId, ManagedAccountTypeId), so the
+        // same rule applies.
+        var wantedScopes = (request.ManagedAccountTypeIds ?? []).Distinct().ToHashSet();
+
         var scopes = await db.UserManagementScopes.AsTracking()
             .Where(s => roleIds.Contains(s.RoleId))
             .ToListAsync(ct);
 
-        db.UserManagementScopes.RemoveRange(scopes);
+        foreach (var row in scopes.Where(s => !wantedScopes.Contains(s.ManagedAccountTypeId)))
+        {
+            db.UserManagementScopes.Remove(row);
+        }
 
         foreach (var roleId in roleIds)
         {
-            foreach (var managed in (request.ManagedAccountTypeIds ?? []).Distinct())
+            var held = scopes
+                .Where(s => s.RoleId == roleId)
+                .Select(s => s.ManagedAccountTypeId)
+                .ToHashSet();
+
+            foreach (var managed in wantedScopes.Where(id => !held.Contains(id)))
             {
                 db.UserManagementScopes.Add(new UserManagementScope
                 {

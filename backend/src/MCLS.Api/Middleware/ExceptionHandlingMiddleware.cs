@@ -108,6 +108,11 @@ public sealed class ExceptionHandlingMiddleware(
     /// Writes the error row. Wrapped in its own try/catch: if the database is
     /// what failed, the logging attempt must not replace the original error
     /// with a second one.
+    ///
+    /// The change tracker is cleared first. Without that, an exception thrown
+    /// by the request's own SaveChanges left its pending entries on the
+    /// context, this save picked them up, and it threw for the same reason —
+    /// so the errors most worth recording were the ones that never appeared.
     /// </summary>
     private async Task TryPersistAsync(HttpContext context, Exception ex, int status, Guid correlationId)
     {
@@ -117,6 +122,13 @@ public sealed class ExceptionHandlingMiddleware(
             if (db is null) return;
 
             var currentUser = context.RequestServices.GetService<ICurrentUser>();
+
+            // The request's own context is what failed, and whatever it was
+            // holding is still pending on it — so saving the log row would try
+            // to save that too and throw again, losing the very error we are
+            // here to record. Dropping the pending work first leaves this
+            // SaveChanges with nothing but the log row.
+            db.ChangeTracker.Clear();
 
             db.ErrorLogs.Add(new ErrorLog
             {

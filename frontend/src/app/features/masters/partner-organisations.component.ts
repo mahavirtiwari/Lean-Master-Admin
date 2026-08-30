@@ -285,14 +285,22 @@ export class PartnerOrganisationsComponent {
   }
 
   /**
-   * Whether this caller may change this row.
+   * Whether this caller may correct this body's details.
    *
-   * An agency sees every body — an applicant may name any of them — but only
-   * corrects what it raised. Anyone who is not an agency is judged by rights
-   * alone, which is how a State Office decides and a Super Admin corrects a
-   * seeded record.
+   * Only the agency that raised it — not a Super Admin, who approves and
+   * disables and sees everything but does not rewrite an agency's own claim
+   * about a body it works with.
    */
-  mayChange(row: PartnerRow): boolean {
+  mayEdit(row: PartnerRow): boolean {
+    return this.auth.user()?.accountTypeId === 1 && row.isMine;
+  }
+
+  /**
+   * Whether this caller may enable or disable it. An agency governs what it
+   * raised; anyone else is judged by their rights, which is how a State Office
+   * decides and a Super Admin takes a seeded body out of use.
+   */
+  mayChangeStatus(row: PartnerRow): boolean {
     const isAgency = this.auth.user()?.accountTypeId === 1;
     return isAgency ? row.isMine : this.canDecide;
   }

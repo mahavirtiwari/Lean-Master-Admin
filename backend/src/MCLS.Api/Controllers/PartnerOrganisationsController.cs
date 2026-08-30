@@ -274,11 +274,11 @@ public sealed class PartnerOrganisationsController(
 
         if (organisation is null) return NotFound(new { message = "That organisation does not exist." });
 
-        if (!await MayChangeAsync(organisation, ct))
+        if (!await MayEditAsync(organisation, ct))
         {
             return StatusCode(403, new
             {
-                message = "This body was raised by another agency, so only that agency may change it.",
+                message = "A body's details are corrected by the Implementing Agency that raised it.",
             });
         }
 
@@ -569,7 +569,25 @@ public sealed class PartnerOrganisationsController(
     }
 
     /// <summary>
-    /// Whether this caller may change this body.
+    /// Whether this caller may correct this body's details.
+    ///
+    /// Only the agency that raised it. A Super Admin approves, disables and
+    /// sees everything, but the record belongs to the agency that put it
+    /// forward — it is their claim about a body they work with, and someone
+    /// else rewriting it would leave them answering for text they did not
+    /// write.
+    /// </summary>
+    private async Task<bool> MayEditAsync(Organisation organisation, CancellationToken ct)
+    {
+        if (currentUser.AccountTypeId != ImplementingAgencyType) return false;
+
+        var mine = await MyOrganisationIdAsync(ct);
+
+        return mine is not null && organisation.RaisedByOrganisationId == mine;
+    }
+
+    /// <summary>
+    /// Whether this caller may enable or disable this body.
     ///
     /// An Implementing Agency owns what it raised and nothing else: every
     /// agency can see the whole list, because an applicant may name any body

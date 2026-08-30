@@ -83,7 +83,7 @@
 
     <!-- --------------------------------------------- account type cards -->
     <div class="type-grid">
-      @for (type of types(); track type.accountTypeId; let i = $index) {
+      @for (type of cards(); track type.accountTypeId; let i = $index) {
         <section class="card card-pad type-card" [class]="'tone-' + toneFor(i)">
           <div class="type-head">
             <h3 class="type-name">{{ type.name }}</h3>
@@ -131,12 +131,12 @@
       </div>
 
       <div class="export-types">
-        @for (type of types(); track type.accountTypeId) {
-          <label class="export-type" [class.is-checked]="isSelected(type.accountTypeId)">
+        @for (type of cards(); track type.accountTypeId) {
+          <label class="export-type" [class.is-checked]="isCardSelected(type)">
             <input
               type="checkbox"
-              [checked]="isSelected(type.accountTypeId)"
-              (change)="toggleSelected(type.accountTypeId)"
+              [checked]="isCardSelected(type)"
+              (change)="toggleCard(type)"
             />
             <span class="export-type-name">{{ type.name }}</span>
             <span class="export-type-count">{{ type.totalUsers | number }}</span>

@@ -1,3 +1,13 @@
+// The filter row is one line on the deck: search, then three fixed-width
+// selects, all 36px. Without this the selects inherit width:100% from the
+// global .select and each wraps onto a line of its own — which is what the
+// screen was doing.
+.filter-w { width: 168px; flex: none; }
+
+@media (max-width: 900px) {
+  .filter-w { width: 100%; }
+}
+
 // User Management landing: nine account-type cards in rows of three, banded
 // blue / green / amber as on 2-green.svg.
 

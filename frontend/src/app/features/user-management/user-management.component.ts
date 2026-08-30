@@ -57,11 +57,61 @@ export class UserManagementComponent {
     this.types().reduce((sum, type) => sum + type.totalUsers, 0),
   );
 
+  /**
+   * OEMs, PSUs and IAs as one card.
+   *
+   * They are three account types in auth.AccountType because a user belongs to
+   * exactly one of them, but the deck shows them as a single industry-partner
+   * group everywhere — the cards, the export list and the permission matrix.
+   * Nine cards, which is what the subtitle has always claimed.
+   */
+  readonly cards = computed(() => {
+    const partnerTypes = new Set([4, 11, 12]);
+    const partners = this.types().filter((t) => partnerTypes.has(t.accountTypeId));
+    const rest = this.types().filter((t) => !partnerTypes.has(t.accountTypeId));
+
+    if (partners.length === 0) return rest;
+
+    const merged: AccountTypeSummary = {
+      ...partners[0],
+      name: 'OEMs / PSUs / IAs',
+      description: 'Sector-mapped industry partners and anchor enterprises',
+      totalUsers: partners.reduce((n, t) => n + t.totalUsers, 0),
+      activeUsers: partners.reduce((n, t) => n + t.activeUsers, 0),
+      inactiveUsers: partners.reduce((n, t) => n + t.inactiveUsers, 0),
+      // Every type in the group, so selecting the card selects all three.
+      groupedTypeIds: partners.map((t) => t.accountTypeId),
+    };
+
+    return [...rest, merged].sort((a, b) => a.sortOrder - b.sortOrder);
+  });
+
   readonly selectedCount = computed(() =>
     this.types()
       .filter((type) => this.selectedTypes().has(type.accountTypeId))
       .reduce((sum, type) => sum + type.totalUsers, 0),
   );
+
+  /** Every underlying account type a card stands for. */
+  typeIdsOf(card: AccountTypeSummary): number[] {
+    return card.groupedTypeIds ?? [card.accountTypeId];
+  }
+
+  isCardSelected(card: AccountTypeSummary): boolean {
+    return this.typeIdsOf(card).every((id) => this.selectedTypes().has(id));
+  }
+
+  toggleCard(card: AccountTypeSummary): void {
+    const next = new Set(this.selectedTypes());
+    const ids = this.typeIdsOf(card);
+    const on = this.isCardSelected(card);
+
+    for (const id of ids) {
+      if (on) next.delete(id);
+      else next.add(id);
+    }
+    this.selectedTypes.set(next);
+  }
 
   constructor() {
     this.api.userAccountTypes().subscribe({

@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.Data;
+using System.Globalization;
 using MCLS.Api.Authorization;
 using MCLS.Application.Common.Interfaces;
 using MCLS.Application.Common.Models;
@@ -457,7 +458,7 @@ public sealed class UsersController(
     {
         var target = await db.Users
             .Where(u => u.Id == id)
-            .Select(u => new { u.AccountTypeId, u.StatusId })
+            .Select(u => new { u.AccountTypeId, u.StatusId, u.FullName, u.UserCode, u.Email })
             .SingleOrDefaultAsync(ct);
 
         if (target is null) return NotFound();
@@ -480,7 +481,47 @@ public sealed class UsersController(
             ],
             ct);
 
+        // The person whose access changed is told. Without this the status was
+        // written and they found out by failing to sign in — or, on the way
+        // back, never found out at all.
+        await NotifyStatusChangeAsync(
+            request.StatusId, target.FullName, target.UserCode, target.Email, request.Reason, ct);
+
         return NoContent();
+    }
+
+    /// <summary>
+    /// Mails the user their account was disabled or enabled again.
+    ///
+    /// Queued, never awaited against SMTP, and a failure here does not undo the
+    /// status change: the change is the decision, the mail is the courtesy.
+    /// Only the two states a person can act on are worth a mail — a move to
+    /// Locked or PendingActivation is the system's own bookkeeping.
+    /// </summary>
+    private async Task NotifyStatusChangeAsync(
+        byte statusId, string fullName, string userCode, string? address, string? reason, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(address)) return;
+
+        var templateCode = statusId switch
+        {
+            (byte)UserStatusId.Inactive => "USER_DISABLED",
+            (byte)UserStatusId.Active => "USER_ENABLED",
+            _ => null,
+        };
+
+        if (templateCode is null) return;
+
+        var values = new Dictionary<string, string>
+        {
+            ["user_name"] = fullName,
+            ["user_code"] = userCode,
+            ["action_date"] = DateTime.UtcNow.ToString("dd MMM yyyy", CultureInfo.InvariantCulture),
+            ["reason"] = string.IsNullOrWhiteSpace(reason) ? "Not stated" : reason,
+            ["portal_url"] = $"{Request.Headers.Origin}/login",
+        };
+
+        await email.QueueTemplatedAsync(templateCode, address!, null, values, ct);
     }
 
     /// <summary>The permission grid: every module/right, with the user's current state.</summary>

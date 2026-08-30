@@ -115,6 +115,13 @@ export interface AccountTypeSummary {
   totalUsers: number;
   activeUsers: number;
   inactiveUsers: number;
+
+  /**
+   * Set only on a card that stands for several account types — the deck shows
+   * OEMs, PSUs and IAs as one industry-partner group, so selecting that card
+   * has to select all three underneath.
+   */
+  groupedTypeIds?: number[];
 }
 
 export interface UserDetail {

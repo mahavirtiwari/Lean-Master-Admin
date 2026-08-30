@@ -472,6 +472,28 @@ public sealed class UsersController(
             });
         }
 
+        // What the holder is told changed. Captured before the writes below,
+        // because afterwards there is nothing left to compare against.
+        var changes = new List<string>();
+
+        void Moved(string label, string? before, string? after)
+        {
+            if (!string.Equals(before?.Trim(), after?.Trim(), StringComparison.Ordinal))
+            {
+                changes.Add(label);
+            }
+        }
+
+        Moved("Name", user.FullName, request.FullName);
+        Moved("Mobile", user.PhoneNumber, request.Mobile);
+        Moved("Designation", user.Designation, request.Designation);
+        Moved("Jurisdiction", user.Jurisdiction, request.Jurisdiction);
+
+        if (user.OrganisationId != request.OrganisationId) changes.Add("Organisation");
+        if (user.StateId != request.StateId) changes.Add("State");
+        if (user.DistrictId != request.DistrictId) changes.Add("District");
+        if (user.RoleId != request.RoleId) changes.Add("Role");
+
         user.FullName = request.FullName;
         user.Initials = BuildInitials(request.FullName);
         user.PhoneNumber = request.Mobile;
@@ -504,6 +526,23 @@ public sealed class UsersController(
         }
 
         await db.SaveChangesAsync(ct);
+
+        // Only when something actually moved. An administrator who opens the
+        // form, changes their mind and saves anyway has not told the holder
+        // anything, and a mail saying so would be noise.
+        if (changes.Count > 0 && !string.IsNullOrWhiteSpace(user.Email))
+        {
+            await email.QueueTemplatedAsync("USER_UPDATED", user.Email!, user.Id,
+                new Dictionary<string, string>
+                {
+                    ["user_name"] = user.FullName,
+                    ["user_code"] = user.UserCode,
+                    ["action_date"] = DateTime.UtcNow.ToString("dd MMM yyyy", CultureInfo.InvariantCulture),
+                    ["changes"] = string.Join(", ", changes),
+                    ["portal_url"] = $"{Request.Headers.Origin}/login",
+                }, ct);
+        }
+
         return NoContent();
     }
 

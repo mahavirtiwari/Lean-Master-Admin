@@ -113,6 +113,20 @@
           </div>
 
 
+          <div class="field span-2">
+            <label class="field-label" for="address">
+              {{ copy().addressLabel }}<span class="req">*</span>
+            </label>
+            <textarea
+              id="address"
+              class="textarea"
+              name="address"
+              placeholder="Building, street, locality, city"
+              [ngModel]="org().addressLine"
+              (ngModelChange)="org.set({ ...org(), addressLine: $event })"
+            ></textarea>
+          </div>
+
           <div class="field">
             <label class="field-label" for="state">
               {{ selectedType() === 1 ? 'STATE' : 'STATE / UT' }}<span class="req">*</span>
@@ -146,20 +160,6 @@
                 <option [value]="d.districtId">{{ d.name }}</option>
               }
             </select>
-          </div>
-
-          <div class="field span-2">
-            <label class="field-label" for="address">
-              {{ copy().addressLabel }}<span class="req">*</span>
-            </label>
-            <textarea
-              id="address"
-              class="textarea"
-              name="address"
-              placeholder="Building, street, locality, city"
-              [ngModel]="org().addressLine"
-              (ngModelChange)="org.set({ ...org(), addressLine: $event })"
-            ></textarea>
           </div>
 
           <div class="field">

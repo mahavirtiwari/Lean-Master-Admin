@@ -1,3 +1,4 @@
+@if (!embeddedKind()) {
 <header class="q-head">
   <div>
     <h2 class="q-title">Associations, OEMs &amp; PSUs</h2>
@@ -14,6 +15,8 @@
     }
   </div>
 </header>
+}
+
 
 <div class="lvl-grid">
   <section class="lvl-card">
@@ -48,15 +51,17 @@
     </div>
 
     <form class="form-grid" (ngSubmit)="save()">
-      <div class="f-field">
-        <label class="f-label" for="kind">TYPE<span class="req">*</span></label>
-        <select id="kind" class="f-input" name="kind"
-                [ngModel]="form().kind" (ngModelChange)="form.set({ ...form(), kind: $event })">
-          <option value="Association">Industry Association</option>
-          <option value="OEM">OEM</option>
-          <option value="PSU">PSU</option>
-        </select>
-      </div>
+      @if (!embeddedKind()) {
+        <div class="f-field">
+          <label class="f-label" for="kind">TYPE<span class="req">*</span></label>
+          <select id="kind" class="f-input" name="kind"
+                  [ngModel]="form().kind" (ngModelChange)="form.set({ ...form(), kind: $event })">
+            <option value="Association">Industry Association</option>
+            <option value="OEM">OEM</option>
+            <option value="PSU">PSU</option>
+          </select>
+        </div>
+      }
 
       <div class="f-field">
         <label class="f-label" for="name">NAME<span class="req">*</span></label>

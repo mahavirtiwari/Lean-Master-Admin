@@ -10,6 +10,12 @@
     </div>
   </app-page-intro>
 
+  @if (partnerKind(); as kind) {
+    <!-- These three are bodies the scheme approves as well as accounts, so the
+         organisations and their approval sit above the people. -->
+    <app-partner-organisations [embeddedKind]="kind" />
+  }
+
   <div class="stack">
     <!-- ------------------------------------------------------- counters -->
     <div class="stat-grid stat-grid-3">

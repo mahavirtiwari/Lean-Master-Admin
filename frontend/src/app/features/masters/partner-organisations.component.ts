@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { AuthService } from '../../core/auth.service';
@@ -36,7 +36,12 @@ interface VerificationRow {
 }
 
 /**
- * Associations, OEMs and PSUs — the screen both halves of the workflow use.
+ * Associations, OEMs and PSUs — the panel both halves of the workflow use.
+ *
+ * Rendered inside User Management > OEMs, PSUs and IAs, one kind per screen:
+ * those sub-menus are about exactly these bodies, so this is not a separate
+ * place in the menu saying the same thing. `embeddedKind` is what narrows it,
+ * and it also drops the page header the host screen already provides.
  *
  * An Implementing Agency raises a body and it sits Pending; a State Office
  * approves or rejects it. Implementing Agencies themselves are not here: the
@@ -53,6 +58,9 @@ interface VerificationRow {
   styleUrl: './partner-organisations.component.scss',
 })
 export class PartnerOrganisationsComponent {
+  /** Association | OEM | PSU when hosted inside a User Management screen. */
+  readonly embeddedKind = input<'Association' | 'OEM' | 'PSU' | null>(null);
+
   private readonly http = inject(HttpClient);
   private readonly auth = inject(AuthService);
   private readonly base = environment.apiBase;
@@ -84,16 +92,22 @@ export class PartnerOrganisationsComponent {
   readonly remark = signal('');
   readonly decideError = signal<string | null>(null);
 
-  readonly canCreate = this.auth.can('PARTNER_ORGS', 'create');
-  readonly canDecide = this.auth.can('PARTNER_ORGS', 'edit');
-  readonly canExport = this.auth.can('PARTNER_ORGS', 'export');
+  readonly canCreate = this.auth.can('USER_MGMT', 'create');
+  readonly canDecide = this.auth.can('USER_MGMT', 'edit');
+  readonly canExport = this.auth.can('USER_MGMT', 'export');
 
   readonly pendingCount = computed(() => this.rows().filter((r) => r.approvalStatus === 'Pending').length);
   readonly approvedCount = computed(() => this.rows().filter((r) => r.approvalStatus === 'Approved').length);
   readonly openClaims = computed(() => this.claims().filter((c) => c.status === 'Pending').length);
 
   constructor() {
-    this.load();
+    // The host sets the kind from its account type, so the load waits for it
+    // rather than fetching every body and then narrowing.
+    effect(() => {
+      const kind = this.embeddedKind();
+      if (kind) this.kind.set(kind);
+      this.load();
+    });
   }
 
   load(): void {
@@ -101,7 +115,8 @@ export class PartnerOrganisationsComponent {
     this.loadError.set(null);
 
     const params = new URLSearchParams();
-    if (this.kind()) params.set('kind', this.kind());
+    const kind = this.embeddedKind() ?? this.kind();
+    if (kind) params.set('kind', kind);
     if (this.status()) params.set('status', this.status());
     if (this.search().trim()) params.set('search', this.search().trim());
 
@@ -127,7 +142,7 @@ export class PartnerOrganisationsComponent {
   startAdd(): void {
     this.adding.set(true);
     this.formError.set(null);
-    this.form.set({ kind: 'Association', name: '', jurisdictionScope: '', contactEmail: '', contactPhone: '' });
+    this.form.set({ kind: this.embeddedKind() ?? 'Association', name: '', jurisdictionScope: '', contactEmail: '', contactPhone: '' });
   }
 
   save(): void {

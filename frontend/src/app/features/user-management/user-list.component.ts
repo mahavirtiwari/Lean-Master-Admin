@@ -2,6 +2,7 @@ import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { PartnerOrganisationsComponent } from '../masters/partner-organisations.component';
 
 import { ApiService } from '../../core/api.service';
 import { AuthService } from '../../core/auth.service';
@@ -34,6 +35,7 @@ import {
     PagerComponent,
     EmptyComponent,
     ConfirmComponent,
+    PartnerOrganisationsComponent,
   ],
   templateUrl: './user-list.component.html',
   styleUrl: './user-list.component.scss',
@@ -65,6 +67,20 @@ export class UserListComponent {
   readonly canEdit = this.auth.can('USER_MGMT', 'edit');
 
   readonly typeId = computed(() => Number(this.accountTypeId()));
+
+  /**
+   * OEMs, PSUs and IAs are bodies the scheme approves, not only accounts, so
+   * those three screens carry the raise-and-approve panel above their user
+   * list. auth.AccountType: 4 OEMs, 11 PSUs, 12 Industry Associations.
+   */
+  readonly partnerKind = computed<'Association' | 'OEM' | 'PSU' | null>(() => {
+    switch (this.typeId()) {
+      case 4: return 'OEM';
+      case 11: return 'PSU';
+      case 12: return 'Association';
+      default: return null;
+    }
+  });
 
   readonly accountType = computed(() =>
     this.types().find((t) => t.accountTypeId === this.typeId()),

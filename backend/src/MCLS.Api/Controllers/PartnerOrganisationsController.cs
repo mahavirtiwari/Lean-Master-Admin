@@ -19,6 +19,10 @@ namespace MCLS.Api.Controllers;
 /// creates those and they are live at once, because there is nobody above the
 /// Super Admin to approve them.
 ///
+/// The screens live under User Management > OEMs, PSUs and IAs — those
+/// sub-menus are about exactly these bodies — so the rights are User
+/// Management's rather than a module of their own.
+///
 /// Routing is by the body's own state, so an association operating in Gujarat
 /// is decided by the Gujarat office. A pan-India body has no state to route to
 /// and falls to the national queue, which Super Admin, Operations Admin and
@@ -57,7 +61,7 @@ public sealed class PartnerOrganisationsController(
     /// asking for status=Pending and its own state.
     /// </summary>
     [HttpGet]
-    [HasPermission(Permissions.PartnerOrgs, Permissions.View)]
+    [HasPermission(Permissions.UserManagement, Permissions.View)]
     public async Task<IActionResult> Get(
         [FromQuery] string? kind,
         [FromQuery] string? status,
@@ -133,7 +137,7 @@ public sealed class PartnerOrganisationsController(
     /// proposes, a State Office decides.
     /// </summary>
     [HttpPost]
-    [HasPermission(Permissions.PartnerOrgs, Permissions.Create)]
+    [HasPermission(Permissions.UserManagement, Permissions.Create)]
     public async Task<IActionResult> Create([FromBody] PartnerSaveRequest request, CancellationToken ct)
     {
         var name = request.Name.Trim();
@@ -177,7 +181,7 @@ public sealed class PartnerOrganisationsController(
     /// rejection carries its reason, so the agency can fix and resubmit.
     /// </summary>
     [HttpPost("{id:int}/decision")]
-    [HasPermission(Permissions.PartnerOrgs, Permissions.Edit)]
+    [HasPermission(Permissions.UserManagement, Permissions.Edit)]
     public async Task<IActionResult> Decide(int id, [FromBody] PartnerDecisionRequest request, CancellationToken ct)
     {
         if (request.Approve is false && string.IsNullOrWhiteSpace(request.Remark))

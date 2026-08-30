@@ -118,7 +118,6 @@ public static class Permissions
     public const string EsgChecklist = "ESG_CHECKLIST";
     public const string BasicInfoDocs = "BASIC_INFO_DOCS";
     public const string ELearning = "E_LEARNING";
-    public const string PartnerOrgs = "PARTNER_ORGS";
 
     public const string View = "view";
     public const string Create = "create";

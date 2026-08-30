@@ -1,0 +1,165 @@
+<header class="rp-head">
+  <div>
+    <h2 class="rp-title">Edit Role &amp; Permissions</h2>
+    <p class="rp-sub">Grant or revoke module access and record-level rights for each account type</p>
+  </div>
+  <div class="spacer"></div>
+
+  <button class="btn-ghost" type="button" (click)="cancel()">Cancel</button>
+  @if (canEdit) {
+    <button class="btn-solid" type="button" [disabled]="saving() || !grid()" (click)="save()">
+      {{ saving() ? 'Saving…' : 'Save Changes' }}
+    </button>
+  }
+</header>
+
+<div class="rp-note">
+  <span class="rp-note-mark"></span>
+  <span>
+    Permission changes take effect at the user's next sign-in and are recorded in the audit trail.<br />
+    Super Admin permissions are fixed and cannot be edited.
+  </span>
+</div>
+
+@if (saved()) {
+  <div class="rp-ok">Saved. Everyone on this account type picks the change up at their next sign-in.</div>
+}
+@if (saveError(); as msg) {
+  <div class="rp-bad">{{ msg }}</div>
+}
+
+@if (loading()) {
+  <p class="rp-empty">Loading…</p>
+} @else if (loadError(); as msg) {
+  <p class="rp-empty is-bad">{{ msg }}</p>
+} @else {
+  <div class="rp-layout">
+    <!-- --------------------------------------------------- account types -->
+    <aside class="rp-side">
+      <div class="rp-side-head">ACCOUNT TYPE / ROLE</div>
+
+      @for (a of accounts(); track a.name) {
+        <button
+          class="rp-acct"
+          type="button"
+          [class.is-on]="a.accountTypeId === selected()"
+          [class.is-locked]="a.locked"
+          [disabled]="a.locked"
+          (click)="select(a.accountTypeId)"
+        >
+          <span class="rp-acct-text">
+            <span class="rp-acct-name">{{ a.name }}</span>
+            <span class="rp-acct-sub">{{ a.modules }} of {{ a.moduleTotal }} modules</span>
+          </span>
+
+          @if (a.locked) {
+            <svg class="rp-acct-mark" viewBox="0 0 16 16" aria-hidden="true">
+              <rect x="3.6" y="7" width="8.8" height="6.4" rx="1.3" fill="none"
+                    stroke="currentColor" stroke-width="1.5" />
+              <path d="M5.6 7V5.2a2.4 2.4 0 0 1 4.8 0V7" fill="none" stroke="currentColor"
+                    stroke-width="1.5" stroke-linecap="round" />
+            </svg>
+          } @else {
+            <svg class="rp-acct-mark" viewBox="0 0 16 16" aria-hidden="true">
+              <path d="m6.4 3.6 4.4 4.4-4.4 4.4" fill="none" stroke="currentColor"
+                    stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          }
+        </button>
+      }
+    </aside>
+
+    <!-- ---------------------------------------------------------- the grid -->
+    <section class="rp-grid">
+      @if (gridLoading()) {
+        <p class="rp-empty">Loading…</p>
+      } @else if (grid(); as g) {
+        <div class="rp-grid-head">
+          <div>
+            <h3 class="rp-grid-title">{{ g.name }}</h3>
+            <p class="rp-grid-sub">Toggle a module to grant access, then choose the record-level rights.</p>
+          </div>
+
+          <span class="rp-chip">
+            {{ grantedModules() }} of {{ g.moduleTotal }} modules ·
+            {{ grantedScopes() }} of {{ g.scopeTotal }} account types
+          </span>
+
+          <div class="spacer"></div>
+
+          @if (canEdit) {
+            <span class="rp-bulk">
+              <button class="rp-link" type="button" (click)="grantAll(true)">Grant all</button>
+              <span class="rp-sep">·</span>
+              <button class="rp-link rp-link-danger" type="button" (click)="grantAll(false)">Revoke all</button>
+            </span>
+          }
+        </div>
+
+        <div class="rp-tbl-wrap">
+          <table class="rp-tbl">
+            <thead>
+              <tr>
+                <th class="rp-col-module">MODULE</th>
+                <th>ACCESS</th>
+                @for (r of rights; track r) {
+                  <th>{{ r.toUpperCase() }}</th>
+                }
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of g.rows; track $index) {
+                <tr [class.is-child]="row.kind === 'child'" [class.is-off]="!row.access">
+                  <td class="rp-col-module">
+                    @if (row.kind === 'child') { <span class="rp-bullet"></span> }
+                    <span class="rp-row-name">{{ row.name }}</span>
+                    @if (row.kind === 'child' && !row.grantable) {
+                      <span class="rp-inherits" title="Follows the module above it">inherits</span>
+                    }
+                  </td>
+
+                  <td>
+                    <button
+                      class="rp-toggle"
+                      type="button"
+                      role="switch"
+                      [attr.aria-checked]="row.access"
+                      [class.on]="row.access"
+                      [disabled]="!editable(row)"
+                      (click)="toggleAccess(row)"
+                    >
+                      <span class="rp-knob"></span>
+                    </button>
+                  </td>
+
+                  @for (r of rights; track r) {
+                    <td>
+                      <button
+                        class="rp-check"
+                        type="button"
+                        role="checkbox"
+                        [attr.aria-checked]="row[r]"
+                        [class.on]="row[r]"
+                        [disabled]="!editable(row)"
+                        (click)="toggleRight(row, r)"
+                      >
+                        @if (row[r]) {
+                          <svg viewBox="0 0 16 16" aria-hidden="true">
+                            <path d="m4 8.2 2.6 2.6L12 5.4" fill="none" stroke="#FFFFFF"
+                                  stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                          </svg>
+                        }
+                      </button>
+                    </td>
+                  }
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      } @else {
+        <p class="rp-empty">Choose an account type on the left.</p>
+      }
+    </section>
+  </div>
+}

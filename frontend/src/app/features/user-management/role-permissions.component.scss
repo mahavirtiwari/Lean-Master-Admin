@@ -1,0 +1,293 @@
+// Edit Role & Permissions — 2-User-Management edit-permissions.svg. The
+// toggles, checkboxes and the amber notice carry the artboard's own values:
+// 34x18 rx 9 track, 16x16 rx 3.5 box, #1B4F8A on, #C6D3CB outline off.
+
+.rp-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 18px;
+
+  .rp-title { margin: 0; font-size: 21px; font-weight: 700; color: #16211a; }
+  .rp-sub { margin: 6px 0 0; font-size: 11.6px; color: #5d6b62; }
+  .spacer { flex: 1; }
+}
+
+.btn-solid,
+.btn-ghost {
+  height: 38px;
+  padding: 0 20px;
+  border-radius: 7px;
+  font: inherit;
+  font-size: 12.8px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.btn-solid { background: #1b4f8a; border: 1px solid #1b4f8a; color: #fff; }
+.btn-solid:hover:not(:disabled) { background: #17436f; }
+.btn-solid:disabled { opacity: 0.55; cursor: default; }
+.btn-ghost { background: #fff; border: 1px solid #c6d3cb; color: #16211a; }
+.btn-ghost:hover { background: #f7faf8; }
+
+// --------------------------------------------------------------- notices ---
+.rp-note {
+  display: flex;
+  gap: 12px;
+  padding: 15px 18px;
+  margin-bottom: 18px;
+  background: #fefce8;
+  border: 1px solid #fde68a;
+  border-radius: 7px;
+  font-size: 11.8px;
+  line-height: 1.6;
+  color: #47554c;
+}
+
+.rp-note-mark {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  margin-top: 2px;
+  border-radius: 3px;
+  background: #a16207;
+}
+
+.rp-ok,
+.rp-bad {
+  padding: 11px 16px;
+  margin-bottom: 16px;
+  border-radius: 7px;
+  font-size: 11.8px;
+}
+.rp-ok { background: #f0faf4; border: 1px solid #b7e4c9; color: #0f7b45; }
+.rp-bad { background: #fef2f2; border: 1px solid #f3cfcf; color: #b91c1c; }
+
+.rp-empty {
+  padding: 48px 18px;
+  text-align: center;
+  font-size: 12px;
+  color: #5d6b62;
+
+  &.is-bad { color: #b91c1c; }
+}
+
+// ---------------------------------------------------------------- layout ---
+.rp-layout {
+  display: grid;
+  grid-template-columns: 320px minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+
+  @media (max-width: 1100px) { grid-template-columns: minmax(0, 1fr); }
+}
+
+.rp-side {
+  background: #fff;
+  border: 1px solid #dee7e1;
+  border-radius: 8px;
+  padding: 14px;
+}
+
+.rp-side-head {
+  padding: 4px 8px 12px;
+  font-size: 9.6px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  color: #5d6b62;
+}
+
+.rp-acct {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 14px;
+  margin-bottom: 6px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+
+  &:hover:not(:disabled) { background: #f7faf8; }
+
+  // The account type the grid is showing, marked with the same blue rail the
+  // rest of the portal uses for "you are here".
+  &.is-on {
+    background: #f4f8fc;
+    border-color: #cfe0f1;
+    box-shadow: inset 3px 0 0 #1b4f8a;
+  }
+
+  // Super Admin is not editable, so it does not offer itself as a target.
+  &.is-locked { cursor: default; color: #5d6b62; }
+}
+
+.rp-acct-text { flex: 1; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.rp-acct-name { font-size: 13px; font-weight: 700; color: #16211a; }
+.rp-acct-sub { font-size: 10.8px; color: #5d6b62; }
+.rp-acct.is-locked .rp-acct-name { color: #47554c; }
+.rp-acct-mark { width: 15px; height: 15px; flex: none; color: #93a29a; }
+.rp-acct.is-on .rp-acct-mark { color: #1b4f8a; }
+
+// ------------------------------------------------------------------ grid ---
+.rp-grid {
+  background: #fff;
+  border: 1px solid #dee7e1;
+  border-radius: 8px;
+}
+
+.rp-grid-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px;
+  flex-wrap: wrap;
+
+  .spacer { flex: 1; }
+}
+
+.rp-grid-title { margin: 0; font-size: 16px; font-weight: 700; color: #16211a; }
+.rp-grid-sub { margin: 4px 0 0; font-size: 11.4px; color: #5d6b62; }
+
+.rp-chip {
+  padding: 6px 14px;
+  border-radius: 6px;
+  background: #eff4fa;
+  border: 1px solid #c3d8ee;
+  font-size: 11px;
+  font-weight: 600;
+  color: #1b4f8a;
+  white-space: nowrap;
+}
+
+.rp-bulk { display: inline-flex; align-items: center; gap: 8px; }
+.rp-sep { color: #c6d3cb; }
+
+.rp-link {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  font-size: 11.4px;
+  font-weight: 600;
+  color: #1b4f8a;
+  cursor: pointer;
+
+  &:hover { text-decoration: underline; }
+}
+.rp-link-danger { color: #b91c1c; }
+
+.rp-tbl-wrap { overflow-x: auto; }
+
+.rp-tbl {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 860px;
+
+  thead th {
+    background: #f7faf8;
+    height: 34px;
+    padding: 0 12px;
+    text-align: center;
+    font-size: 9.4px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    color: #5d6b62;
+    white-space: nowrap;
+  }
+
+  thead th.rp-col-module { text-align: left; }
+
+  tbody td {
+    height: 32px;
+    padding: 0 12px;
+    border-top: 1px solid #f0f4f2;
+    text-align: center;
+    vertical-align: middle;
+  }
+
+  tbody td.rp-col-module { text-align: left; }
+
+  // A row with no access at all is dimmed, so the grid reads at a glance.
+  tbody tr.is-off .rp-row-name { color: #93a29a; }
+}
+
+.rp-col-module { width: 300px; }
+
+.rp-row-name { font-size: 11.4px; font-weight: 600; color: #16211a; }
+
+// A menu item under its module, bulleted and indented as on the deck.
+tbody tr.is-child .rp-col-module { padding-left: 30px; }
+tbody tr.is-child .rp-row-name { font-weight: 500; }
+
+.rp-bullet {
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  margin-right: 8px;
+  border-radius: 50%;
+  background: #1b4f8a;
+  vertical-align: middle;
+}
+tr.is-off .rp-bullet { background: #c6d3cb; }
+
+// A child that has no grant of its own follows the module above it.
+.rp-inherits {
+  margin-left: 8px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: #f4f6f5;
+  font-size: 9px;
+  font-weight: 600;
+  color: #93a29a;
+}
+
+// --------------------------------------------------------- the controls ---
+.rp-toggle {
+  width: 34px;
+  height: 18px;
+  padding: 0;
+  border: 0;
+  border-radius: 9px;
+  background: #c6d3cb;
+  cursor: pointer;
+  position: relative;
+  transition: background 0.15s;
+
+  &.on { background: #1b4f8a; }
+  &:disabled { opacity: 0.45; cursor: default; }
+}
+
+.rp-knob {
+  position: absolute;
+  top: 2.5px;
+  left: 2.5px;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.15s;
+}
+.rp-toggle.on .rp-knob { transform: translateX(16px); }
+
+.rp-check {
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: 1.3px solid #c6d3cb;
+  border-radius: 3.5px;
+  background: #fff;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  &.on { background: #1b4f8a; border-color: #1b4f8a; }
+  &:disabled { opacity: 0.45; cursor: default; }
+
+  svg { width: 12px; height: 12px; }
+}

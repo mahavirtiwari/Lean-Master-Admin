@@ -180,8 +180,18 @@ export const routes: Routes = [
             (m) => m.UserManagementComponent,
           ),
       },
+      // Role-wise: what a kind of account may reach. One person's exceptions
+      // are edited on their own screen, under user-management/users/:id.
       {
         path: 'user-management/permissions',
+        canActivate: [permissionGuard('USER_MGMT', 'edit')],
+        loadComponent: () =>
+          import('./features/user-management/role-permissions.component').then(
+            (m) => m.RolePermissionsComponent,
+          ),
+      },
+      {
+        path: 'user-management/permissions/user',
         canActivate: [permissionGuard('USER_MGMT', 'edit')],
         loadComponent: () =>
           import('./features/user-management/permissions.component').then(

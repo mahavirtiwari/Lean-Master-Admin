@@ -126,6 +126,9 @@ export interface AccountTypeSummary {
 }
 
 export interface UserDetail {
+  /** States and districts a State Specific officer covers. */
+  jurisdictions?: { stateId: number; districtIds: number[] }[];
+
   userId: number;
   userCode: string;
   fullName: string;

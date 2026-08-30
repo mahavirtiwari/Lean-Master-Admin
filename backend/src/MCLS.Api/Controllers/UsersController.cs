@@ -232,6 +232,21 @@ public sealed class UsersController(
                 SELECT PermissionKey FROM auth.vw_EffectivePermission WHERE UserId = {id}")
             .ToListAsync(ct);
 
+        // The states and districts a State Specific officer covers. Returned
+        // because the edit form replaces the whole selection on save: without
+        // it the form opens empty and saving wipes the coverage the officer had.
+        user.Jurisdictions = await db.UserJurisdictions.AsNoTracking()
+            .Where(j => j.UserId == id)
+            .GroupBy(j => j.StateId)
+            .Select(g => new JurisdictionSelection
+            {
+                StateId = g.Key,
+                DistrictIds = g.Where(j => j.DistrictId != null)
+                               .Select(j => j.DistrictId!.Value)
+                               .ToList(),
+            })
+            .ToListAsync(ct);
+
         return Ok(user);
     }
 
@@ -1142,6 +1157,12 @@ public sealed class UserListDto
 
 public sealed class UserDetailDto
 {
+    /// <summary>
+    /// The states and districts a State Specific officer covers. Empty for
+    /// every other account type.
+    /// </summary>
+    public List<JurisdictionSelection> Jurisdictions { get; set; } = [];
+
     public int UserId { get; init; }
     public string UserCode { get; init; } = string.Empty;
     public string FullName { get; init; } = string.Empty;

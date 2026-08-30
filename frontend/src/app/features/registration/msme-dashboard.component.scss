@@ -518,3 +518,84 @@
 
 .dp-open { display: inline-block; margin-top: 16px; font-size: 12.4px; font-weight: 700; color: #1b4f8a; text-decoration: none; }
 .dp-open:hover { text-decoration: underline; }
+
+// ---- the load-failure banner and the page footer ----
+// Both were written against class names defined only in the registration
+// wizard's own stylesheet. Component styles are scoped, so neither rule ever
+// reached this screen: the error banner and the whole footer rendered bare.
+// The values are the wizard's, so the two screens still look like one portal.
+
+.notice {
+  display: flex;
+  gap: 12px;
+  padding: 14px 18px;
+  margin-bottom: 22px;
+  background: #eff4fa;
+  border: 1px solid #c3d8ee;
+  border-radius: 8px;
+  font-size: 12.6px;
+  color: #47554c;
+  line-height: 1.6;
+
+  .notice-mark {
+    flex: none;
+    width: 10px;
+    height: 10px;
+    margin-top: 4px;
+    border-radius: 2px;
+    background: #1b4f8a;
+  }
+}
+
+.notice-bad {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #7f1d1d;
+
+  .notice-mark { background: #b91c1c; }
+}
+
+.pub-foot {
+  border-top: 1px solid #dee7e1;
+  background: #fff;
+  padding: 24px 40px;
+}
+
+.foot-inner {
+  display: flex;
+  align-items: flex-start;
+  gap: 24px;
+  max-width: 1120px;
+  margin: 0 auto;
+  flex-wrap: wrap;
+
+  .spacer { flex: 1; }
+}
+
+.foot-left { min-width: 0; }
+.foot-a { font-size: 11.8px; color: #47554c; }
+
+.foot-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 9px;
+  margin-top: 8px;
+  font-size: 11px;
+  color: #8a9a92;
+}
+
+.foot-dot { color: #c6d3cb; }
+.foot-links { display: flex; gap: 34px; padding-top: 2px; }
+
+.foot-link {
+  font-size: 11.8px;
+  font-weight: 600;
+  color: #1b4f8a;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+
+  &:hover { text-decoration: underline; }
+}

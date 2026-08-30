@@ -254,6 +254,13 @@ export class UserFormComponent {
     this.api.user(userId).subscribe({
       next: (u) => {
         this.selectedType.set(u.accountTypeId);
+
+        // Section 4 replaces the whole selection on save, so it has to open
+        // showing what is already there — otherwise editing an officer's name
+        // would quietly clear every state they cover.
+        const covered = u.jurisdictions ?? [];
+        this.coveredStates.set(new Set(covered.map((j) => j.stateId)));
+        this.coveredDistricts.set(new Set(covered.flatMap((j) => j.districtIds ?? [])));
         this.api.roles(u.accountTypeId).subscribe((r) => this.roles.set(r));
 
         if (u.stateId) this.loadDistricts(u.stateId);

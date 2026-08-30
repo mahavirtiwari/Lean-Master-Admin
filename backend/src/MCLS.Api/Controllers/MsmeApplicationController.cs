@@ -125,7 +125,12 @@ public sealed class MsmeApplicationController(MclsDbContext db, ICurrentUser cur
             if (missing is not null) return BadRequest(new { message = missing });
         }
 
-        var submission = await db.ApplicationSubmissions
+        // AsTracking: the context is NoTracking by default, so an existing
+        // submission came back detached and every edit below — the status, the
+        // submitted date, all three answer sets — was written to a graph
+        // SaveChanges does not look at. A new draft saved (it is Added); an
+        // existing one silently did nothing.
+        var submission = await db.ApplicationSubmissions.AsTracking()
             .Include(s => s.BasicInfo)
             .Include(s => s.EsgAnswers)
             .Include(s => s.Documents)
@@ -147,29 +152,99 @@ public sealed class MsmeApplicationController(MclsDbContext db, ICurrentUser cur
             if (submission.Status == "Submitted")
                 return Conflict(new { message = "This application has already been submitted." });
 
-            db.SubmissionBasicInfo.RemoveRange(submission.BasicInfo);
-            db.SubmissionEsgAnswers.RemoveRange(submission.EsgAnswers);
-            db.SubmissionDocuments.RemoveRange(submission.Documents);
             submission.ModifiedOnUtc = DateTime.UtcNow;
         }
 
         submission.Status = request.Submit ? "Submitted" : "Draft";
         submission.SubmittedOnUtc = request.Submit ? DateTime.UtcNow : null;
 
-        foreach (var b in request.BasicInfo ?? [])
-            submission.BasicInfo.Add(new SubmissionBasicInfo { BasicInfoItemId = b.BasicInfoItemId, ValueText = b.Value });
+        // Answers are updated where they already exist, not cleared and
+        // re-added. Each of these three is keyed on (submission, item), so
+        // re-adding an answer to a question that was already answered collides
+        // in the change tracker with the Deleted row of the same key and EF
+        // throws before anything is written — which is every save after the
+        // first, since a draft is saved repeatedly as it is filled in.
+        var basicGiven = request.BasicInfo ?? [];
+        var basicKeep = basicGiven.Select(b => b.BasicInfoItemId).ToHashSet();
 
-        foreach (var e in request.Esg ?? [])
-            if (e.Answer is "Yes" or "No" or "NA")
-                submission.EsgAnswers.Add(new SubmissionEsgAnswer { EsgQuestionId = e.EsgQuestionId, Answer = e.Answer });
+        foreach (var gone in submission.BasicInfo.Where(x => !basicKeep.Contains(x.BasicInfoItemId)).ToList())
+        {
+            db.SubmissionBasicInfo.Remove(gone);
+        }
 
-        foreach (var d in request.Documents ?? [])
-            submission.Documents.Add(new SubmissionDocument
+        foreach (var b in basicGiven)
+        {
+            var row = submission.BasicInfo.FirstOrDefault(x => x.BasicInfoItemId == b.BasicInfoItemId);
+
+            if (row is null)
             {
-                DocumentRequirementId = d.DocumentRequirementId,
-                OriginalFileName = d.OriginalFileName,
-                UploadedOnUtc = DateTime.UtcNow,
-            });
+                submission.BasicInfo.Add(new SubmissionBasicInfo
+                {
+                    BasicInfoItemId = b.BasicInfoItemId,
+                    ValueText = b.Value,
+                });
+            }
+            else
+            {
+                row.ValueText = b.Value;
+            }
+        }
+
+        var esgGiven = (request.Esg ?? []).Where(e => e.Answer is "Yes" or "No" or "NA").ToList();
+        var esgKeep = esgGiven.Select(e => e.EsgQuestionId).ToHashSet();
+
+        foreach (var gone in submission.EsgAnswers.Where(x => !esgKeep.Contains(x.EsgQuestionId)).ToList())
+        {
+            db.SubmissionEsgAnswers.Remove(gone);
+        }
+
+        foreach (var e in esgGiven)
+        {
+            var row = submission.EsgAnswers.FirstOrDefault(x => x.EsgQuestionId == e.EsgQuestionId);
+
+            if (row is null)
+            {
+                submission.EsgAnswers.Add(new SubmissionEsgAnswer
+                {
+                    EsgQuestionId = e.EsgQuestionId,
+                    Answer = e.Answer,
+                });
+            }
+            else
+            {
+                row.Answer = e.Answer;
+            }
+        }
+
+        var docsGiven = request.Documents ?? [];
+        var docsKeep = docsGiven.Select(d => d.DocumentRequirementId).ToHashSet();
+
+        foreach (var gone in submission.Documents.Where(x => !docsKeep.Contains(x.DocumentRequirementId)).ToList())
+        {
+            db.SubmissionDocuments.Remove(gone);
+        }
+
+        foreach (var d in docsGiven)
+        {
+            var row = submission.Documents.FirstOrDefault(x => x.DocumentRequirementId == d.DocumentRequirementId);
+
+            if (row is null)
+            {
+                submission.Documents.Add(new SubmissionDocument
+                {
+                    DocumentRequirementId = d.DocumentRequirementId,
+                    OriginalFileName = d.OriginalFileName,
+                    UploadedOnUtc = DateTime.UtcNow,
+                });
+            }
+            else if (row.OriginalFileName != d.OriginalFileName)
+            {
+                // Only a replaced file is re-stamped; re-saving the form around
+                // an untouched upload should not move its date.
+                row.OriginalFileName = d.OriginalFileName;
+                row.UploadedOnUtc = DateTime.UtcNow;
+            }
+        }
 
         await db.SaveChangesAsync(ct);
         return Ok(new { submission.SubmissionId, submission.Status });

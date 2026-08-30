@@ -111,11 +111,18 @@ public sealed class PartnerOrganisationsController(
                 o.DecidedOnUtc,
                 o.DecisionRemark,
                 o.IsActive,
+                o.RaisedByOrganisationId,
                 // The accounts held under this body. One table lists the bodies,
                 // and this is the way through to the people under each.
                 userCount = db.Users.Count(u => u.OrganisationId == o.OrganisationId && !u.IsDeleted),
             })
             .ToListAsync(ct);
+
+        // Every agency sees every body — an applicant may name any of them —
+        // but only the agency that raised one may change it. Decided here
+        // rather than on the screen so the answer is the same either way.
+        var mine = await MyOrganisationIdAsync(ct);
+        var isAgency = currentUser.AccountTypeId == ImplementingAgencyType;
 
         return Ok(new
         {
@@ -135,6 +142,10 @@ public sealed class PartnerOrganisationsController(
                 o.DecisionRemark,
                 o.IsActive,
                 o.userCount,
+                // An agency owns what it raised; anyone else who can reach this
+                // screen at all (Super Admin, a State Office) is not an agency
+                // and is judged by their rights alone.
+                isMine = isAgency && o.RaisedByOrganisationId == mine,
             }),
         });
     }
@@ -263,6 +274,14 @@ public sealed class PartnerOrganisationsController(
 
         if (organisation is null) return NotFound(new { message = "That organisation does not exist." });
 
+        if (!await MayChangeAsync(organisation, ct))
+        {
+            return StatusCode(403, new
+            {
+                message = "This body was raised by another agency, so only that agency may change it.",
+            });
+        }
+
         var name = request.Name.Trim();
 
         if (await db.Organisations.AnyAsync(
@@ -299,6 +318,14 @@ public sealed class PartnerOrganisationsController(
             .FirstOrDefaultAsync(o => o.OrganisationId == id && PartnerTypes.Contains(o.AccountTypeId), ct);
 
         if (organisation is null) return NotFound(new { message = "That organisation does not exist." });
+
+        if (!await MayChangeAsync(organisation, ct))
+        {
+            return StatusCode(403, new
+            {
+                message = "This body was raised by another agency, so only that agency may change it.",
+            });
+        }
 
         organisation.IsActive = request.IsActive;
         organisation.ModifiedOnUtc = DateTime.UtcNow;
@@ -539,6 +566,24 @@ public sealed class PartnerOrganisationsController(
 
         // Anyone else is a State Office, and only for their own state.
         return organisation.StateId is not null && organisation.StateId == currentUser.StateId;
+    }
+
+    /// <summary>
+    /// Whether this caller may change this body.
+    ///
+    /// An Implementing Agency owns what it raised and nothing else: every
+    /// agency can see the whole list, because an applicant may name any body
+    /// on it, but a body is one agency's to correct. Anyone who is not an
+    /// agency is judged by their rights, which is how a State Office decides
+    /// and a Super Admin corrects a seeded record.
+    /// </summary>
+    private async Task<bool> MayChangeAsync(Organisation organisation, CancellationToken ct)
+    {
+        if (currentUser.AccountTypeId != ImplementingAgencyType) return true;
+
+        var mine = await MyOrganisationIdAsync(ct);
+
+        return mine is not null && organisation.RaisedByOrganisationId == mine;
     }
 
     private async Task<int?> MyOrganisationIdAsync(CancellationToken ct)

@@ -69,6 +69,17 @@ public sealed class UsersController(
             q = q.Where(u => scope.Contains(u.AccountTypeId));
         }
 
+        // Then ownership. The account type says what a caller may administer;
+        // this says whose. An Implementing Agency sees the firms it created and
+        // the people inside them, a Consultant Organisation sees its own — and
+        // neither sees the other's.
+        var owned = await OwnedOrganisationIdsAsync(ct);
+
+        if (owned is not null)
+        {
+            q = q.Where(u => u.OrganisationId != null && owned.Contains(u.OrganisationId.Value));
+        }
+
         if (query.AccountTypeId is { } typeId)
         {
             if (scope.Count > 0 && !scope.Contains(typeId))
@@ -234,17 +245,14 @@ public sealed class UsersController(
             return Forbid();
         }
 
-        // An Operation Admin runs the portal on behalf of an Implementing
-        // Agency, so an agency is who creates one — and the account belongs to
-        // that agency, which is what the Organisation column names.
-        if (request.AccountTypeId == (byte)AccountTypeId.OperationAdmin
-            && currentUser.AccountTypeId != (byte)AccountTypeId.ImplementingAgency)
-        {
-            return StatusCode(403, new
-            {
-                message = "An Operation Admin account is created by an Implementing Agency.",
-            });
-        }
+        // Who may create what. Each account type has exactly one kind of
+        // creator, because each belongs to exactly one body: an Operation Admin
+        // to its Implementing Agency, a consultant to its firm, an assessor to
+        // its agency. The scope check above says which types a role may
+        // administer at all; this says which it may bring into being.
+        var creatorFault = CreatorFault(request.AccountTypeId, request.Organisation is not null);
+
+        if (creatorFault is not null) return StatusCode(403, new { message = creatorFault });
 
         // The role must belong to the account type, or a caller could hand an
         // Assessor account the Super Admin role.
@@ -310,6 +318,11 @@ public sealed class UsersController(
                 ContactPhone = request.Mobile,
                 JurisdictionScope = request.Jurisdiction,
                 IsActive = true,
+
+                // The creator owns it, and that is what every later visibility
+                // and edit check reads — a consultant's Implementing Agency is
+                // the agency that raised the consultant's firm.
+                RaisedByOrganisationId = currentUser.OrganisationId,
             };
 
             db.Organisations.Add(newOrganisation);
@@ -424,6 +437,14 @@ public sealed class UsersController(
         if (user is null) return NotFound();
         if (!IsInScope(user.AccountTypeId)) return Forbid();
 
+        if (!await OwnsAsync(user.OrganisationId, ct))
+        {
+            return StatusCode(403, new
+            {
+                message = "This account belongs to another organisation.",
+            });
+        }
+
         // A Super Admin edits only the three account types the scheme itself
         // issues. The rest belong to the body that empanelled them — an
         // Operation Admin to its Implementing Agency, a consultant to its firm
@@ -486,7 +507,7 @@ public sealed class UsersController(
     {
         var target = await db.Users
             .Where(u => u.Id == id)
-            .Select(u => new { u.AccountTypeId, u.StatusId, u.FullName, u.UserCode, u.Email })
+            .Select(u => new { u.AccountTypeId, u.StatusId, u.FullName, u.UserCode, u.Email, u.OrganisationId })
             .SingleOrDefaultAsync(ct);
 
         if (target is null) return NotFound();
@@ -495,6 +516,14 @@ public sealed class UsersController(
         if (id == currentUser.UserId)
         {
             return BadRequest(new { message = "You cannot change the status of your own account." });
+        }
+
+        if (!await OwnsAsync(target.OrganisationId, ct))
+        {
+            return StatusCode(403, new
+            {
+                message = "This account belongs to another organisation.",
+            });
         }
 
         // The procedure writes the status, the history row and the session
@@ -680,6 +709,96 @@ public sealed class UsersController(
     /// Whether the caller's role administers this account type. An empty scope
     /// means unrestricted (Super Admin).
     /// </summary>
+    /// <summary>
+    /// Why this caller may not create that account type, or null if they may.
+    ///
+    /// A Consultant Organisation is created by an Implementing Agency, with a
+    /// new organisation of its own. The same account type without a new
+    /// organisation is a sub-user inside a firm that already exists, and that
+    /// is the firm's own to create — so the two are told apart by whether an
+    /// organisation is being raised alongside the account.
+    /// </summary>
+    private string? CreatorFault(byte accountTypeId, bool raisingOrganisation)
+    {
+        var caller = currentUser.AccountTypeId;
+
+        // The Super Admin issues the three the scheme itself runs on.
+        if (accountTypeId is (byte)AccountTypeId.ImplementingAgency
+                          or (byte)AccountTypeId.MinistryOfMsme
+                          or (byte)AccountTypeId.StateSpecific)
+        {
+            return null;
+        }
+
+        return accountTypeId switch
+        {
+            (byte)AccountTypeId.OperationAdmin when caller != (byte)AccountTypeId.ImplementingAgency =>
+                "An Operation Admin account is created by an Implementing Agency.",
+
+            (byte)AccountTypeId.ConsultantOrganisation or (byte)AccountTypeId.AssessmentAgency
+                when raisingOrganisation && caller != (byte)AccountTypeId.ImplementingAgency =>
+                "A Consultant Organisation or Assessment Agency is created by an Implementing Agency.",
+
+            // A sub-user inside a firm belongs to that firm.
+            (byte)AccountTypeId.ConsultantOrganisation when !raisingOrganisation
+                && caller != (byte)AccountTypeId.ConsultantOrganisation =>
+                "A sub-user is created by the Consultant Organisation itself.",
+
+            (byte)AccountTypeId.AssessmentAgency when !raisingOrganisation
+                && caller != (byte)AccountTypeId.AssessmentAgency =>
+                "A sub-user is created by the Assessment Agency itself.",
+
+            (byte)AccountTypeId.Consultants when caller != (byte)AccountTypeId.ConsultantOrganisation =>
+                "A consultant is created by their Consultant Organisation.",
+
+            (byte)AccountTypeId.Assessors when caller != (byte)AccountTypeId.AssessmentAgency =>
+                "An assessor is created by their Assessment Agency.",
+
+            _ => null,
+        };
+    }
+
+    /// <summary>
+    /// The organisations whose people this caller may see, or null for a caller
+    /// who sees everyone.
+    ///
+    /// An Implementing Agency sees its own organisation, every firm it raised,
+    /// and — because a consultant belongs to a firm rather than to the agency —
+    /// the people inside those firms. A firm sees only itself. Anyone else with
+    /// the module and no organisation of their own (Super Admin, Ministry
+    /// Reviewer) sees everything, which is what null means here.
+    /// </summary>
+    private async Task<HashSet<int>?> OwnedOrganisationIdsAsync(CancellationToken ct)
+    {
+        var mine = currentUser.OrganisationId;
+        if (mine is null) return null;
+
+        return currentUser.AccountTypeId switch
+        {
+            (byte)AccountTypeId.ImplementingAgency =>
+                (await db.Organisations.AsNoTracking()
+                    .Where(o => o.OrganisationId == mine || o.RaisedByOrganisationId == mine)
+                    .Select(o => o.OrganisationId)
+                    .ToListAsync(ct))
+                .ToHashSet(),
+
+            (byte)AccountTypeId.ConsultantOrganisation or (byte)AccountTypeId.AssessmentAgency =>
+                [mine.Value],
+
+            _ => null,
+        };
+    }
+
+    /// <summary>Whether this caller owns the organisation an account sits in.</summary>
+    private async Task<bool> OwnsAsync(int? organisationId, CancellationToken ct)
+    {
+        var owned = await OwnedOrganisationIdsAsync(ct);
+
+        if (owned is null) return true;
+
+        return organisationId is { } id && owned.Contains(id);
+    }
+
     private async Task<bool> IsSuperAdminAsync(int roleId, CancellationToken ct) =>
         await db.Roles.AsNoTracking().AnyAsync(r => r.Id == roleId && r.Code == "SUPER_ADMIN", ct);
 

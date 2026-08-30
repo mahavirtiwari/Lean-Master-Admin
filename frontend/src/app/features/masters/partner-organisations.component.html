@@ -232,7 +232,7 @@
                 <td class="nowrap">
                   <button class="link-act" type="button" (click)="viewing.set(r)">View</button>
 
-                  @if (canCreate) {
+                  @if (mayChange(r)) {
                     <span class="act-sep">|</span>
                     <button class="link-act" type="button" (click)="startEdit(r)">Edit</button>
                   }
@@ -244,7 +244,7 @@
                     <button class="link-act link-danger" type="button" (click)="startDecision(r, false)">Reject</button>
                   }
 
-                  @if (canDecide) {
+                  @if (mayChange(r)) {
                     <span class="act-sep">|</span>
                     <button class="link-act" [class.link-danger]="r.isActive" type="button"
                             (click)="togglingStatus.set(r)">

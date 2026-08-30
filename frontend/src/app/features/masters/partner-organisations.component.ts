@@ -30,6 +30,8 @@ interface PartnerRow {
   decisionRemark: string | null;
   isActive: boolean;
   userCount: number;
+  /** Raised by this caller's own agency, so theirs to change. */
+  isMine: boolean;
 }
 
 interface VerificationRow {
@@ -280,6 +282,19 @@ export class PartnerOrganisationsComponent {
     this.deciding.set(null);
     this.decidingClaim.set(null);
     this.decideError.set(null);
+  }
+
+  /**
+   * Whether this caller may change this row.
+   *
+   * An agency sees every body — an applicant may name any of them — but only
+   * corrects what it raised. Anyone who is not an agency is judged by rights
+   * alone, which is how a State Office decides and a Super Admin corrects a
+   * seeded record.
+   */
+  mayChange(row: PartnerRow): boolean {
+    const isAgency = this.auth.user()?.accountTypeId === 1;
+    return isAgency ? row.isMine : this.canDecide;
   }
 
   claimLabel(kind: string): string {

@@ -254,10 +254,26 @@ public sealed class UsersController(
 
         if (creatorFault is not null) return StatusCode(403, new { message = creatorFault });
 
+        // No role asked for means the account type's default — stored rather
+        // than inferred, because Ministry of MSME carries both Ministry
+        // Reviewer and Super Admin and guessing there mints administrators.
+        var roleId = request.RoleId ?? await db.Roles.AsNoTracking()
+            .Where(r => r.AccountTypeId == request.AccountTypeId && r.IsActive && r.IsDefaultForType)
+            .Select(r => (int?)r.Id)
+            .FirstOrDefaultAsync(ct);
+
+        if (roleId is null)
+        {
+            return BadRequest(new
+            {
+                message = "No default role is configured for that account type.",
+            });
+        }
+
         // The role must belong to the account type, or a caller could hand an
         // Assessor account the Super Admin role.
         var roleAccountType = await db.Roles
-            .Where(r => r.Id == request.RoleId && r.IsActive)
+            .Where(r => r.Id == roleId && r.IsActive)
             .Select(r => (byte?)r.AccountTypeId)
             .SingleOrDefaultAsync(ct);
 
@@ -372,7 +388,7 @@ public sealed class UsersController(
             Initials = BuildInitials(request.FullName),
             Designation = request.Designation,
             AccountTypeId = request.AccountTypeId,
-            RoleId = request.RoleId,
+            RoleId = roleId.Value,
             OrganisationId = request.OrganisationId,
             // Set through the navigation when the organisation is new: its key
             // does not exist until SaveChanges, and EF fixes the FK up for us.
@@ -1075,7 +1091,12 @@ public sealed class CreateUserRequest
     [Phone, MaxLength(30)] public string? Mobile { get; set; }
     [MaxLength(150)] public string? Designation { get; set; }
     [Required] public byte AccountTypeId { get; set; }
-    [Required] public int RoleId { get; set; }
+    /// <summary>
+    /// Optional. The create form does not ask for a role, so an account starts
+    /// on its account type's default (auth.Role.IsDefaultForType) — never
+    /// Super Admin. A role is still chosen deliberately on the edit screen.
+    /// </summary>
+    public int? RoleId { get; set; }
     /// <summary>
     /// An existing organisation. Leave null and supply <see cref="Organisation"/>
     /// instead to create one as part of the same request, which is what the

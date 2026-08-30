@@ -131,6 +131,12 @@ public class Permission
 
 public class Role : IdentityRole<int>, IConcurrencyAware
 {
+    /// <summary>
+    /// The role an account of this type starts on when none is chosen. Exactly
+    /// one per account type, and never Super Admin.
+    /// </summary>
+    public bool IsDefaultForType { get; set; }
+
     public string Code { get; set; } = string.Empty;
     public byte AccountTypeId { get; set; }
     public AccountType AccountType { get; set; } = null!;

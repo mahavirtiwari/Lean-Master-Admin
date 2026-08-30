@@ -260,8 +260,15 @@ export class UserFormComponent {
     const p = this.person();
     const o = this.org();
 
-    if (!p.fullName.trim() || !p.roleId) {
-      this.error.set('Name and portal role are both required.');
+    if (!p.fullName.trim()) {
+      this.error.set('A name is required.');
+      return;
+    }
+
+    // Only the edit screen asks for a role. A new account starts on its
+    // account type's default, so requiring one here would block creation.
+    if (this.isEdit() && !p.roleId) {
+      this.error.set('A portal role is required.');
       return;
     }
 
@@ -290,8 +297,6 @@ export class UserFormComponent {
       fullName: p.fullName.trim(),
       mobile: p.mobile.trim() || null,
       designation: p.designation.trim() || null,
-      roleId: Number(p.roleId),
-      jurisdiction: p.jurisdiction.trim() || null,
     };
 
     const editId = this.id();
@@ -299,6 +304,7 @@ export class UserFormComponent {
     const request: Observable<unknown> = editId
       ? this.api.updateUser(Number(editId), {
           ...common,
+          roleId: Number(p.roleId),
           organisationId: this.existingOrg()?.organisationId ?? null,
           stateId: this.org().stateId === '' ? null : Number(this.org().stateId),
           districtId: this.org().districtId === '' ? null : Number(this.org().districtId),
@@ -320,8 +326,6 @@ export class UserFormComponent {
           // The organisation is created with the user, in one request.
           organisation: {
             name: o.name.trim(),
-            registrationNo: o.registrationNo.trim() || null,
-            categoryLookupId: o.categoryLookupId === '' ? null : Number(o.categoryLookupId),
             addressLine: o.addressLine.trim(),
             stateId: Number(o.stateId),
             districtId: o.districtId === '' ? null : Number(o.districtId),

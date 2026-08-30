@@ -112,39 +112,6 @@
             />
           </div>
 
-          @if (copy().showRegistration) {
-            <div class="field">
-              <label class="field-label" for="cin">REGISTRATION / CIN NO.</label>
-              <input
-                id="cin"
-                class="input"
-                name="cin"
-                placeholder="e.g. AAATN2451K"
-                [ngModel]="org().registrationNo"
-                (ngModelChange)="org.set({ ...org(), registrationNo: $event })"
-              />
-            </div>
-          }
-
-          @if (copy().showCategory) {
-            <div class="field">
-              <label class="field-label" for="category">
-                AGENCY CATEGORY<span class="req">*</span>
-              </label>
-              <select
-                id="category"
-                class="select"
-                name="category"
-                [ngModel]="org().categoryLookupId"
-                (ngModelChange)="org.set({ ...org(), categoryLookupId: $event })"
-              >
-                <option value="">Select category</option>
-                @for (c of categories(); track c.lookupValueId) {
-                  <option [value]="c.lookupValueId">{{ c.name }}</option>
-                }
-              </select>
-            </div>
-          }
 
           <div class="field">
             <label class="field-label" for="state">
@@ -246,21 +213,25 @@
           />
         </div>
 
-        <div class="field">
-          <label class="field-label" for="role">PORTAL ROLE<span class="req">*</span></label>
-          <select
-            id="role"
-            class="select"
-            name="role"
-            [ngModel]="person().roleId"
-            (ngModelChange)="person.set({ ...person(), roleId: $event })"
-          >
-            <option value="">Select role</option>
-            @for (r of roles(); track r.roleId) {
-              <option [value]="r.roleId">{{ r.name }}</option>
-            }
-          </select>
-        </div>
+        @if (isEdit()) {
+          <!-- Only on edit. A new account starts on its account type's default
+               role, so the form does not ask; changing one is deliberate. -->
+          <div class="field">
+            <label class="field-label" for="role">PORTAL ROLE<span class="req">*</span></label>
+            <select
+              id="role"
+              class="select"
+              name="role"
+              [ngModel]="person().roleId"
+              (ngModelChange)="person.set({ ...person(), roleId: $event })"
+            >
+              <option value="">Select role</option>
+              @for (r of roles(); track r.roleId) {
+                <option [value]="r.roleId">{{ r.name }}</option>
+              }
+            </select>
+          </div>
+        }
 
         <div class="field">
           <label class="field-label" for="email">
@@ -294,25 +265,7 @@
           />
         </div>
 
-        <div class="field">
-          <label class="field-label" for="jurisdiction">JURISDICTION</label>
-          <input
-            id="jurisdiction"
-            class="input"
-            name="jurisdiction"
-            placeholder="e.g. National, Western Region"
-            [ngModel]="person().jurisdiction"
-            (ngModelChange)="person.set({ ...person(), jurisdiction: $event })"
-          />
-        </div>
       </div>
-
-      @if (!isEdit()) {
-        <div class="note" style="margin-top: 18px">
-          The account is created in Pending Activation. An activation e-mail goes to the address
-          above and the holder sets their own password from it — no password is issued here.
-        </div>
-      }
 
       @if (error()) {
         <div class="field-error form-error-row">{{ error() }}</div>

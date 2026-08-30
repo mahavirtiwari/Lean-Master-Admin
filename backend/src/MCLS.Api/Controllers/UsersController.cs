@@ -416,6 +416,17 @@ public sealed class UsersController(
                 ["portal_url"] = $"{Request.Headers.Origin}/login",
             }, ct);
 
+        // A firm creating a colleague says which modules they get, and gets no
+        // say over anything it does not hold itself — the same rule the
+        // permissions screen applies, applied at the moment of creation so a
+        // sub-user is never briefly given the firm's whole access.
+        var permissionFault = await GrantOnCreateAsync(user.Id, request.Permissions, ct);
+
+        if (permissionFault is not null)
+        {
+            return BadRequest(new { message = permissionFault });
+        }
+
         return CreatedAtAction(nameof(GetUser), new { id = user.Id }, new
         {
             userId = user.Id,
@@ -789,6 +800,97 @@ public sealed class UsersController(
         };
     }
 
+    /// <summary>
+    /// Grants a new account the modules it was created with, or says why not.
+    ///
+    /// Nothing to do when none were asked for: the account then holds whatever
+    /// its role carries, which is the normal case. When some were asked for,
+    /// the caller may only pass on what they hold themselves — a Consultant
+    /// Organisation cannot hand a colleague a module it cannot reach.
+    /// </summary>
+    private async Task<string?> GrantOnCreateAsync(
+        int userId, List<short>? permissionIds, CancellationToken ct)
+    {
+        if (permissionIds is null || permissionIds.Count == 0) return null;
+
+        var wanted = permissionIds.Distinct().ToList();
+
+        var keys = await db.Permissions.AsNoTracking()
+            .Where(p => wanted.Contains(p.PermissionId))
+            .Select(p => new { p.PermissionId, p.PermissionKey })
+            .ToListAsync(ct);
+
+        var held = currentUser.Permissions;
+        var escalation = keys.Where(k => !held.Contains(k.PermissionKey)).Select(k => k.PermissionKey).ToList();
+
+        if (escalation.Count > 0)
+        {
+            return $"You cannot grant a permission you do not hold yourself: {string.Join(", ", escalation)}.";
+        }
+
+        var table = new DataTable();
+        table.Columns.Add("PermissionId", typeof(short));
+        table.Columns.Add("IsGranted", typeof(bool));
+
+        foreach (var id in wanted) table.Rows.Add(id, true);
+
+        await db.Database.ExecuteSqlRawAsync(
+            "EXEC auth.usp_User_ReplacePermissions @UserId, @Permissions, @SetByUserId, @Reason",
+            [
+                new SqlParameter("@UserId", userId),
+                new SqlParameter("@Permissions", SqlDbType.Structured)
+                {
+                    TypeName = "auth.PermissionGrantList",
+                    Value = table,
+                },
+                new SqlParameter("@SetByUserId", currentUser.UserId ?? 0),
+                new SqlParameter("@Reason", "Granted when the account was created."),
+            ],
+            ct);
+
+        return null;
+    }
+
+    /// <summary>
+    /// The modules this caller may pass on, for the sub-user form.
+    ///
+    /// A firm grants out of its own access and no further, so the form offers
+    /// exactly what the caller holds rather than the whole matrix with most of
+    /// it refused on save.
+    /// </summary>
+    [HttpGet("grantable-permissions")]
+    [HasPermission(Permissions.UserManagement, Permissions.Create)]
+    public async Task<IActionResult> GrantablePermissions(CancellationToken ct)
+    {
+        var held = currentUser.Permissions;
+
+        var rows = await db.Permissions.AsNoTracking()
+            .Select(p => new
+            {
+                p.PermissionId,
+                p.PermissionKey,
+                p.ModuleId,
+                moduleName = p.Module.Name,
+                moduleSort = p.Module.SortOrder,
+                right = p.RightType.Code,
+            })
+            .ToListAsync(ct);
+
+        var mine = rows.Where(r => held.Contains(r.PermissionKey)).ToList();
+
+        var modules = mine
+            .GroupBy(r => new { r.ModuleId, r.moduleName, r.moduleSort })
+            .OrderBy(g => g.Key.moduleSort)
+            .Select(g => new
+            {
+                g.Key.ModuleId,
+                name = g.Key.moduleName,
+                rights = g.OrderBy(r => r.right).Select(r => new { r.PermissionId, r.right }),
+            });
+
+        return Ok(new { modules });
+    }
+
     /// <summary>Whether this caller owns the organisation an account sits in.</summary>
     private async Task<bool> OwnsAsync(int? organisationId, CancellationToken ct)
     {
@@ -922,6 +1024,13 @@ public sealed class UserDetailDto
 
 public sealed class CreateUserRequest
 {
+    /// <summary>
+    /// Permission ids to grant the new account, for a firm creating a sub-user
+    /// with less access than itself. Empty means the account holds whatever its
+    /// role carries, which is the normal case.
+    /// </summary>
+    public List<short>? Permissions { get; set; }
+
     [Required, MaxLength(200)] public string FullName { get; set; } = string.Empty;
     [Required, EmailAddress, MaxLength(256)] public string Email { get; set; } = string.Empty;
     [Phone, MaxLength(30)] public string? Mobile { get; set; }

@@ -42,10 +42,47 @@
     <section class="card card-pad">
       <div class="step-head">
         <span class="step-no">2</span>
-        <h3 class="step-title">{{ copy().section }}</h3>
+        <h3 class="step-title">{{ isSubUser() ? 'Modules for this colleague' : copy().section }}</h3>
       </div>
 
-      @if (isEdit()) {
+      @if (isSubUser()) {
+        <div class="org-readonly">
+          <span class="field-label">ORGANISATION</span>
+          <div class="detail-value">{{ auth.user()?.organisationName || '—' }}</div>
+          <div class="field-hint">
+            A colleague joins your organisation. Choose the modules they may reach — you can
+            only pass on access you hold yourself.
+          </div>
+        </div>
+
+        @if (grantable().length === 0) {
+          <p class="field-hint">No modules are available to grant.</p>
+        } @else {
+          <div class="grant-list">
+            @for (m of grantable(); track m.moduleId) {
+              <div class="grant-module" [class.is-on]="moduleOn(m)">
+                <label class="grant-head">
+                  <input type="checkbox" [checked]="moduleOn(m)" (change)="toggleModule(m)" />
+                  <span class="grant-name">{{ m.name }}</span>
+                </label>
+
+                <div class="grant-rights">
+                  @for (r of m.rights; track r.permissionId) {
+                    <label class="grant-right">
+                      <input
+                        type="checkbox"
+                        [checked]="isGranted(r.permissionId)"
+                        (change)="toggleGrant(r.permissionId)"
+                      />
+                      <span>{{ r.right }}</span>
+                    </label>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        }
+      } @else if (isEdit()) {
         <div class="org-readonly">
           <span class="field-label">{{ copy().orgLabel }}</span>
           <div class="detail-value">{{ existingOrg()?.name || '—' }}</div>

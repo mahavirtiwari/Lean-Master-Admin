@@ -16,3 +16,20 @@
   color: var(--text-strong);
   padding-top: 4px;
 }
+
+// ---- the modules a firm hands a colleague ----
+.grant-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; margin-top: 14px; }
+
+.grant-module {
+  border: 1px solid #dee7e1;
+  border-radius: 8px;
+  padding: 11px 13px;
+
+  &.is-on { border-color: #1b4f8a; background: #f6f9fc; }
+}
+
+.grant-head { display: flex; align-items: center; gap: 9px; cursor: pointer; }
+.grant-name { font-size: 12.4px; font-weight: 700; color: #16211a; }
+
+.grant-rights { display: flex; flex-wrap: wrap; gap: 4px 12px; margin: 9px 0 0 25px; }
+.grant-right { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; color: #5d6b62; cursor: pointer; }

@@ -2,6 +2,9 @@ import { Component, computed, effect, inject, input, signal, untracked } from '@
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
+import { AuthService } from '../../core/auth.service';
+import { HttpClient } from '@angular/common/http';
+import { environment } from '../../../environments/environment';
 
 import { ApiService } from '../../core/api.service';
 import {
@@ -72,6 +75,13 @@ const TYPE_COPY: Record<
  * nothing to pick. On edit the organisation already exists, so it is shown
  * read-only — renaming a department is not what this screen is for.
  */
+/** A module this caller holds, and the rights on it they may pass on. */
+interface GrantableModule {
+  moduleId: number;
+  name: string;
+  rights: { permissionId: number; right: string }[];
+}
+
 @Component({
   selector: 'app-user-form',
   imports: [FormsModule, PageIntroComponent],
@@ -80,6 +90,8 @@ const TYPE_COPY: Record<
 })
 export class UserFormComponent {
   private readonly api = inject(ApiService);
+  readonly auth = inject(AuthService);
+  private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
 
   /** /user-management/type/:accountTypeId/new */
@@ -93,6 +105,10 @@ export class UserFormComponent {
   readonly districts = signal<DistrictRef[]>([]);
   readonly categories = signal<LookupValue[]>([]);
   readonly existingOrg = signal<Organisation | null>(null);
+
+  /** Modules this caller may pass on, and the ones ticked for the sub-user. */
+  readonly grantable = signal<GrantableModule[]>([]);
+  readonly grantedIds = signal<Set<number>>(new Set());
 
   readonly saving = signal(false);
   readonly loading = signal(false);
@@ -136,8 +152,33 @@ export class UserFormComponent {
 
   readonly heading = computed(() => (this.isEdit() ? 'Edit User' : 'Create New User'));
 
+  /**
+   * A firm creating a colleague rather than an agency creating a firm.
+   *
+   * Both are the same account type, so what tells them apart is whether an
+   * organisation is being raised alongside the account. A Consultant
+   * Organisation or Assessment Agency already has one — its own — so it is
+   * creating a sub-user, and the form asks which modules they get instead of
+   * asking for an address.
+   */
+  readonly isSubUser = computed(() => {
+    if (this.isEdit()) return false;
+
+    const me = this.auth.user();
+    return me?.accountTypeId === this.selectedType()
+        && (me?.accountTypeId === 6 || me?.accountTypeId === 7);
+  });
+
   constructor() {
     this.api.userAccountTypes().subscribe((types) => this.types.set(types));
+
+    // What this caller may hand on. Fetched once: a firm grants out of its own
+    // access and no further, so the list does not change while the form is open.
+    this.http.get<{ modules: GrantableModule[] }>(`${environment.apiBase}/users/grantable-permissions`)
+      .subscribe({
+        next: (r) => this.grantable.set(r.modules ?? []),
+        error: () => this.grantable.set([]),
+      });
     this.api.states().subscribe((states) => this.states.set(states));
     this.api.lookupValues('AGENCY_CATEGORY').subscribe((v) => this.categories.set(v));
 
@@ -262,6 +303,16 @@ export class UserFormComponent {
           stateId: this.org().stateId === '' ? null : Number(this.org().stateId),
           districtId: this.org().districtId === '' ? null : Number(this.org().districtId),
         })
+      : this.isSubUser()
+      ? this.api.createUser({
+          ...common,
+          email: p.email.trim(),
+          accountTypeId: this.selectedType(),
+          // The colleague joins the firm that is creating them; no new
+          // organisation is raised, which is what marks this a sub-user.
+          organisationId: this.auth.user()?.organisationId ?? null,
+          permissions: [...this.grantedIds()],
+        })
       : this.api.createUser({
           ...common,
           email: p.email.trim(),
@@ -295,6 +346,36 @@ export class UserFormComponent {
         );
       },
     });
+  }
+
+  toggleGrant(permissionId: number): void {
+    const next = new Set(this.grantedIds());
+
+    if (next.has(permissionId)) next.delete(permissionId);
+    else next.add(permissionId);
+
+    this.grantedIds.set(next);
+  }
+
+  isGranted(permissionId: number): boolean {
+    return this.grantedIds().has(permissionId);
+  }
+
+  /** Ticks or clears every right on one module at once. */
+  toggleModule(module: GrantableModule): void {
+    const next = new Set(this.grantedIds());
+    const on = module.rights.every((r) => next.has(r.permissionId));
+
+    for (const right of module.rights) {
+      if (on) next.delete(right.permissionId);
+      else next.add(right.permissionId);
+    }
+
+    this.grantedIds.set(next);
+  }
+
+  moduleOn(module: GrantableModule): boolean {
+    return module.rights.some((r) => this.grantedIds().has(r.permissionId));
   }
 
   cancel(): void {

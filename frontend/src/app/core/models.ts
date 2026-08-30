@@ -22,6 +22,7 @@ export interface CurrentUser {
   accountTypeName: string;
   roleName: string;
   roleCode: string;
+  organisationId: number | null;
   organisationName: string | null;
   jurisdiction: string | null;
   mustChangePassword: boolean;

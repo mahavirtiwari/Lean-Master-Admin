@@ -447,6 +447,7 @@ public sealed class AuthController(
                 AccountTypeName = u.AccountType.Name,
                 RoleName = u.Role.Name,
                 RoleCode = u.Role.Code,
+                OrganisationId = u.OrganisationId,
                 OrganisationName = u.Organisation != null ? u.Organisation.Name : null,
             })
             .SingleOrDefaultAsync(ct);
@@ -506,6 +507,7 @@ public sealed class AuthController(
             AccountTypeName = profile.AccountTypeName,
             RoleName = profile.RoleName,
             RoleCode = profile.RoleCode,
+            OrganisationId = profile.OrganisationId,
             OrganisationName = profile.OrganisationName,
             Jurisdiction = profile.Jurisdiction,
             MustChangePassword = profile.MustChangePassword,
@@ -610,6 +612,10 @@ public sealed class CurrentUserResponse
     public string AccountTypeName { get; init; } = string.Empty;
     public string? RoleName { get; init; }
     public string? RoleCode { get; init; }
+    /// <summary>The body this account belongs to — a firm creating a
+    /// sub-user puts the colleague in the same one.</summary>
+    public int? OrganisationId { get; init; }
+
     public string? OrganisationName { get; init; }
     public string? Jurisdiction { get; init; }
 

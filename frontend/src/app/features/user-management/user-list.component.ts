@@ -77,7 +77,7 @@ export class UserListComponent {
   /**
    * A Super Admin edits only the three account types the scheme itself issues:
    * Implementing Agency, Ministry of MSME and State Specific. The rest belong
-   * to the body that empanelled them — an Operation Admin to its Implementing
+   * to the body that empanelled them — an Operation Manager to its Implementing
    * Agency, a consultant to its firm — and that body edits them.
    */
   readonly canEditThisType = computed(() => {
@@ -92,7 +92,7 @@ export class UserListComponent {
    *
    * canCreateDirectly is the account type's own flag: false for the six the
    * portal does not issue from here, because the body that empanels them makes
-   * them. Operation Admin is one of those — but it has a creator now, its
+   * them. Operation Manager is one of those — but it has a creator now, its
    * Implementing Agency, so an agency signed in is offered the button the
    * Super Admin is not.
    */
@@ -106,7 +106,7 @@ export class UserListComponent {
   });
 
   /**
-   * Operation Admins are created by Implementing Agencies, so an Operation
+   * Operation Managers are created by Implementing Agencies, so an Operation
    * Admin belongs to one and that is what the reference column names.
    */
 

@@ -246,7 +246,7 @@ public sealed class UsersController(
         }
 
         // Who may create what. Each account type has exactly one kind of
-        // creator, because each belongs to exactly one body: an Operation Admin
+        // creator, because each belongs to exactly one body: an Operation Manager
         // to its Implementing Agency, a consultant to its firm, an assessor to
         // its agency. The scope check above says which types a role may
         // administer at all; this says which it may bring into being.
@@ -476,7 +476,7 @@ public sealed class UsersController(
 
         // A Super Admin edits only the three account types the scheme itself
         // issues. The rest belong to the body that empanelled them — an
-        // Operation Admin to its Implementing Agency, a consultant to its firm
+        // Operation Manager to its Implementing Agency, a consultant to its firm
         // — and that body edits them. Enforced here as well as hidden on the
         // screen: a hidden button is not a rule.
         if (currentUser.RoleId is { } roleId && await IsSuperAdminAsync(roleId, ct)
@@ -802,11 +802,11 @@ public sealed class UsersController(
         return accountTypeId switch
         {
             (byte)AccountTypeId.OperationAdmin when caller != (byte)AccountTypeId.ImplementingAgency =>
-                "An Operation Admin account is created by an Implementing Agency.",
+                "An Operation Manager account is created by an Implementing Agency.",
 
             (byte)AccountTypeId.ConsultantOrganisation or (byte)AccountTypeId.AssessmentAgency
                 when raisingOrganisation && caller != (byte)AccountTypeId.ImplementingAgency =>
-                "A Consultant Organisation or Assessment Agency is created by an Implementing Agency.",
+                "A Consultant Organisation or Assessment Manager is created by an Implementing Agency.",
 
             // A sub-user inside a firm belongs to that firm.
             (byte)AccountTypeId.ConsultantOrganisation when !raisingOrganisation
@@ -815,13 +815,13 @@ public sealed class UsersController(
 
             (byte)AccountTypeId.AssessmentAgency when !raisingOrganisation
                 && caller != (byte)AccountTypeId.AssessmentAgency =>
-                "A sub-user is created by the Assessment Agency itself.",
+                "A sub-user is created by the Assessment Manager itself.",
 
             (byte)AccountTypeId.Consultants when caller != (byte)AccountTypeId.ConsultantOrganisation =>
                 "A consultant is created by their Consultant Organisation.",
 
             (byte)AccountTypeId.Assessors when caller != (byte)AccountTypeId.AssessmentAgency =>
-                "An assessor is created by their Assessment Agency.",
+                "An assessor is created by their Assessment Manager.",
 
             _ => null,
         };

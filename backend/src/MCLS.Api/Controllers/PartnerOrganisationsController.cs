@@ -27,7 +27,7 @@ namespace MCLS.Api.Controllers;
 ///
 /// Routing is by the body's own state, so an association operating in Gujarat
 /// is decided by the Gujarat office. A pan-India body has no state to route to
-/// and falls to the national queue, which Super Admin, Operations Admin and
+/// and falls to the national queue, which Super Admin, Operation Manager and
 /// Ministry Reviewer work.
 /// </summary>
 [ApiController]

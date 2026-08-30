@@ -195,7 +195,7 @@ export class UserFormComponent {
    *
    * Both are the same account type, so what tells them apart is whether an
    * organisation is being raised alongside the account. A Consultant
-   * Organisation or Assessment Agency already has one — its own — so it is
+   * Organisation or Assessment Manager already has one — its own — so it is
    * creating a sub-user, and the form asks which modules they get instead of
    * asking for an address.
    */

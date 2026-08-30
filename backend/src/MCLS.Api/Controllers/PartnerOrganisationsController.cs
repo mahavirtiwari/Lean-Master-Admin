@@ -38,7 +38,8 @@ public sealed class PartnerOrganisationsController(
     ICurrentUser currentUser,
     IEmailQueue emailQueue) : ControllerBase
 {
-    // auth.AccountType: 4 OEMs, 11 PSUs, 12 Industry Associations.
+    // auth.AccountType: 1 Implementing Agency, 4 OEMs, 11 PSUs, 12 Industry Associations.
+    private const byte ImplementingAgencyType = 1;
     private static readonly byte[] PartnerTypes = [4, 11, 12];
 
     private static string KindOf(byte accountTypeId) => accountTypeId switch
@@ -146,6 +147,28 @@ public sealed class PartnerOrganisationsController(
     [HasPermission(Permissions.UserManagement, Permissions.Create)]
     public async Task<IActionResult> Create([FromBody] PartnerSaveRequest request, CancellationToken ct)
     {
+        // Raising a body is the Implementing Agency's job: it proposes what it
+        // works with, and a State Office decides. A Super Admin approving its
+        // own proposal would make the second step ceremonial, so the button is
+        // not offered to one and the endpoint does not accept one either.
+        if (currentUser.AccountTypeId != ImplementingAgencyType)
+        {
+            return StatusCode(403, new
+            {
+                message = "Only an Implementing Agency raises a body for approval.",
+            });
+        }
+
+        var raisedBy = await MyOrganisationIdAsync(ct);
+
+        if (raisedBy is null)
+        {
+            return StatusCode(403, new
+            {
+                message = "Your account is not linked to an Implementing Agency.",
+            });
+        }
+
         var name = request.Name.Trim();
 
         if (await db.Organisations.AnyAsync(o => o.Name == name && PartnerTypes.Contains(o.AccountTypeId), ct))
@@ -166,7 +189,7 @@ public sealed class PartnerOrganisationsController(
             StateId = request.StateId,
             ContactEmail = string.IsNullOrWhiteSpace(request.ContactEmail) ? null : request.ContactEmail.Trim(),
             ContactPhone = string.IsNullOrWhiteSpace(request.ContactPhone) ? null : request.ContactPhone.Trim(),
-            RaisedByOrganisationId = await MyOrganisationIdAsync(ct),
+            RaisedByOrganisationId = raisedBy,
             ApprovalStatus = "Pending",
             IsActive = true,
             CreatedOnUtc = DateTime.UtcNow,
@@ -363,7 +386,7 @@ public sealed class PartnerOrganisationsController(
             sheet.Cell(line, 4).Value = o.JurisdictionScope ?? string.Empty;
             sheet.Cell(line, 5).Value = o.ContactEmail ?? string.Empty;
             sheet.Cell(line, 6).Value = o.ContactPhone ?? string.Empty;
-            sheet.Cell(line, 7).Value = o.raisedBy ?? "Super Admin";
+            sheet.Cell(line, 7).Value = o.raisedBy ?? string.Empty;
             sheet.Cell(line, 8).Value = o.users;
             sheet.Cell(line, 9).Value = o.ApprovalStatus;
 

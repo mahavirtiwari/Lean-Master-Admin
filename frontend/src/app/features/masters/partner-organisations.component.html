@@ -213,7 +213,7 @@
               </td>
               <td class="muted">{{ r.kind }}</td>
               <td class="muted">{{ r.jurisdictionScope || r.stateName || '—' }}</td>
-              <td class="muted">{{ r.raisedBy || 'Super Admin' }}</td>
+              <td class="muted">{{ r.raisedBy || '—' }}</td>
               <td class="num">
                 @if (r.userCount > 0) {
                   <a class="link-act"
@@ -317,7 +317,7 @@
     <div class="dlg-kv"><span class="dlg-k">Coverage</span>
       <span class="dlg-v">{{ r.jurisdictionScope || r.stateName || '—' }}</span></div>
     <div class="dlg-kv"><span class="dlg-k">Raised by</span>
-      <span class="dlg-v">{{ r.raisedBy || 'Super Admin' }}</span></div>
+      <span class="dlg-v">{{ r.raisedBy || 'Not raised by an agency' }}</span></div>
     <div class="dlg-kv"><span class="dlg-k">Contact e-mail</span>
       <span class="dlg-v">{{ r.contactEmail || '—' }}</span></div>
     <div class="dlg-kv"><span class="dlg-k">Contact phone</span>

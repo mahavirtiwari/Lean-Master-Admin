@@ -105,7 +105,14 @@ export class PartnerOrganisationsComponent {
   readonly remark = signal('');
   readonly decideError = signal<string | null>(null);
 
-  readonly canCreate = this.auth.can('USER_MGMT', 'create');
+  /**
+   * Raising a body is the Implementing Agency's job — it proposes what it works
+   * with, and a State Office decides. A Super Admin holds every right in the
+   * portal, so the rights alone would offer it the button; the account type is
+   * what actually decides. auth.AccountType 1 is Implementing Agency.
+   */
+  readonly canCreate = this.auth.can('USER_MGMT', 'create')
+    && this.auth.user()?.accountTypeId === 1;
   readonly canDecide = this.auth.can('USER_MGMT', 'edit');
   readonly canExport = this.auth.can('USER_MGMT', 'export');
 

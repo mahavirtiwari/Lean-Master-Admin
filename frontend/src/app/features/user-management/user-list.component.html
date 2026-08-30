@@ -8,7 +8,7 @@
   >
     <div class="row">
       <span class="acct-chip">Account Type: {{ type.name }}</span>
-      @if (canCreate && type.canCreateDirectly && !showBodies()) {
+      @if (canCreateHere() && !showBodies()) {
         <a class="btn btn-primary" [routerLink]="['/user-management/type', type.accountTypeId, 'new']">
           Create New User
         </a>
@@ -107,12 +107,12 @@
         <app-empty
           [title]="'No ' + type.name + ' users found'"
           [text]="
-            type.canCreateDirectly
+            canCreateHere()
               ? 'No account matches the current search and filters. Clear them, or create the first user for this account type.'
               : 'No account matches the current filters. Accounts of this type are raised by the organisation that empanels them, not from this screen.'
           "
         >
-          @if (canCreate && type.canCreateDirectly) {
+          @if (canCreateHere()) {
             <a class="btn btn-primary" [routerLink]="['/user-management/type', type.accountTypeId, 'new']">
               Create New User
             </a>
@@ -155,7 +155,7 @@
                   </td>
                   <td class="nowrap">
                     <a class="act act-edit" [routerLink]="['/user-management/users', row.userId]">View</a>
-                    @if (canEdit) {
+                    @if (canEditThisType()) {
                       <span class="act-sep">|</span>
                       <a
                         class="act act-edit"
@@ -163,6 +163,8 @@
                       >
                         Edit
                       </a>
+                    }
+                    @if (canEdit) {
                       <span class="act-sep">|</span>
                       <button
                         class="act"

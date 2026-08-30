@@ -74,6 +74,42 @@ export class UserListComponent {
   readonly canCreate = this.auth.can('USER_MGMT', 'create');
   readonly canEdit = this.auth.can('USER_MGMT', 'edit');
 
+  /**
+   * A Super Admin edits only the three account types the scheme itself issues:
+   * Implementing Agency, Ministry of MSME and State Specific. The rest belong
+   * to the body that empanelled them — an Operation Admin to its Implementing
+   * Agency, a consultant to its firm — and that body edits them.
+   */
+  readonly canEditThisType = computed(() => {
+    if (!this.canEdit) return false;
+    if (this.auth.user()?.roleCode !== 'SUPER_ADMIN') return true;
+
+    return [1, 2, 3].includes(this.typeId());
+  });
+
+  /**
+   * Whether this screen offers Create New User.
+   *
+   * canCreateDirectly is the account type's own flag: false for the six the
+   * portal does not issue from here, because the body that empanels them makes
+   * them. Operation Admin is one of those — but it has a creator now, its
+   * Implementing Agency, so an agency signed in is offered the button the
+   * Super Admin is not.
+   */
+  readonly canCreateHere = computed(() => {
+    if (!this.canCreate) return false;
+
+    const type = this.accountType();
+    if (type?.canCreateDirectly) return true;
+
+    return this.typeId() === 5 && this.auth.user()?.accountTypeId === 1;
+  });
+
+  /**
+   * Operation Admins are created by Implementing Agencies, so an Operation
+   * Admin belongs to one and that is what the reference column names.
+   */
+
   readonly typeId = computed(() => Number(this.accountTypeId()));
 
   /**
@@ -115,6 +151,7 @@ export class UserListComponent {
         return { header: 'State / UT', kind: 'state' as const };
       case 1:
       case 4:
+      case 5:
         return { header: 'Implementing Agency', kind: 'org' as const };
       case 6:
       case 7:

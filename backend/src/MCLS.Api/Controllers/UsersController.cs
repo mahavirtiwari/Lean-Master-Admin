@@ -234,6 +234,18 @@ public sealed class UsersController(
             return Forbid();
         }
 
+        // An Operation Admin runs the portal on behalf of an Implementing
+        // Agency, so an agency is who creates one — and the account belongs to
+        // that agency, which is what the Organisation column names.
+        if (request.AccountTypeId == (byte)AccountTypeId.OperationAdmin
+            && currentUser.AccountTypeId != (byte)AccountTypeId.ImplementingAgency)
+        {
+            return StatusCode(403, new
+            {
+                message = "An Operation Admin account is created by an Implementing Agency.",
+            });
+        }
+
         // The role must belong to the account type, or a caller could hand an
         // Assessor account the Super Admin role.
         var roleAccountType = await db.Roles

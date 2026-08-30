@@ -91,7 +91,7 @@ GO
    The rights split the two — create is the agency, edit is the decision. */
 MERGE auth.Module AS tgt
 USING (VALUES
-    (19, 'PARTNER_ORGS', N'Associations, OEMs & PSUs', '/partner-organisations', 'hands', 19)
+    (19, 'PARTNER_ORGS', N'Associations, OEMs & PSUs', '/partner-organisations', 'partners', 19)
 ) AS src (ModuleId, Code, Name, RoutePath, IconKey, SortOrder)
    ON tgt.ModuleId = src.ModuleId
 WHEN MATCHED THEN UPDATE SET
@@ -136,7 +136,7 @@ GO
 
 MERGE auth.MenuItem AS tgt
 USING (VALUES
-    ('PARTNER_ORGS', 19, N'Associations, OEMs & PSUs', '/partner-organisations', 'hands', 1180)
+    ('PARTNER_ORGS', 19, N'Associations, OEMs & PSUs', '/partner-organisations', 'partners', 1180)
 ) AS src (Code, ModuleId, Label, RoutePath, IconKey, SortOrder)
    ON tgt.Code = src.Code
 WHEN MATCHED THEN UPDATE SET

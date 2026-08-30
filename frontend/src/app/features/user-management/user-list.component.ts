@@ -102,12 +102,20 @@ export class UserListComponent {
     const type = this.accountType();
     if (type?.canCreateDirectly) return true;
 
-    return this.typeId() === 5 && this.auth.user()?.accountTypeId === 1;
+    // An Operation Manager is appointed by the body they work for: the
+    // Ministry, an Implementing Agency, a Consultant Organisation or an
+    // Assessment Manager. Not the industry partners, and not the Super Admin,
+    // who holds every right so the account type alone would let them through.
+    const me = this.auth.user();
+
+    return this.typeId() === 5
+        && me?.roleCode !== 'SUPER_ADMIN'
+        && [1, 2, 6, 7].includes(me?.accountTypeId ?? 0);
   });
 
   /**
-   * Operation Managers are created by Implementing Agencies, so an Operation
-   * Admin belongs to one and that is what the reference column names.
+   * An Operation Manager belongs to the body that appointed them, which is
+   * what the reference column names.
    */
 
   readonly typeId = computed(() => Number(this.accountTypeId()));
@@ -151,8 +159,12 @@ export class UserListComponent {
         return { header: 'State / UT', kind: 'state' as const };
       case 1:
       case 4:
-      case 5:
         return { header: 'Implementing Agency', kind: 'org' as const };
+
+      // An Operation Manager may be appointed by any of four bodies, so the
+      // column cannot name one of them.
+      case 5:
+        return { header: 'Appointed by', kind: 'org' as const };
       case 6:
       case 7:
         return { header: 'Organisation', kind: 'org' as const };

@@ -42,16 +42,18 @@
     <section class="card card-pad">
       <div class="step-head">
         <span class="step-no">2</span>
-        <h3 class="step-title">{{ isSubUser() ? 'Modules for this colleague' : copy().section }}</h3>
+        <h3 class="step-title">{{ joinsMyOrganisation() ? (selectedType() === 5 ? 'Modules for this Operation Manager' : 'Modules for this colleague') : copy().section }}</h3>
       </div>
 
-      @if (isSubUser()) {
+      @if (joinsMyOrganisation()) {
         <div class="org-readonly">
           <span class="field-label">ORGANISATION</span>
           <div class="detail-value">{{ auth.user()?.organisationName || '—' }}</div>
           <div class="field-hint">
-            A colleague joins your organisation. Choose the modules they may reach — you can
-            only pass on access you hold yourself.
+            {{ selectedType() === 5
+                 ? 'The Operation Manager works for your organisation.'
+                 : 'A colleague joins your organisation.' }}
+            Choose the modules they may reach — you can only pass on access you hold yourself.
           </div>
         </div>
 

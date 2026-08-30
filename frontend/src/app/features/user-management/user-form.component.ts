@@ -199,9 +199,14 @@ export class UserFormComponent {
    * creating a sub-user, and the form asks which modules they get instead of
    * asking for an address.
    */
-  readonly isSubUser = computed(() => {
+  readonly joinsMyOrganisation = computed(() => {
     if (this.isEdit()) return false;
 
+    // An Operation Manager always works for the body appointing them.
+    if (this.selectedType() === 5) return true;
+
+    // A firm's sub-user and the firm itself are the same account type, so what
+    // separates them is that the sub-user raises no organisation of its own.
     const me = this.auth.user();
     return me?.accountTypeId === this.selectedType()
         && (me?.accountTypeId === 6 || me?.accountTypeId === 7);
@@ -355,7 +360,7 @@ export class UserFormComponent {
           stateId: this.org().stateId === '' ? null : Number(this.org().stateId),
           districtId: this.org().districtId === '' ? null : Number(this.org().districtId),
         })
-      : this.isSubUser()
+      : this.joinsMyOrganisation()
       ? this.api.createUser({
           ...common,
           email: p.email.trim(),

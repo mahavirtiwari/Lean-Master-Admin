@@ -250,7 +250,8 @@ public sealed class UsersController(
         // to its Implementing Agency, a consultant to its firm, an assessor to
         // its agency. The scope check above says which types a role may
         // administer at all; this says which it may bring into being.
-        var creatorFault = CreatorFault(request.AccountTypeId, request.Organisation is not null);
+        var creatorFault = await CreatorFaultAsync(
+            request.AccountTypeId, request.Organisation is not null, ct);
 
         if (creatorFault is not null) return StatusCode(403, new { message = creatorFault });
 
@@ -431,6 +432,15 @@ public sealed class UsersController(
                 ["password"] = temporary,
                 ["portal_url"] = $"{Request.Headers.Origin}/login",
             }, ct);
+
+        // An Operation Manager belongs to the body that appointed them, which
+        // is what every ownership and visibility check then reads.
+        if (request.AccountTypeId == (byte)AccountTypeId.OperationAdmin
+            && user.OrganisationId is null)
+        {
+            user.OrganisationId = currentUser.OrganisationId;
+            await db.SaveChangesAsync(ct);
+        }
 
         // A firm creating a colleague says which modules they get, and gets no
         // say over anything it does not hold itself — the same rule the
@@ -787,7 +797,8 @@ public sealed class UsersController(
     /// is the firm's own to create — so the two are told apart by whether an
     /// organisation is being raised alongside the account.
     /// </summary>
-    private string? CreatorFault(byte accountTypeId, bool raisingOrganisation)
+    private async Task<string?> CreatorFaultAsync(
+        byte accountTypeId, bool raisingOrganisation, CancellationToken ct)
     {
         var caller = currentUser.AccountTypeId;
 
@@ -799,10 +810,21 @@ public sealed class UsersController(
             return null;
         }
 
-        return accountTypeId switch
+        var fault = accountTypeId switch
         {
-            (byte)AccountTypeId.OperationAdmin when caller != (byte)AccountTypeId.ImplementingAgency =>
-                "An Operation Manager account is created by an Implementing Agency.",
+            // An Operation Manager runs the portal on behalf of the body that
+            // appointed them, and four kinds of body appoint one. Not the
+            // industry partners — an OEM, PSU or association is a body the
+            // scheme recognises, not one that staffs it — and not the Super
+            // Admin, who is checked below because Super Admin is a role inside
+            // Ministry of MSME rather than an account type of its own.
+            (byte)AccountTypeId.OperationAdmin when caller is not
+                ((byte)AccountTypeId.MinistryOfMsme
+                 or (byte)AccountTypeId.ImplementingAgency
+                 or (byte)AccountTypeId.ConsultantOrganisation
+                 or (byte)AccountTypeId.AssessmentAgency) =>
+                "An Operation Manager is appointed by the Ministry, an Implementing Agency, "
+                + "a Consultant Organisation or an Assessment Manager.",
 
             (byte)AccountTypeId.ConsultantOrganisation or (byte)AccountTypeId.AssessmentAgency
                 when raisingOrganisation && caller != (byte)AccountTypeId.ImplementingAgency =>
@@ -825,6 +847,20 @@ public sealed class UsersController(
 
             _ => null,
         };
+
+        if (fault is not null) return fault;
+
+        // Super Admin sits inside Ministry of MSME, so the account type above
+        // lets it through. It appoints nobody's Operation Manager: the point of
+        // the appointment is that a body chooses who runs the portal for it.
+        if (accountTypeId == (byte)AccountTypeId.OperationAdmin
+            && currentUser.RoleId is { } callerRole
+            && await IsSuperAdminAsync(callerRole, ct))
+        {
+            return "An Operation Manager is appointed by the body they work for, not by the Super Admin.";
+        }
+
+        return null;
     }
 
     /// <summary>

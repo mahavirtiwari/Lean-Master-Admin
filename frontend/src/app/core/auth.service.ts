@@ -34,6 +34,31 @@ export class AuthService {
   readonly isAuthenticated = computed(() => this._user() !== null);
   readonly menu = computed<MenuItem[]>(() => this._user()?.menu ?? []);
 
+  constructor() {
+    // The session is cached so a page refresh does not bounce anyone to
+    // sign-in, but the cache is a copy of what was true at login: a renamed
+    // menu, a changed permission or a new module would not show up until the
+    // person next signed out. This re-reads it once on boot.
+    if (this.accessToken) this.refresh();
+  }
+
+  /**
+   * Re-reads the signed-in user from the API and replaces the cached copy.
+   *
+   * Failure is ignored on purpose. The cached session is still usable, and
+   * signing somebody out because one background call did not land would be a
+   * worse answer than showing them a slightly stale menu.
+   */
+  refresh(): void {
+    this.http.get<CurrentUser>(`${environment.apiBase}/auth/me`).subscribe({
+      next: (user) => {
+        sessionStorage.setItem(USER_KEY, JSON.stringify(user));
+        this._user.set(user);
+      },
+      error: () => {},
+    });
+  }
+
   get accessToken(): string | null {
     return sessionStorage.getItem(TOKEN_KEY);
   }

@@ -424,6 +424,22 @@ public sealed class UsersController(
         if (user is null) return NotFound();
         if (!IsInScope(user.AccountTypeId)) return Forbid();
 
+        // A Super Admin edits only the three account types the scheme itself
+        // issues. The rest belong to the body that empanelled them — an
+        // Operation Admin to its Implementing Agency, a consultant to its firm
+        // — and that body edits them. Enforced here as well as hidden on the
+        // screen: a hidden button is not a rule.
+        if (currentUser.RoleId is { } roleId && await IsSuperAdminAsync(roleId, ct)
+            && user.AccountTypeId is not ((byte)AccountTypeId.ImplementingAgency
+                                          or (byte)AccountTypeId.MinistryOfMsme
+                                          or (byte)AccountTypeId.StateSpecific))
+        {
+            return StatusCode(403, new
+            {
+                message = "This account is edited by the organisation that empanelled it.",
+            });
+        }
+
         user.FullName = request.FullName;
         user.Initials = BuildInitials(request.FullName);
         user.PhoneNumber = request.Mobile;
@@ -664,6 +680,9 @@ public sealed class UsersController(
     /// Whether the caller's role administers this account type. An empty scope
     /// means unrestricted (Super Admin).
     /// </summary>
+    private async Task<bool> IsSuperAdminAsync(int roleId, CancellationToken ct) =>
+        await db.Roles.AsNoTracking().AnyAsync(r => r.Id == roleId && r.Code == "SUPER_ADMIN", ct);
+
     private bool IsInScope(byte accountTypeId)
     {
         var scope = currentUser.ManageableAccountTypes;

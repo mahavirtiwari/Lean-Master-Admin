@@ -1,5 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 
+using ClosedXML.Excel;
+
 using MCLS.Api.Authorization;
 using MCLS.Application.Common.Interfaces;
 using MCLS.Domain.Entities.Identity;
@@ -228,6 +230,173 @@ public sealed class PartnerOrganisationsController(
         return Ok(new { organisation.OrganisationId, organisation.ApprovalStatus });
     }
 
+    /// <summary>Renames a body or corrects its details. The decision is unchanged.</summary>
+    [HttpPut("{id:int}")]
+    [HasPermission(Permissions.UserManagement, Permissions.Edit)]
+    public async Task<IActionResult> Update(int id, [FromBody] PartnerSaveRequest request, CancellationToken ct)
+    {
+        var organisation = await db.Organisations.AsTracking()
+            .FirstOrDefaultAsync(o => o.OrganisationId == id && PartnerTypes.Contains(o.AccountTypeId), ct);
+
+        if (organisation is null) return NotFound(new { message = "That organisation does not exist." });
+
+        var name = request.Name.Trim();
+
+        if (await db.Organisations.AnyAsync(
+                o => o.Name == name && o.OrganisationId != id && PartnerTypes.Contains(o.AccountTypeId), ct))
+        {
+            return Conflict(new { message = "A body with that name is already on the list." });
+        }
+
+        organisation.Name = name;
+        organisation.JurisdictionScope = Blank(request.JurisdictionScope);
+        organisation.ContactEmail = Blank(request.ContactEmail);
+        organisation.ContactPhone = Blank(request.ContactPhone);
+        if (request.StateId is not null) organisation.StateId = request.StateId;
+        organisation.ModifiedOnUtc = DateTime.UtcNow;
+        organisation.ModifiedByUserId = currentUser.UserId;
+
+        await db.SaveChangesAsync(ct);
+        return NoContent();
+    }
+
+    /// <summary>
+    /// Takes a body out of use, or puts it back.
+    ///
+    /// Disabled rather than deleted: enterprises have already named it on their
+    /// applications, and deleting the row would leave those claims pointing at
+    /// nothing. A disabled body is not offered on the Silver intake.
+    /// </summary>
+    [HttpPost("{id:int}/status")]
+    [HasPermission(Permissions.UserManagement, Permissions.Edit)]
+    public async Task<IActionResult> SetStatus(
+        int id, [FromBody] PartnerStatusRequest request, CancellationToken ct)
+    {
+        var organisation = await db.Organisations.AsTracking()
+            .FirstOrDefaultAsync(o => o.OrganisationId == id && PartnerTypes.Contains(o.AccountTypeId), ct);
+
+        if (organisation is null) return NotFound(new { message = "That organisation does not exist." });
+
+        organisation.IsActive = request.IsActive;
+        organisation.ModifiedOnUtc = DateTime.UtcNow;
+        organisation.ModifiedByUserId = currentUser.UserId;
+
+        await db.SaveChangesAsync(ct);
+        return NoContent();
+    }
+
+    /// <summary>
+    /// The list as a workbook — a real one, with a filterable header row and a
+    /// frozen pane, not a CSV wearing an .xlsx name.
+    /// </summary>
+    [HttpGet("export")]
+    [HasPermission(Permissions.UserManagement, Permissions.Export)]
+    public async Task<IActionResult> Export(
+        [FromQuery] string? kind, [FromQuery] string? status, CancellationToken ct)
+    {
+        var query = db.Organisations.AsNoTracking()
+            .Where(o => PartnerTypes.Contains(o.AccountTypeId));
+
+        if (!string.IsNullOrWhiteSpace(kind)) query = query.Where(o => o.AccountTypeId == TypeOf(kind));
+        if (!string.IsNullOrWhiteSpace(status)) query = query.Where(o => o.ApprovalStatus == status);
+
+        var rows = await query
+            .OrderBy(o => o.OrganisationCode)
+            .Select(o => new
+            {
+                o.OrganisationCode,
+                o.Name,
+                o.AccountTypeId,
+                o.JurisdictionScope,
+                o.ContactEmail,
+                o.ContactPhone,
+                raisedBy = db.Organisations.Where(r => r.OrganisationId == o.RaisedByOrganisationId)
+                    .Select(r => r.Name).FirstOrDefault(),
+                users = db.Users.Count(u => u.OrganisationId == o.OrganisationId && !u.IsDeleted),
+                o.ApprovalStatus,
+                o.DecidedOnUtc,
+                o.DecisionRemark,
+                o.IsActive,
+            })
+            .ToListAsync(ct);
+
+        var title = kind switch
+        {
+            "OEM" => "OEMs",
+            "PSU" => "PSUs",
+            _ => "Industry Associations",
+        };
+
+        using var workbook = new XLWorkbook();
+        var sheet = workbook.AddWorksheet(title);
+
+        sheet.Cell(1, 1).Value = title;
+        sheet.Cell(1, 1).Style.Font.SetBold().Font.SetFontSize(13);
+        sheet.Cell(2, 1).Value =
+            $"MSME Competitive (LEAN) Scheme - generated {DateTime.Now:dd MMM yyyy HH:mm}";
+        sheet.Cell(2, 1).Style.Font.SetFontColor(XLColor.FromHtml("#5D6B62")).Font.SetFontSize(9);
+
+        string[] headers =
+        [
+            "Code", "Name", "Type", "Coverage", "Contact e-mail", "Contact phone",
+            "Raised by", "Users", "Approval", "Decided on", "Remark", "Active",
+        ];
+
+        const int headerRow = 4;
+
+        for (var c = 0; c < headers.Length; c++)
+        {
+            var cell = sheet.Cell(headerRow, c + 1);
+            cell.Value = headers[c];
+            cell.Style.Font.SetBold().Font.SetFontColor(XLColor.White);
+            cell.Style.Fill.SetBackgroundColor(XLColor.FromHtml("#0F7B45"));
+        }
+
+        for (var r = 0; r < rows.Count; r++)
+        {
+            var o = rows[r];
+            var line = headerRow + 1 + r;
+
+            sheet.Cell(line, 1).Value = o.OrganisationCode;
+            sheet.Cell(line, 2).Value = o.Name;
+            sheet.Cell(line, 3).Value = KindOf(o.AccountTypeId);
+            sheet.Cell(line, 4).Value = o.JurisdictionScope ?? string.Empty;
+            sheet.Cell(line, 5).Value = o.ContactEmail ?? string.Empty;
+            sheet.Cell(line, 6).Value = o.ContactPhone ?? string.Empty;
+            sheet.Cell(line, 7).Value = o.raisedBy ?? "Super Admin";
+            sheet.Cell(line, 8).Value = o.users;
+            sheet.Cell(line, 9).Value = o.ApprovalStatus;
+
+            if (o.DecidedOnUtc is { } decided)
+            {
+                sheet.Cell(line, 10).Value = decided;
+                sheet.Cell(line, 10).Style.DateFormat.Format = "dd-MMM-yyyy";
+            }
+
+            sheet.Cell(line, 11).Value = o.DecisionRemark ?? string.Empty;
+            sheet.Cell(line, 12).Value = o.IsActive ? "Yes" : "No";
+        }
+
+        if (rows.Count > 0)
+        {
+            sheet.Range(headerRow, 1, headerRow + rows.Count, headers.Length).SetAutoFilter();
+        }
+
+        sheet.SheetView.FreezeRows(headerRow);
+        sheet.Columns().AdjustToContents(10d, 55d);
+
+        using var stream = new MemoryStream();
+        workbook.SaveAs(stream);
+
+        return File(
+            stream.ToArray(),
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            $"{title.Replace(' ', '-').ToLowerInvariant()}-{DateTime.Now:yyyyMMdd-HHmm}.xlsx");
+    }
+
+    private static string? Blank(string? value) =>
+        string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
     // ------------------------------------------------- the partner's queue ---
 
     /// <summary>
@@ -392,6 +561,11 @@ public sealed class PartnerSaveRequest
     public short? StateId { get; init; }
     [StringLength(256), EmailAddress] public string? ContactEmail { get; init; }
     [StringLength(20)] public string? ContactPhone { get; init; }
+}
+
+public sealed class PartnerStatusRequest
+{
+    public bool IsActive { get; init; }
 }
 
 public sealed class PartnerDecisionRequest

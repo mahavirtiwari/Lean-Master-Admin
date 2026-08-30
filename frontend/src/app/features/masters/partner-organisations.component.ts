@@ -7,7 +7,13 @@ import { AuthService } from '../../core/auth.service';
 import { environment } from '../../../environments/environment';
 import { httpErrorMessage } from '../../shared/http-error';
 import { istDateTime } from '../../shared/when';
-import { downloadCsv, stamp } from '../../shared/csv';
+
+/** A file-name stamp: 20260830-0241. */
+function stampName(): string {
+  const d = new Date();
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}`;
+}
 
 interface PartnerRow {
   organisationId: number;
@@ -87,6 +93,11 @@ export class PartnerOrganisationsComponent {
   readonly formError = signal<string | null>(null);
   readonly saving = signal(false);
 
+  /** The body being looked at, edited, or taken out of use. */
+  readonly viewing = signal<PartnerRow | null>(null);
+  readonly editingId = signal<number | null>(null);
+  readonly togglingStatus = signal<PartnerRow | null>(null);
+
   /** The record or claim being decided, and the remark being typed for it. */
   readonly deciding = signal<PartnerRow | null>(null);
   readonly decidingClaim = signal<VerificationRow | null>(null);
@@ -141,7 +152,41 @@ export class PartnerOrganisationsComponent {
     });
   }
 
+  startEdit(row: PartnerRow): void {
+    this.editingId.set(row.organisationId);
+    this.adding.set(true);
+    this.formError.set(null);
+    this.form.set({
+      kind: row.kind === 'Association' ? 'Association' : row.kind,
+      name: row.name,
+      jurisdictionScope: row.jurisdictionScope ?? '',
+      contactEmail: row.contactEmail ?? '',
+      contactPhone: row.contactPhone ?? '',
+    });
+  }
+
+  cancelForm(): void {
+    this.adding.set(false);
+    this.editingId.set(null);
+    this.formError.set(null);
+  }
+
+  confirmStatus(): void {
+    const row = this.togglingStatus();
+    if (!row) return;
+
+    this.http.post(`${this.base}/partner-organisations/${row.organisationId}/status`,
+                   { isActive: !row.isActive }).subscribe({
+      next: () => {
+        this.togglingStatus.set(null);
+        this.load();
+      },
+      error: () => this.togglingStatus.set(null),
+    });
+  }
+
   startAdd(): void {
+    this.editingId.set(null);
     this.adding.set(true);
     this.formError.set(null);
     this.form.set({ kind: this.embeddedKind() ?? 'Association', name: '', jurisdictionScope: '', contactEmail: '', contactPhone: '' });
@@ -158,16 +203,23 @@ export class PartnerOrganisationsComponent {
     this.saving.set(true);
     this.formError.set(null);
 
-    this.http.post(`${this.base}/partner-organisations`, {
+    const body = {
       kind: f.kind,
       name: f.name.trim(),
       jurisdictionScope: f.jurisdictionScope.trim() || null,
       contactEmail: f.contactEmail.trim() || null,
       contactPhone: f.contactPhone.trim() || null,
-    }).subscribe({
+    };
+
+    const id = this.editingId();
+    const request = id
+      ? this.http.put(`${this.base}/partner-organisations/${id}`, body)
+      : this.http.post(`${this.base}/partner-organisations`, body);
+
+    request.subscribe({
       next: () => {
         this.saving.set(false);
-        this.adding.set(false);
+        this.cancelForm();
         this.load();
       },
       error: (e: unknown) => {
@@ -244,20 +296,26 @@ export class PartnerOrganisationsComponent {
     }
   }
 
+  /**
+   * The workbook comes from the API: the same filters, every column including
+   * the ones the table has no room for, and a real .xlsx rather than a CSV
+   * wearing the extension.
+   */
   export(): void {
-    downloadCsv(
-      `partner-organisations-${stamp()}`,
-      ['Code', 'Name', 'Kind', 'Status', 'Coverage', 'Raised by', 'Users', 'Decided on'],
-      this.rows().map((r) => [
-        r.organisationCode,
-        r.name,
-        r.kind,
-        r.approvalStatus,
-        r.jurisdictionScope ?? '',
-        r.raisedBy ?? 'Super Admin',
-        String(r.userCount),
-        r.decidedOnUtc ? istDateTime(r.decidedOnUtc) : '',
-      ]),
-    );
+    const params = new URLSearchParams();
+    const kind = this.embeddedKind() ?? this.kind();
+    if (kind) params.set('kind', kind);
+    if (this.status()) params.set('status', this.status());
+
+    this.http.get(`${this.base}/partner-organisations/export?${params}`, { responseType: 'blob' })
+      .subscribe((blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${(kind || 'bodies').toLowerCase()}-${stampName()}.xlsx`;
+        a.click();
+        URL.revokeObjectURL(url);
+      });
   }
+
 }

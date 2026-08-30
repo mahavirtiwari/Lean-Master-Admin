@@ -43,11 +43,11 @@
   <section class="card">
     <div class="card-top">
       <div>
-        <h3 class="card-title">Add a body for approval</h3>
+        <h3 class="card-title">{{ editingId() ? 'Edit this body' : 'Add a body for approval' }}</h3>
         <p class="card-sub">It stays out of the applicant's list until a State Office approves it</p>
       </div>
       <div class="spacer"></div>
-      <span class="chip-amber">Will be raised as Pending</span>
+      @if (!editingId()) { <span class="chip-amber">Will be raised as Pending</span> }
     </div>
 
     <form class="form-grid" (ngSubmit)="save()">
@@ -90,9 +90,9 @@
 
       <div class="form-foot">
         <div class="spacer"></div>
-        <button class="btn-ghost" type="button" (click)="adding.set(false)">Cancel</button>
+        <button class="btn-ghost" type="button" (click)="cancelForm()">Cancel</button>
         <button class="btn-solid" type="submit" [disabled]="saving()">
-          {{ saving() ? 'Submitting…' : 'Submit for approval' }}
+          {{ saving() ? 'Saving…' : editingId() ? 'Save changes' : 'Submit for approval' }}
         </button>
       </div>
     </form>
@@ -162,6 +162,15 @@
     </div>
     <div class="spacer"></div>
 
+    @if (embeddedKind()) {
+      @if (canCreate && !adding()) {
+        <button class="btn-solid" type="button" (click)="startAdd()">+ Add New Body</button>
+      }
+      @if (canExport) {
+        <button class="btn-ghost" type="button" (click)="export()">Export to Excel</button>
+      }
+    }
+
     <div class="seg">
       <button type="button" [class.on]="status() === ''" (click)="status.set(''); load()">All</button>
       <button type="button" [class.on]="status() === 'Pending'" (click)="status.set('Pending'); load()">Pending</button>
@@ -196,7 +205,7 @@
         </thead>
         <tbody>
           @for (r of rows(); track r.organisationId) {
-            <tr>
+            <tr [class.is-inactive]="!r.isActive">
               <td class="qid">{{ r.organisationCode }}</td>
               <td class="strong">
                 {{ r.name }}
@@ -215,20 +224,32 @@
                 }
               </td>
               <td>
-                <span class="pill" [class]="'pill-' + r.approvalStatus.toLowerCase()">
-                  {{ r.approvalStatus }}
+                <span class="pill" [class]="r.isActive ? 'pill-' + r.approvalStatus.toLowerCase() : 'pill-inactive'">
+                  {{ r.isActive ? r.approvalStatus : 'Disabled' }}
                 </span>
               </td>
               @if (canDecide) {
                 <td class="nowrap">
-                  @if (r.approvalStatus === 'Pending') {
+                  <button class="link-act" type="button" (click)="viewing.set(r)">View</button>
+
+                  @if (canCreate) {
+                    <span class="act-sep">|</span>
+                    <button class="link-act" type="button" (click)="startEdit(r)">Edit</button>
+                  }
+
+                  @if (canDecide && r.approvalStatus === 'Pending') {
+                    <span class="act-sep">|</span>
                     <button class="link-act" type="button" (click)="startDecision(r, true)">Approve</button>
                     <span class="act-sep">|</span>
-                    <button class="link-act link-danger" type="button" (click)="startDecision(r, false)">
-                      Reject
+                    <button class="link-act link-danger" type="button" (click)="startDecision(r, false)">Reject</button>
+                  }
+
+                  @if (canDecide) {
+                    <span class="act-sep">|</span>
+                    <button class="link-act" [class.link-danger]="r.isActive" type="button"
+                            (click)="togglingStatus.set(r)">
+                      {{ r.isActive ? 'Disable' : 'Enable' }}
                     </button>
-                  } @else {
-                    <span class="muted">{{ when(r.decidedOnUtc) }}</span>
                   }
                 </td>
               }
@@ -279,6 +300,64 @@
       <button class="btn-ghost" type="button" (click)="cancelDecision()">Cancel</button>
       <button class="btn-solid" [class.is-danger]="!approving()" type="button" (click)="confirmDecision()">
         {{ approving() ? 'Confirm' : 'Reject' }}
+      </button>
+    </div>
+  </section>
+}
+
+<!-- ------------------------------------------------------------- one body -- -->
+@if (viewing(); as r) {
+  <div class="dlg-scrim" (click)="viewing.set(null)"></div>
+  <section class="dlg" role="dialog" aria-label="Body details">
+    <h3 class="dlg-title">{{ r.name }}</h3>
+    <p class="dlg-text">{{ r.kind }} &middot; {{ r.organisationCode }}</p>
+
+    <div class="dlg-kv"><span class="dlg-k">Approval</span>
+      <span class="dlg-v">{{ r.isActive ? r.approvalStatus : 'Disabled' }}</span></div>
+    <div class="dlg-kv"><span class="dlg-k">Coverage</span>
+      <span class="dlg-v">{{ r.jurisdictionScope || r.stateName || '—' }}</span></div>
+    <div class="dlg-kv"><span class="dlg-k">Raised by</span>
+      <span class="dlg-v">{{ r.raisedBy || 'Super Admin' }}</span></div>
+    <div class="dlg-kv"><span class="dlg-k">Contact e-mail</span>
+      <span class="dlg-v">{{ r.contactEmail || '—' }}</span></div>
+    <div class="dlg-kv"><span class="dlg-k">Contact phone</span>
+      <span class="dlg-v">{{ r.contactPhone || '—' }}</span></div>
+    <div class="dlg-kv"><span class="dlg-k">Accounts held</span>
+      <span class="dlg-v">{{ r.userCount }}</span></div>
+    <div class="dlg-kv"><span class="dlg-k">Decided on</span>
+      <span class="dlg-v">{{ when(r.decidedOnUtc) }}</span></div>
+    @if (r.decisionRemark) {
+      <div class="dlg-kv"><span class="dlg-k">Remark</span>
+        <span class="dlg-v">{{ r.decisionRemark }}</span></div>
+    }
+
+    <div class="dlg-foot">
+      <div class="spacer"></div>
+      <button class="btn-ghost" type="button" (click)="viewing.set(null)">Close</button>
+      @if (canCreate) {
+        <button class="btn-solid" type="button" (click)="viewing.set(null); startEdit(r)">Edit</button>
+      }
+    </div>
+  </section>
+}
+
+@if (togglingStatus(); as r) {
+  <div class="dlg-scrim" (click)="togglingStatus.set(null)"></div>
+  <section class="dlg" role="dialog">
+    <h3 class="dlg-title">{{ r.isActive ? 'Disable this body?' : 'Enable this body?' }}</h3>
+    <p class="dlg-text">
+      @if (r.isActive) {
+        {{ r.name }} will no longer be offered on the LEAN Silver intake. It is not deleted —
+        enterprises have already named it, and those claims keep their meaning.
+      } @else {
+        {{ r.name }} will be offered again on the LEAN Silver intake.
+      }
+    </p>
+    <div class="dlg-foot">
+      <div class="spacer"></div>
+      <button class="btn-ghost" type="button" (click)="togglingStatus.set(null)">Cancel</button>
+      <button class="btn-solid" [class.is-danger]="r.isActive" type="button" (click)="confirmStatus()">
+        {{ r.isActive ? 'Disable' : 'Enable' }}
       </button>
     </div>
   </section>
